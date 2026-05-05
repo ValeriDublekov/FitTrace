@@ -1,0 +1,86 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // --- Validations ---
+
+    function isValidAdmin(admin) {
+      return admin.keys().hasAll(['email', 'createdAt']) 
+        && admin.keys().size() == 2
+        && admin.email is string
+        && admin.createdAt is timestamp;
+    }
+
+    function isValidExercise(exercise) {
+      // Mandatory fields for both create and update
+      let mandatoryFields = ['name', 'category', 'loadType', 'createdAt'];
+      // Optional fields that might be present
+      let optionalFields = ['thumbnailUrl', 'defaultNotes', 'updatedAt'];
+      
+      return exercise.keys().hasAll(mandatoryFields)
+        && exercise.keys().size() <= mandatoryFields.size() + optionalFields.size()
+        && exercise.name is string && exercise.name.size() <= 200
+        && exercise.category is string && exercise.category.size() <= 100
+        && exercise.loadType in ['WEIGHT_REPS', 'LEVEL_REPS', 'CARDIO']
+        && (exercise.get('thumbnailUrl', '') is string)
+        && (exercise.get('defaultNotes', '') is string)
+        && exercise.createdAt == (resource == null ? request.time : resource.data.createdAt);
+    }
+
+    function isValidWorkout(workout) {
+      return workout.keys().hasAll(['userId', 'date', 'exercises'])
+        && workout.userId == request.auth.uid
+        && workout.date == request.time
+        && workout.exercises is list
+        && workout.exercises.size() <= 30; // Limit number of exercises in a workout
+    }
+
+    // --- Matches ---
+
+    match /admins/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if false; 
+    }
+
+    match /exercises/{exerciseId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() 
+        && isValidId(exerciseId) 
+        && isValidExercise(request.resource.data)
+        && request.resource.data.createdAt == request.time;
+      allow update: if isAdmin() 
+        && isValidExercise(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'category', 'loadType', 'thumbnailUrl', 'defaultNotes', 'updatedAt'])
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if isAdmin();
+    }
+
+    match /workouts/{workoutId} {
+      allow read, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidWorkout(request.resource.data);
+      allow update: if isOwner(resource.data.userId) && isValidWorkout(request.resource.data);
+      allow delete: if isOwner(resource.data.userId);
+    }
+  }
+}

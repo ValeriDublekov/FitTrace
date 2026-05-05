@@ -1,0 +1,89 @@
+{
+  "entities": {
+    "Admin": {
+      "title": "Admin",
+      "description": "Admin user who can manage exercises",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "createdAt"]
+    },
+    "Exercise": {
+      "title": "Exercise",
+      "description": "Global exercise definition",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "loadType": { "type": "string", "enum": ["WEIGHT_REPS", "LEVEL_REPS", "CARDIO"] },
+        "thumbnailUrl": { "type": "string" },
+        "defaultNotes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "category", "loadType", "createdAt"]
+    },
+    "Workout": {
+      "title": "Workout",
+      "description": "A user workout session",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "notes": { "type": "string" },
+        "exercises": {
+          "type": "array",
+          "items": {
+            "$ref": "#/entities/WorkoutExercise"
+          }
+        }
+      },
+      "required": ["userId", "date", "exercises"]
+    },
+    "WorkoutExercise": {
+      "title": "WorkoutExercise",
+      "description": "An exercise within a workout session",
+      "type": "object",
+      "properties": {
+        "exerciseId": { "type": "string" },
+        "exerciseName": { "type": "string" },
+        "sessionNotes": { "type": "string" },
+        "sets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/entities/ExerciseSet"
+          }
+        }
+      },
+      "required": ["exerciseId", "exerciseName", "sets"]
+    },
+    "ExerciseSet": {
+      "title": "ExerciseSet",
+      "description": "A single set of an exercise",
+      "type": "object",
+      "properties": {
+        "setIndex": { "type": "number" },
+        "weight": { "type": "number" },
+        "level": { "type": "number" },
+        "reps": { "type": "number" },
+        "duration": { "type": "number" }
+      },
+      "required": ["setIndex"]
+    }
+  },
+  "firestore": {
+    "/admins/{userId}": {
+      "schema": "Admin",
+      "description": "List of authorized admins"
+    },
+    "/exercises/{exerciseId}": {
+      "schema": "Exercise",
+      "description": "Global exercise database"
+    },
+    "/workouts/{workoutId}": {
+      "schema": "Workout",
+      "description": "User workout history"
+    }
+  }
+}
