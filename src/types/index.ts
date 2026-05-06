@@ -47,3 +47,10 @@ export interface AppSettings {
   updatedAt: Date;
   updatedBy: string;
 }
+
+export type FontSize = 'normal' | 'large' | 'xlarge';
+
+export interface UserSettings {
+  fontSize: FontSize;
+  updatedAt: Date;
+}

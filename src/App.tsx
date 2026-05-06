@@ -8,6 +8,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { useAdmin } from './hooks/useAdmin';
 import { useAppSettings } from './hooks/useAppSettings';
+import { useUserSettings } from './hooks/useUserSettings';
 import Navbar from './components/layout/Navbar';
 import { InstallPrompt } from './components/pwa/InstallPrompt';
 import LoginPage from './pages/LoginPage';
@@ -40,8 +41,19 @@ const AppContent: React.FC = () => {
   const { user, loading: authLoading, logout } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const { settings, loading: settingsLoading } = useAppSettings();
+  const { settings: userSettings, loading: userSettingsLoading } = useUserSettings();
 
-  const loading = authLoading || adminLoading || settingsLoading;
+  const loading = authLoading || adminLoading || settingsLoading || userSettingsLoading;
+
+  React.useEffect(() => {
+    const fontSize = userSettings?.fontSize || 'normal';
+    const root = document.documentElement;
+    
+    // Remove existing font size classes
+    root.classList.remove('font-size-normal', 'font-size-large', 'font-size-xlarge');
+    // Add current font size class
+    root.classList.add(`font-size-${fontSize}`);
+  }, [userSettings?.fontSize]);
 
   if (loading) {
     return (

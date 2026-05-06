@@ -69,6 +69,13 @@ service cloud.firestore {
         && settings.updatedBy == request.auth.uid;
     }
 
+    function isValidUserSettings(settings) {
+      return settings.keys().hasAll(['fontSize', 'updatedAt'])
+        && settings.keys().size() == 2
+        && settings.fontSize in ['normal', 'large', 'xlarge']
+        && settings.updatedAt is timestamp;
+    }
+
     // --- Matches ---
 
     match /settings/global {
@@ -107,6 +114,13 @@ service cloud.firestore {
       allow create: if isSignedIn() && isValidWorkout(request.resource.data);
       allow update: if isOwner(resource.data.userId) && isValidWorkout(request.resource.data);
       allow delete: if isOwner(resource.data.userId);
+    }
+
+    match /users/{userId}/settings/display {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) 
+        && isValidUserSettings(request.resource.data)
+        && request.resource.data.updatedAt == request.time;
     }
   }
 }

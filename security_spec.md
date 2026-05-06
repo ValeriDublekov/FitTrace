@@ -8,6 +8,8 @@
 - `updatedAt` must be set on update.
 - **Global Settings (`/settings/global`) must have `isPublic`, `updatedAt`, and `updatedBy`.**
 - **Only Admins can modify global settings.**
+- **User Settings (`/users/{userId}/settings/display`) must have `fontSize` and `updatedAt`.**
+- **Users can only manage their own settings.**
 
 ## 2. The "Dirty Dozen" (Red Team Payloads)
 

@@ -83,6 +83,16 @@
         "updatedBy": { "type": "string" }
       },
       "required": ["isPublic", "updatedAt", "updatedBy"]
+    },
+    "UserSettings": {
+      "title": "UserSettings",
+      "description": "Individual user preferences",
+      "type": "object",
+      "properties": {
+        "fontSize": { "type": "string", "enum": ["normal", "large", "xlarge"] },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["fontSize", "updatedAt"]
     }
   },
   "firestore": {
@@ -101,6 +111,10 @@
     "/workouts/{workoutId}": {
       "schema": "Workout",
       "description": "User workout history"
+    },
+    "/users/{userId}/settings/display": {
+      "schema": "UserSettings",
+      "description": "User specific display settings"
     }
   }
 }
