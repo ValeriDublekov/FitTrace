@@ -16,7 +16,10 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (request.auth.token.email == 'v.dublekov@gmail.com' && request.auth.token.email_verified == true)
+      );
     }
 
     function isValidId(id) {
@@ -58,7 +61,20 @@ service cloud.firestore {
         && workout.exercises.size() <= 30; // Limit number of exercises in a workout
     }
 
+    function isValidSettings(settings) {
+      return settings.keys().hasAll(['isPublic', 'updatedAt', 'updatedBy'])
+        && settings.keys().size() == 3
+        && settings.isPublic is bool
+        && settings.updatedAt is timestamp
+        && settings.updatedBy == request.auth.uid;
+    }
+
     // --- Matches ---
+
+    match /settings/global {
+      allow read: if true;
+      allow write: if isAdmin() && isValidSettings(request.resource.data);
+    }
 
     match /admins/{userId} {
       allow read: if isOwner(userId) || isAdmin();

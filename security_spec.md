@@ -6,21 +6,23 @@
 - Exercise thumbnails must be valid URLs from Firebase Storage (conceptually).
 - `createdAt` is immutable.
 - `updatedAt` must be set on update.
+- **Global Settings (`/settings/global`) must have `isPublic`, `updatedAt`, and `updatedBy`.**
+- **Only Admins can modify global settings.**
 
 ## 2. The "Dirty Dozen" (Red Team Payloads)
 
 1. **Anonymous Write:** Unauthenticated user attempts to create an exercise.
 2. **Spoofed Admin Write:** Authenticated but non-admin user attempts to create an exercise.
-3. **Ghost Field Injection:** Admin attempts to add a hidden field `isFeatured: true`.
+3. **Ghost Field Injection:** Admin attempts to add a hidden field `isFeatured: true` to an exercise.
 4. **Huge ID Poisoning:** Admin (or attacker) attempts to create an exercise with a 2MB string as its ID.
 5. **PII Leak:** User attempts to read another user's workout data.
 6. **Self-Promotion:** User attempts to write their own document in the `admins` collection.
-7. **Immutability Breach:** Admin attempts to change the `createdAt` timestamp of an existing exercise.
-8. **Type Poisoning:** Admin attempts to set `loadType` to "SQUAT" (not in enum).
-9. **Missing Mandatory Fields:** Admin attempts to create an exercise without a `category`.
-10. **Denial of Wallet:** Attacker attempts to list all workouts without a `userId` filter (if rules were loose).
-11. **Negative Rest:** User attempts to log a set with -10 reps. (Wait, haven't implemented workouts yet, focus on exercises).
-12. **Zombie Update:** Admin attempts to update an exercise that doesn't exist (path poisoning).
+7. **Settings Hijack:** Non-admin user attempts to set `isPublic: true` on `/settings/global`.
+8. **Settings Malformation:** Admin attempts to update settings without providing `updatedBy`.
+9. **Immutability Breach:** Admin attempts to change the `createdAt` timestamp of an existing exercise.
+10. **Type Poisoning:** Admin attempts to set `loadType` to "SQUAT" (not in enum).
+11. **Missing Mandatory Fields:** Admin attempts to create an exercise without a `category`.
+12. **Denial of Wallet:** Attacker attempts to list all workouts without a `userId` filter.
 
 ## 3. Test Runner (firestore.rules.test.ts)
 

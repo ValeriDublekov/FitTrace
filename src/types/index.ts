@@ -41,3 +41,9 @@ export interface Workout {
   notes?: string;
   exercises: WorkoutExercise[];
 }
+
+export interface AppSettings {
+  isPublic: boolean;
+  updatedAt: Date;
+  updatedBy: string;
+}

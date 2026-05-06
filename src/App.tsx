@@ -7,6 +7,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { useAdmin } from './hooks/useAdmin';
+import { useAppSettings } from './hooks/useAppSettings';
 import Navbar from './components/layout/Navbar';
 import { InstallPrompt } from './components/pwa/InstallPrompt';
 import LoginPage from './pages/LoginPage';
@@ -15,6 +16,7 @@ import AdminPage from './pages/AdminPage';
 import NewWorkout from './pages/NewWorkout';
 import ProgressPage from './pages/ProgressPage';
 import MyExercisesPage from './pages/MyExercisesPage';
+import { Lock, LogOut } from 'lucide-react';
 
 const ProtectedAdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAdmin, loading } = useAdmin();
@@ -35,7 +37,11 @@ const ProtectedAdminRoute: React.FC<{ children: React.ReactNode }> = ({ children
 };
 
 const AppContent: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading, logout } = useAuth();
+  const { isAdmin, loading: adminLoading } = useAdmin();
+  const { settings, loading: settingsLoading } = useAppSettings();
+
+  const loading = authLoading || adminLoading || settingsLoading;
 
   if (loading) {
     return (
@@ -53,6 +59,32 @@ const AppContent: React.FC = () => {
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>
+    );
+  }
+
+  // Check for public access
+  if (settings && !settings.isPublic && !isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-zinc-50 p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 flex flex-col items-center text-center">
+          <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mb-6">
+            <Lock className="text-amber-600 w-8 h-8" />
+          </div>
+          
+          <h1 className="text-2xl font-bold text-zinc-900 mb-2 font-sans tracking-tight">App Under Maintenance</h1>
+          <p className="text-zinc-500 mb-8">
+            FitTrace is currently in private mode. Access is restricted to administrators while we prepare for public launch.
+          </p>
+          
+          <button
+            onClick={logout}
+            className="flex items-center gap-2 text-zinc-500 hover:text-zinc-900 font-medium transition-colors"
+          >
+            <LogOut className="w-5 h-5" />
+            Sign Out
+          </button>
+        </div>
+      </div>
     );
   }
 

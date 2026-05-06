@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useExercises } from '../hooks/useExercises';
+import { useAppSettings } from '../hooks/useAppSettings';
 import { ExerciseForm } from '../features/admin/components/ExerciseForm';
 import { Exercise } from '../types';
-import { Plus, Edit3, Trash2, Search, Filter, Dumbbell, Globe, User } from 'lucide-react';
+import { Plus, Edit3, Trash2, Search, Filter, Dumbbell, Globe, ShieldAlert, Lock, Unlock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 
 const AdminPage: React.FC = () => {
-  const { exercises, loading, error, addExercise, updateExercise, deleteExercise, uploadThumbnail } = useExercises({ adminMode: true });
+  const { exercises, loading: exercisesLoading, error, addExercise, updateExercise, deleteExercise, uploadThumbnail } = useExercises({ adminMode: true });
+  const { settings, loading: settingsLoading, updateSettings } = useAppSettings();
   const [showForm, setShowForm] = useState(false);
   const [editingExercise, setEditingExercise] = useState<Exercise | undefined>();
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,6 +17,8 @@ const AdminPage: React.FC = () => {
   
   // Modal state
   const [exerciseToDelete, setExerciseToDelete] = useState<string | null>(null);
+
+  const loading = exercisesLoading || settingsLoading;
 
   const categories = ['All', ...Array.from(new Set(exercises.map(e => e.category)))];
 
@@ -71,20 +75,65 @@ const AdminPage: React.FC = () => {
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <Globe className="w-8 h-8 text-blue-600" />
-            Global Exercises
+            <ShieldAlert className="w-8 h-8 text-blue-600" />
+            Admin Dashboard
           </h1>
-          <p className="text-gray-500 mt-1">Manage official exercises and load types</p>
+          <p className="text-gray-500 mt-1">Manage application settings and global exercises</p>
         </div>
-        <button 
-          onClick={handleCreateNew}
-          className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all font-medium"
-          id="btn-add-exercise-main"
-        >
-          <Plus className="w-5 h-5" />
-          Add Exercise
-        </button>
       </header>
+
+      {/* Global Settings Section */}
+      <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8" id="admin-settings-section">
+        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <Globe className="w-5 h-5 text-gray-400" />
+          General Settings
+        </h2>
+        
+        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+          <div className="flex items-center gap-4">
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${settings?.isPublic ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}>
+              {settings?.isPublic ? <Unlock className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900">Public Access</h3>
+              <p className="text-sm text-gray-500">
+                {settings?.isPublic 
+                  ? 'Anyone logged in can use the app.' 
+                  : 'Only administrators can access the application. Non-admins will see a maintenance message.'}
+              </p>
+            </div>
+          </div>
+          
+          <button
+            onClick={() => updateSettings({ isPublic: !settings?.isPublic })}
+            className={`px-6 py-2 rounded-lg font-medium transition-all ${
+              settings?.isPublic 
+                ? 'bg-amber-100 text-amber-700 hover:bg-amber-200' 
+                : 'bg-green-600 text-white hover:bg-green-700 shadow-md shadow-green-100'
+            }`}
+            id="toggle-public-access-btn"
+          >
+            {settings?.isPublic ? 'Make Private' : 'Make Public'}
+          </button>
+        </div>
+      </section>
+
+      <section className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+             <Dumbbell className="w-5 h-5 text-gray-400" />
+             Global Exercises
+          </h2>
+          <button 
+            onClick={handleCreateNew}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all font-medium text-sm"
+            id="btn-add-exercise-main"
+          >
+            <Plus className="w-4 h-4" />
+            Add Exercise
+          </button>
+        </div>
+      </section>
 
       <AnimatePresence>
         {showForm && (

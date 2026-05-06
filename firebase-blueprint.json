@@ -72,9 +72,24 @@
         "duration": { "type": "number" }
       },
       "required": ["setIndex"]
+    },
+    "AppSettings": {
+      "title": "AppSettings",
+      "description": "Global application configuration",
+      "type": "object",
+      "properties": {
+        "isPublic": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "updatedBy": { "type": "string" }
+      },
+      "required": ["isPublic", "updatedAt", "updatedBy"]
     }
   },
   "firestore": {
+    "/settings/global": {
+      "schema": "AppSettings",
+      "description": "Global application settings"
+    },
     "/admins/{userId}": {
       "schema": "Admin",
       "description": "List of authorized admins"
