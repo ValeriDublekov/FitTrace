@@ -2,38 +2,37 @@ import React, { useState } from 'react';
 import { useExercises } from '../hooks/useExercises';
 import { ExerciseForm } from '../features/admin/components/ExerciseForm';
 import { Exercise } from '../types';
-import { Plus, Edit3, Trash2, Search, Filter, Dumbbell, Globe, User } from 'lucide-react';
+import { Plus, Edit3, Trash2, Search, Filter, User, Dumbbell } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 
-const AdminPage: React.FC = () => {
-  const { exercises, loading, error, addExercise, updateExercise, deleteExercise, uploadThumbnail } = useExercises({ adminMode: true });
+const MyExercisesPage: React.FC = () => {
+  const { exercises, loading, error, addExercise, updateExercise, deleteExercise, uploadThumbnail } = useExercises({ adminMode: false });
   const [showForm, setShowForm] = useState(false);
   const [editingExercise, setEditingExercise] = useState<Exercise | undefined>();
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   
   // Modal state
-  const [exerciseToDelete, setExerciseToDelete] = useState<string | null>(null);
+  const [exerciseToDelete, setExerciseToDelete] = useState<Exercise | null>(null);
 
-  const categories = ['All', ...Array.from(new Set(exercises.map(e => e.category)))];
+  // We only care about custom ones here
+  const customExercises = exercises.filter(e => e.isCustom);
+  const categories = ['All', ...Array.from(new Set(customExercises.map(e => e.category)))];
 
-  // We only care about global ones here (not custom)
-  const globalExercises = exercises.filter(e => !e.isCustom);
-
-  const filteredExercises = globalExercises.filter(e => {
+  const filteredExercises = customExercises.filter(e => {
     const matchesSearch = e.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === 'All' || e.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
-  const handleDeleteClick = (id: string) => {
-    setExerciseToDelete(id);
+  const handleDeleteClick = (exercise: Exercise) => {
+    setExerciseToDelete(exercise);
   };
 
   const confirmDelete = async () => {
-    if (exerciseToDelete) {
-      await deleteExercise(exerciseToDelete);
+    if (exerciseToDelete?.id) {
+      await deleteExercise(exerciseToDelete.id);
       setExerciseToDelete(null);
     }
   };
@@ -61,28 +60,28 @@ const AdminPage: React.FC = () => {
   if (loading && exercises.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8" id="admin-page-root">
+    <div className="max-w-5xl mx-auto px-4 py-8" id="my-exercises-page-root">
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <Globe className="w-8 h-8 text-blue-600" />
-            Global Exercises
+            <User className="w-8 h-8 text-amber-500" />
+            My Exercises
           </h1>
-          <p className="text-gray-500 mt-1">Manage official exercises and load types</p>
+          <p className="text-gray-500 mt-1">Manage your personal custom exercises</p>
         </div>
         <button 
           onClick={handleCreateNew}
-          className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all font-medium"
-          id="btn-add-exercise-main"
+          className="flex items-center justify-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-xl shadow-lg shadow-amber-100 hover:bg-amber-600 transition-all font-bold"
+          id="btn-add-custom-exercise"
         >
           <Plus className="w-5 h-5" />
-          Add Exercise
+          Create New
         </button>
       </header>
 
@@ -97,34 +96,31 @@ const AdminPage: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" id="exercise-list-container">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" id="custom-exercise-list-container">
         {/* Filters */}
         <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row gap-4 bg-gray-50/50">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input 
               type="text"
-              placeholder="Search exercises..."
+              placeholder="Search your exercises..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
-              id="search-exercises-input"
+              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 transition-all"
+              id="search-custom-exercises"
             />
           </div>
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-gray-400" />
-              <select 
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="px-4 py-2 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-sm font-medium"
-                id="filter-category-select"
-              >
-                {categories.map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-gray-400" />
+            <select 
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="px-4 py-2 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 transition-all text-sm font-medium"
+            >
+              {categories.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -135,8 +131,7 @@ const AdminPage: React.FC = () => {
               <motion.div 
                 layout
                 key={exercise.id}
-                className="p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors group"
-                id={`exercise-item-${exercise.id}`}
+                className="p-4 flex items-center gap-4 hover:bg-amber-50/30 transition-colors group"
               >
                 <div className="w-16 h-16 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
                   {exercise.thumbnailUrl ? (
@@ -144,6 +139,7 @@ const AdminPage: React.FC = () => {
                       src={exercise.thumbnailUrl} 
                       alt={exercise.name} 
                       className="w-full h-full object-cover" 
+                      referrerPolicy="no-referrer"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -155,7 +151,7 @@ const AdminPage: React.FC = () => {
                 <div className="flex-1 min-w-0">
                   <h4 className="font-semibold text-gray-900 truncate">{exercise.name}</h4>
                   <div className="flex items-center gap-3 mt-1">
-                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs font-medium">
+                    <span className="px-2 py-0.5 bg-amber-50 text-amber-700 rounded text-xs font-bold uppercase tracking-wider">
                       {exercise.category}
                     </span>
                     <span className="text-xs text-gray-500 uppercase tracking-wider">
@@ -164,20 +160,18 @@ const AdminPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex gap-2">
                   <button 
                     onClick={() => handleEdit(exercise)}
-                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                    className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
                     title="Edit"
-                    id={`btn-edit-${exercise.id}`}
                   >
                     <Edit3 className="w-5 h-5" />
                   </button>
                   <button 
-                    onClick={() => exercise.id && handleDeleteClick(exercise.id)}
+                    onClick={() => handleDeleteClick(exercise)}
                     className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                     title="Delete"
-                    id={`btn-delete-${exercise.id}`}
                   >
                     <Trash2 className="w-5 h-5" />
                   </button>
@@ -187,9 +181,15 @@ const AdminPage: React.FC = () => {
           ) : (
             <div className="p-12 text-center">
               <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Search className="w-8 h-8 text-gray-200" />
+                <Dumbbell className="w-8 h-8 text-gray-300" />
               </div>
-              <p className="text-gray-500">No official exercises found matching your criteria.</p>
+              <p className="text-gray-500">You haven't created any custom exercises yet.</p>
+              <button 
+                onClick={handleCreateNew}
+                className="mt-4 text-amber-600 font-bold hover:underline"
+              >
+                Create your first exercise
+              </button>
             </div>
           )}
         </div>
@@ -198,8 +198,8 @@ const AdminPage: React.FC = () => {
       <ConfirmModal
         isOpen={exerciseToDelete !== null}
         title="Delete Exercise"
-        message="Are you sure you want to delete this exercise? This action is irreversible and may affect workout history referencing this exercise."
-        confirmLabel="Delete Permanently"
+        message={`Are you sure you want to delete "${exerciseToDelete?.name}"? This action cannot be undone.`}
+        confirmLabel="Delete"
         onConfirm={confirmDelete}
         onCancel={() => setExerciseToDelete(null)}
       />
@@ -207,4 +207,4 @@ const AdminPage: React.FC = () => {
   );
 };
 
-export default AdminPage;
+export default MyExercisesPage;

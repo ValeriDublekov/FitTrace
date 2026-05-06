@@ -14,6 +14,7 @@ import Dashboard from './pages/Dashboard';
 import AdminPage from './pages/AdminPage';
 import NewWorkout from './pages/NewWorkout';
 import ProgressPage from './pages/ProgressPage';
+import MyExercisesPage from './pages/MyExercisesPage';
 
 const ProtectedAdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAdmin, loading } = useAdmin();
@@ -64,6 +65,7 @@ const AppContent: React.FC = () => {
             <Route path="/" element={<Dashboard />} />
             <Route path="/new-workout" element={<NewWorkout />} />
             <Route path="/history" element={<ProgressPage />} />
+            <Route path="/my-exercises" element={<MyExercisesPage />} />
             <Route 
               path="/admin" 
               element={

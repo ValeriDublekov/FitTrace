@@ -4,15 +4,15 @@ import { useExercises } from '../../../hooks/useExercises';
 import { useWorkoutContext } from '../context/WorkoutSessionContext';
 import { Exercise } from '../../../types';
 
-export type ViewState = 'ACTIVE_SESSION' | 'SELECT_CATEGORY' | 'SELECT_EXERCISE';
+export type ViewState = 'SETUP' | 'ACTIVE_SESSION' | 'SELECT_CATEGORY' | 'SELECT_EXERCISE';
 
 export const useWorkoutFlow = () => {
   const navigate = useNavigate();
-  const { exercises, loading } = useExercises();
+  const { exercises, loading, addExercise: createExercise, updateExercise, deleteExercise, uploadThumbnail } = useExercises();
   const { activeExercises, addExercise, finishWorkout } = useWorkoutContext();
 
   const [viewState, setViewState] = useState<ViewState>(
-    activeExercises.length > 0 ? 'ACTIVE_SESSION' : 'SELECT_CATEGORY'
+    activeExercises.length > 0 ? 'ACTIVE_SESSION' : 'SETUP'
   );
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -25,10 +25,9 @@ export const useWorkoutFlow = () => {
     });
   }, [exercises, selectedCategory, searchQuery]);
 
-  const handleAddExercise = (exercise: Exercise) => {
-    addExercise(exercise);
+  const handleAddExercise = async (exercise: Exercise) => {
+    await addExercise(exercise);
     setViewState('ACTIVE_SESSION');
-    setSelectedCategory(null);
     setSearchQuery('');
   };
 
@@ -42,9 +41,11 @@ export const useWorkoutFlow = () => {
   };
 
   const handleBack = () => {
-    if (viewState === 'SELECT_CATEGORY') {
+    if (viewState === 'SETUP') {
+      navigate('/');
+    } else if (viewState === 'SELECT_CATEGORY') {
       if (activeExercises.length > 0) setViewState('ACTIVE_SESSION');
-      else navigate('/');
+      else setViewState('SETUP');
     } else if (viewState === 'SELECT_EXERCISE') {
       setViewState('SELECT_CATEGORY');
       setSelectedCategory(null);
@@ -66,6 +67,10 @@ export const useWorkoutFlow = () => {
     handleAddExercise,
     handleFinish,
     handleBack,
-    activeExercises
+    activeExercises,
+    createExercise,
+    updateExercise,
+    deleteExercise,
+    uploadThumbnail
   };
 };

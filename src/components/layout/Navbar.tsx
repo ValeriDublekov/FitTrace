@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useAdmin } from '../../hooks/useAdmin';
-import { LogOut, User, Dumbbell, ShieldCheck, LayoutDashboard, Settings, TrendingUp } from 'lucide-react';
+import { LogOut, User, Dumbbell, ShieldCheck, LayoutDashboard, Settings, TrendingUp, Globe } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -14,10 +14,11 @@ const Navbar: React.FC = () => {
   const navLinks = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'History', path: '/history', icon: TrendingUp },
+    { name: 'My Exercises', path: '/my-exercises', icon: User },
   ];
 
   if (isAdmin) {
-    navLinks.push({ name: 'Admin', path: '/admin', icon: Settings });
+    navLinks.push({ name: 'Global Library', path: '/admin', icon: Globe });
   }
 
   return (

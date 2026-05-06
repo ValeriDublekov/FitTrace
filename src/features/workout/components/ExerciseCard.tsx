@@ -1,14 +1,16 @@
 import React from 'react';
 import { Exercise } from '../../../types';
-import { Plus } from 'lucide-react';
+import { Plus, Edit3, Trash2 } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface ExerciseCardProps {
   exercise: Exercise;
   onAdd: (exercise: Exercise) => void;
+  onEdit?: (exercise: Exercise) => void;
+  onDelete?: (exercise: Exercise) => void;
 }
 
-export const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, onAdd }) => {
+export const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, onAdd, onEdit, onDelete }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -31,20 +33,53 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, onAdd }) =
 
       <div className="flex-1 min-w-0">
         <h3 className="font-bold text-slate-900 truncate tracking-tight">{exercise.name}</h3>
-        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.1em] mt-0.5">{exercise.category}</p>
+        <div className="flex items-center gap-2 mt-0.5">
+          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.1em]">{exercise.category}</p>
+          {exercise.isCustom && (
+            <span className="text-[10px] bg-amber-50 text-amber-600 font-black px-1.5 py-0.5 rounded uppercase tracking-[0.1em]">Custom</span>
+          )}
+        </div>
       </div>
 
-      <button
-        id={`add-exercise-${exercise.id}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          onAdd(exercise);
-        }}
-        className="w-11 h-11 flex items-center justify-center bg-indigo-50 text-indigo-600 rounded-full hover:bg-indigo-600 hover:text-white active:scale-90 transition-all shadow-sm"
-        aria-label={`Add ${exercise.name}`}
-      >
-        <Plus size={22} strokeWidth={2.5} />
-      </button>
+      <div className="flex items-center gap-2">
+        {exercise.isCustom && (
+          <>
+            {onEdit && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(exercise);
+                }}
+                className="w-9 h-9 flex items-center justify-center bg-slate-50 text-slate-400 rounded-full hover:bg-slate-200 hover:text-slate-600 transition-all"
+              >
+                <Edit3 size={16} />
+              </button>
+            )}
+            {onDelete && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(exercise);
+                }}
+                className="w-9 h-9 flex items-center justify-center bg-red-50 text-red-400 rounded-full hover:bg-red-600 hover:text-white transition-all"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
+          </>
+        )}
+        <button
+          id={`add-exercise-${exercise.id}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onAdd(exercise);
+          }}
+          className="w-11 h-11 flex items-center justify-center bg-indigo-50 text-indigo-600 rounded-full hover:bg-indigo-600 hover:text-white active:scale-90 transition-all shadow-sm"
+          aria-label={`Add ${exercise.name}`}
+        >
+          <Plus size={22} strokeWidth={2.5} />
+        </button>
+      </div>
     </motion.div>
   );
 };

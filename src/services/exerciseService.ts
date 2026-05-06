@@ -21,11 +21,11 @@ import { Exercise } from '../types';
 const EXERCISES_COLLECTION = 'exercises';
 
 export const exerciseService = {
-  async getExercises(): Promise<Exercise[]> {
+  async getExercises(userId?: string): Promise<Exercise[]> {
     try {
       const q = query(collection(db, EXERCISES_COLLECTION), orderBy('name', 'asc'));
       const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => {
+      const exercises = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -33,6 +33,11 @@ export const exerciseService = {
           createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
         } as Exercise;
       });
+
+      if (userId) {
+        return exercises.filter(ex => !ex.userId || ex.userId === userId);
+      }
+      return exercises;
     } catch (error) {
       handleFirestoreError(error, OperationType.LIST, EXERCISES_COLLECTION);
       return [];
@@ -41,8 +46,13 @@ export const exerciseService = {
 
   async createExercise(exercise: Omit<Exercise, 'id' | 'createdAt'>): Promise<string> {
     try {
+      // Remove any undefined fields to prevent Firestore errors
+      const sanitizedData = Object.fromEntries(
+        Object.entries(exercise).filter(([_, v]) => v !== undefined)
+      );
+
       const docRef = await addDoc(collection(db, EXERCISES_COLLECTION), {
-        ...exercise,
+        ...sanitizedData,
         createdAt: serverTimestamp(),
       });
       return docRef.id;
@@ -55,8 +65,14 @@ export const exerciseService = {
   async updateExercise(id: string, exercise: Partial<Omit<Exercise, 'id' | 'createdAt'>>): Promise<void> {
     try {
       const docRef = doc(db, EXERCISES_COLLECTION, id);
+      
+      // Remove any undefined fields to prevent Firestore errors
+      const sanitizedData = Object.fromEntries(
+        Object.entries(exercise).filter(([_, v]) => v !== undefined)
+      );
+
       await updateDoc(docRef, {
-        ...exercise,
+        ...sanitizedData,
         updatedAt: serverTimestamp(),
       });
     } catch (error) {
@@ -72,6 +88,15 @@ export const exerciseService = {
       return await getDownloadURL(snapshot.ref);
     } catch (error) {
       console.error('Storage upload error:', error);
+      throw error;
+    }
+  },
+
+  async deleteExercise(id: string): Promise<void> {
+    try {
+      await deleteDoc(doc(db, EXERCISES_COLLECTION, id));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `${EXERCISES_COLLECTION}/${id}`);
       throw error;
     }
   }

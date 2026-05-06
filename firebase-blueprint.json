@@ -12,7 +12,7 @@
     },
     "Exercise": {
       "title": "Exercise",
-      "description": "Global exercise definition",
+      "description": "Global or custom exercise definition",
       "type": "object",
       "properties": {
         "name": { "type": "string" },
@@ -20,6 +20,8 @@
         "loadType": { "type": "string", "enum": ["WEIGHT_REPS", "LEVEL_REPS", "CARDIO"] },
         "thumbnailUrl": { "type": "string" },
         "defaultNotes": { "type": "string" },
+        "userId": { "type": "string", "description": "Owner of the custom exercise if applicable" },
+        "isCustom": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["name", "category", "loadType", "createdAt"]

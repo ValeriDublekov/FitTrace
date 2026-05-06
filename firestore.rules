@@ -36,7 +36,7 @@ service cloud.firestore {
       // Mandatory fields for both create and update
       let mandatoryFields = ['name', 'category', 'loadType', 'createdAt'];
       // Optional fields that might be present
-      let optionalFields = ['thumbnailUrl', 'defaultNotes', 'updatedAt'];
+      let optionalFields = ['thumbnailUrl', 'defaultNotes', 'updatedAt', 'userId', 'isCustom'];
       
       return exercise.keys().hasAll(mandatoryFields)
         && exercise.keys().size() <= mandatoryFields.size() + optionalFields.size()
@@ -45,13 +45,15 @@ service cloud.firestore {
         && exercise.loadType in ['WEIGHT_REPS', 'LEVEL_REPS', 'CARDIO']
         && (exercise.get('thumbnailUrl', '') is string)
         && (exercise.get('defaultNotes', '') is string)
+        && (exercise.get('userId', '') == '' || exercise.userId is string)
+        && (exercise.get('isCustom', false) is bool)
         && exercise.createdAt == (resource == null ? request.time : resource.data.createdAt);
     }
 
     function isValidWorkout(workout) {
       return workout.keys().hasAll(['userId', 'date', 'exercises'])
         && workout.userId == request.auth.uid
-        && workout.date == request.time
+        && workout.date is timestamp
         && workout.exercises is list
         && workout.exercises.size() <= 30; // Limit number of exercises in a workout
     }
@@ -64,16 +66,24 @@ service cloud.firestore {
     }
 
     match /exercises/{exerciseId} {
-      allow read: if isSignedIn();
-      allow create: if isAdmin() 
-        && isValidId(exerciseId) 
+      allow read: if isSignedIn() && (
+        !('userId' in resource.data) || resource.data.userId == request.auth.uid
+      );
+      allow create: if isSignedIn() 
         && isValidExercise(request.resource.data)
-        && request.resource.data.createdAt == request.time;
-      allow update: if isAdmin() 
+        && (
+          isAdmin() || 
+          (request.resource.data.userId == request.auth.uid && request.resource.data.isCustom == true)
+        );
+      allow update: if isSignedIn() 
         && isValidExercise(request.resource.data)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'category', 'loadType', 'thumbnailUrl', 'defaultNotes', 'updatedAt'])
+        && (
+          isAdmin() || 
+          (resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid)
+        )
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'category', 'loadType', 'thumbnailUrl', 'defaultNotes', 'updatedAt', 'userId', 'isCustom'])
         && request.resource.data.updatedAt == request.time;
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() || (resource.data.userId == request.auth.uid);
     }
 
     match /workouts/{workoutId} {

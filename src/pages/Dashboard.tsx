@@ -36,6 +36,7 @@ const Dashboard: React.FC = () => {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
+          onClick={() => navigate('/history')}
           className="bg-white border border-zinc-200 p-6 rounded-3xl flex flex-col items-start gap-4 shadow-sm active:shadow-none transition-all group"
         >
           <div className="bg-zinc-100 p-3 rounded-2xl group-hover:bg-zinc-200 transition-colors">
@@ -50,6 +51,7 @@ const Dashboard: React.FC = () => {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
+          onClick={() => navigate('/history')}
           className="bg-white border border-zinc-200 p-6 rounded-3xl flex flex-col items-start gap-4 shadow-sm active:shadow-none transition-all group"
         >
           <div className="bg-zinc-100 p-3 rounded-2xl group-hover:bg-zinc-200 transition-colors">

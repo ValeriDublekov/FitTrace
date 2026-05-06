@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   LineChart, 
   Line, 
@@ -8,19 +9,22 @@ import {
   Tooltip, 
   ResponsiveContainer 
 } from 'recharts';
-import { Search, TrendingUp, Calendar, ArrowRight, History as HistoryIcon, Dumbbell } from 'lucide-react';
+import { Search, TrendingUp, Calendar, ArrowRight, History as HistoryIcon, Dumbbell, Clock } from 'lucide-react';
 import { useExercises } from '../hooks/useExercises';
 import { useExerciseHistory } from '../hooks/useExerciseHistory';
+import { useWorkoutHistory } from '../hooks/useWorkoutHistory';
 import { Exercise, LoadType, WorkoutExercise } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 
 const ProgressPage: React.FC = () => {
+  const navigate = useNavigate();
   const { exercises, loading: exercisesLoading } = useExercises();
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const selectedExercise = exercises.find(e => e.id === selectedExerciseId);
-  const { history, loading: historyLoading } = useExerciseHistory(selectedExerciseId || undefined);
+  const { history: exerciseHistory, loading: exerciseHistoryLoading } = useExerciseHistory(selectedExerciseId || undefined);
+  const { history: globalHistory, loading: globalHistoryLoading } = useWorkoutHistory();
 
   const filteredExercises = exercises.filter(e => 
     e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -28,9 +32,9 @@ const ProgressPage: React.FC = () => {
   );
 
   const chartData = useMemo(() => {
-    if (!history || !selectedExercise) return [];
+    if (!exerciseHistory || !selectedExercise) return [];
 
-    return history
+    return exerciseHistory
       .map(workout => {
         const exerciseData = workout.exercises.find(ex => ex.exerciseId === selectedExercise.id);
         if (!exerciseData) return null;
@@ -47,25 +51,49 @@ const ProgressPage: React.FC = () => {
           workoutId: workout.id
         };
       })
-      .filter((d): d is any => d !== null)
+      .filter((d): d is { date: string; timestamp: number; value: number; workoutId: string } => d !== null)
       .sort((a, b) => a.timestamp - b.timestamp);
-  }, [history, selectedExercise]);
+  }, [exerciseHistory, selectedExercise]);
 
   const unit = selectedExercise?.loadType === 'WEIGHT_REPS' ? 'kg' : 'Level';
 
   return (
     <div className="max-w-4xl mx-auto p-4 pb-24 md:p-8">
-      <header className="mb-8">
-        <h1 className="text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-3">
-          <TrendingUp className="text-indigo-600" />
-          Progress
-        </h1>
-        <p className="text-zinc-500 mt-1">Track your growth and peak performance.</p>
+      <header className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-3">
+            <TrendingUp className="text-indigo-600" />
+            {selectedExercise ? 'Exercise Progress' : 'Workout History'}
+          </h1>
+          <p className="text-zinc-500 mt-1">
+            {selectedExercise ? `Tracking ${selectedExercise.name}` : 'Review all your past workout sessions.'}
+          </p>
+        </div>
+        
+        <button 
+          onClick={() => navigate('/new-workout?mode=manual')}
+          className="flex items-center justify-center gap-2 px-6 py-3 bg-white border-2 border-zinc-900 text-zinc-900 rounded-2xl hover:bg-zinc-50 active:scale-95 transition-all font-bold shadow-sm"
+        >
+          <Clock className="w-5 h-5" />
+          Log Past Workout
+        </button>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Sidebar: Exercise Selector */}
         <div className="lg:col-span-1 space-y-4">
+          <button
+            onClick={() => setSelectedExerciseId(null)}
+            className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center gap-3 shadow-sm ${
+              !selectedExerciseId 
+                ? 'bg-zinc-900 border-zinc-900 text-white' 
+                : 'bg-white border-zinc-200 text-zinc-600 hover:border-zinc-300'
+            }`}
+          >
+            <HistoryIcon className={`w-5 h-5 ${!selectedExerciseId ? 'text-white' : 'text-zinc-400'}`} />
+            <span className="font-bold">All History</span>
+          </button>
+
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 w-4 h-4" />
             <input 
@@ -78,7 +106,7 @@ const ProgressPage: React.FC = () => {
             />
           </div>
 
-          <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-sm max-h-[60vh] overflow-y-auto">
+          <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-sm max-h-[50vh] overflow-y-auto">
             {exercisesLoading ? (
                <div className="p-8 flex justify-center">
                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
@@ -112,18 +140,59 @@ const ProgressPage: React.FC = () => {
           <AnimatePresence mode="wait">
             {!selectedExerciseId ? (
               <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white border border-dashed border-zinc-300 rounded-3xl p-12 text-center"
+                key="global-history"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="space-y-6"
               >
-                <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <ArrowRight className="text-zinc-400 animate-pulse" />
-                </div>
-                <h3 className="text-lg font-bold text-zinc-900">Select an exercise</h3>
-                <p className="text-zinc-500 text-sm">Select an exercise from the left to visualize your progress.</p>
+                {globalHistoryLoading ? (
+                  <div className="p-12 flex justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                  </div>
+                ) : globalHistory.length > 0 ? (
+                  <div className="space-y-4">
+                    {globalHistory.map((workout) => (
+                      <div key={workout.id} className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm group hover:border-indigo-200 transition-all">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="bg-indigo-50 p-3 rounded-xl text-indigo-600">
+                              <Calendar className="w-6 h-6" />
+                            </div>
+                            <div>
+                              <h3 className="font-bold text-zinc-900">
+                                {workout.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                              </h3>
+                              <p className="text-zinc-500 text-xs">
+                                {workout.exercises.length} Exercises • {new Date(workout.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {workout.exercises.slice(0, 4).map((ex, idx) => {
+                            const exerciseInfo = exercises.find(e => e.id === ex.exerciseId);
+                            return (
+                              <span key={idx} className="bg-zinc-100 text-zinc-600 text-[10px] font-bold px-2 py-1 rounded-md">
+                                {exerciseInfo?.name || 'Exercise'} ({ex.sets.length} sets)
+                              </span>
+                            );
+                          })}
+                          {workout.exercises.length > 4 && (
+                            <span className="text-[10px] text-zinc-400 font-bold px-2 py-1">+{workout.exercises.length - 4} more</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-white border border-zinc-200 rounded-3xl p-12 text-center">
+                    <HistoryIcon className="w-12 h-12 text-zinc-200 mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-zinc-900">No workouts yet</h3>
+                    <p className="text-zinc-500">Your completed sessions will appear here.</p>
+                  </div>
+                )}
               </motion.div>
-            ) : historyLoading ? (
+            ) : exerciseHistoryLoading ? (
               <div className="h-64 flex items-center justify-center bg-white border border-zinc-200 rounded-3xl">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
               </div>
@@ -187,10 +256,10 @@ const ProgressPage: React.FC = () => {
                     Recent Sessions
                   </div>
                   <div className="space-y-3">
-                    {history.map((workout) => {
+                    {exerciseHistory.map((workout) => {
                       const ex = workout.exercises.find(e => e.exerciseId === selectedExerciseId);
                       return (
-                        <div key={workout.id} className="bg-white border border-zinc-200 rounded-2xl p-4 flex justify-between items-center group hover:border-indigo-200 transition-colors">
+                        <div key={workout.id} className="bg-white border border-zinc-200 rounded-2xl p-4 flex justify-between items-center group hover:border-indigo-200 transition-colors shadow-sm">
                           <div className="flex items-center gap-4">
                             <div className="bg-zinc-50 p-2.5 rounded-xl text-zinc-500 group-hover:text-indigo-600 group-hover:bg-indigo-50 transition-colors">
                               <Calendar className="w-5 h-5" />

@@ -9,15 +9,22 @@ import { motion, AnimatePresence } from 'motion/react';
 interface ExerciseLoggerProps {
   exercise: Exercise;
   workoutExercise: WorkoutExercise;
+  onFinish?: () => void;
 }
 
 export const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
   exercise,
   workoutExercise,
+  onFinish,
 }) => {
-  const { updateSet, addSet, removeSet } = useWorkoutContext();
+  const { updateSet, addSet, removeSet, clearRestTimer } = useWorkoutContext();
   const { history, loading: historyLoading } = useExerciseHistory(exercise.id);
   const [showHistory, setShowHistory] = React.useState(false);
+
+  const handleFinish = () => {
+    clearRestTimer();
+    if (onFinish) onFinish();
+  };
 
   return (
     <motion.div
@@ -40,12 +47,14 @@ export const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
           </div>
         </div>
         
-        <button 
-          onClick={() => setShowHistory(!showHistory)}
-          className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all"
-        >
-          {showHistory ? <ChevronUp size={20} /> : <History size={20} />}
-        </button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setShowHistory(!showHistory)}
+            className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all"
+          >
+            {showHistory ? <ChevronUp size={20} /> : <History size={20} />}
+          </button>
+        </div>
       </header>
 
       <AnimatePresence>
@@ -117,6 +126,15 @@ export const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
           <Plus size={16} strokeWidth={3} />
           Add Set
         </button>
+
+        {onFinish && (
+          <button
+            onClick={handleFinish}
+            className="w-full py-4 mt-4 flex items-center justify-center gap-2 bg-emerald-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-100 active:scale-95"
+          >
+            Done
+          </button>
+        )}
       </div>
     </motion.div>
   );

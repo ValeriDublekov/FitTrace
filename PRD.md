@@ -15,8 +15,14 @@ A Progressive Web App (PWA) designed for Android (but responsive for desktop) to
 - New signups are technically possible via Google, but only Admins can create/edit exercises. (Eventually, standard users will only see data, but currently, it's a single-user focused app).
 
 ### 3.2. Admin: Exercise Management
-- **Add/Edit Exercise:** Admin can define Name, Category (Chest, Back, Legs, Arms, etc.), Notes, and `LoadType`.
-- **Image Upload:** Admin can upload a thumbnail image (via Firebase Storage) so exercises are easily recognizable without reading.
+- **Add/Edit Exercise:** Admin can define Name, Category, Notes, and `LoadType`.
+- **Image Upload:** Supports thumbnail uploads for quick recognition.
+- **Global Database:** Admin manages official exercises visible to all users.
+
+### 3.2.1. User: Custom Exercises
+- **On-the-fly Creation:** Users can create custom exercises directly from the selection screen during a workout.
+- **Privacy:** Custom exercises are only visible to the user who created them.
+- **Management:** Users can edit or delete their own custom exercises from the selection screen.
 - **Load Types:** 
   - `WEIGHT_REPS`: Standard weights (e.g., Dumbbells, Bench press) -> Requires Weight (kg) and Reps.
   - `LEVEL_REPS`: Machines with levels (e.g., Kinesis) -> Requires Level (1, 2, 3) and Reps.

@@ -10,7 +10,7 @@ import {
   Timestamp 
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from './firebase';
-import { Workout } from '../types';
+import { Workout, WorkoutExercise } from '../types';
 
 const WORKOUTS_COLLECTION = 'workouts';
 
@@ -19,7 +19,7 @@ export const workoutService = {
     try {
       const docRef = await addDoc(collection(db, WORKOUTS_COLLECTION), {
         ...workout,
-        date: serverTimestamp(),
+        date: workout.date instanceof Date ? Timestamp.fromDate(workout.date) : serverTimestamp(),
       });
       return docRef.id;
     } catch (error) {
@@ -55,6 +55,19 @@ export const workoutService = {
     } catch (error) {
       handleFirestoreError(error, OperationType.LIST, WORKOUTS_COLLECTION);
       return [];
+    }
+  },
+
+  async getLastExerciseSession(exerciseId: string, userId: string): Promise<WorkoutExercise | null> {
+    try {
+      const history = await this.getExerciseHistory(exerciseId, userId, 1);
+      if (history.length > 0) {
+        return history[0].exercises.find(ex => ex.exerciseId === exerciseId) || null;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting last exercise session:', error);
+      return null;
     }
   }
 };

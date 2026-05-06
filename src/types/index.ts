@@ -12,6 +12,8 @@ export interface Exercise {
   loadType: LoadType;
   thumbnailUrl?: string;
   defaultNotes?: string;
+  userId?: string;
+  isCustom?: boolean;
   createdAt: Date;
 }
 

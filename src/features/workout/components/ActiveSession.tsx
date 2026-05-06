@@ -9,28 +9,49 @@ import { useExercises } from '../../../hooks/useExercises';
 interface ActiveSessionProps {
   onAddClick: () => void;
   onFinish: () => void;
+  onExerciseFinish?: () => void;
 }
 
 export const ActiveSession: React.FC<ActiveSessionProps> = ({
   onAddClick,
-  onFinish
+  onFinish,
+  onExerciseFinish
 }) => {
-  const { activeExercises, workoutNotes, setWorkoutNotes, isSaving, restTimer } = useWorkoutContext();
+  const { 
+    activeExercises, 
+    workoutNotes, 
+    setWorkoutNotes, 
+    sessionMode,
+    isSaving, 
+    restTimer,
+    clearRestTimer
+  } = useWorkoutContext();
   const { exercises } = useExercises();
 
   return (
     <div className="space-y-8 pb-32">
-      <header className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full inline-block">Active</h2>
-          <p className="text-2xl font-black text-slate-900 tracking-tight">Today's Workout</p>
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div className="flex-1 space-y-4">
+          <div className="flex items-center gap-2">
+            <h2 className={`text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full inline-block ${
+              sessionMode === 'LIVE'
+                ? 'text-indigo-600 bg-indigo-50 border border-indigo-100' 
+                : 'text-amber-600 bg-amber-50 border border-amber-100'
+            }`}>
+              {sessionMode === 'LIVE' ? '🔴 Live Session' : '📝 Manual Log'}
+            </h2>
+          </div>
         </div>
-        <button
-          onClick={onAddClick}
-          className="w-12 h-12 flex items-center justify-center bg-slate-900 text-white rounded-2xl hover:bg-slate-800 active:scale-95 transition-all shadow-lg shadow-slate-200"
-        >
-          <Plus size={24} strokeWidth={2.5} />
-        </button>
+
+        <div className="flex items-center gap-3 self-end sm:self-center">
+          <button
+            onClick={onAddClick}
+            className="w-14 h-14 flex items-center justify-center bg-slate-900 text-white rounded-2xl hover:bg-slate-800 active:scale-95 transition-all shadow-xl shadow-slate-200"
+            title="Add Exercise"
+          >
+            <Plus size={28} strokeWidth={2.5} />
+          </button>
+        </div>
       </header>
 
       <div className="space-y-6">
@@ -43,6 +64,7 @@ export const ActiveSession: React.FC<ActiveSessionProps> = ({
                 key={workoutEx.exerciseId}
                 exercise={exercise}
                 workoutExercise={workoutEx}
+                onFinish={onExerciseFinish}
               />
             );
           })
@@ -76,31 +98,10 @@ export const ActiveSession: React.FC<ActiveSessionProps> = ({
               className="w-full p-5 bg-white border border-slate-200 rounded-3xl text-sm font-medium focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all min-h-[100px] resize-none"
             />
           </div>
-
-          <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-slate-50 via-slate-50 to-transparent pointer-events-none z-40">
-            <div className="max-w-xl mx-auto w-full pointer-events-auto">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                disabled={isSaving}
-                onClick={onFinish}
-                className="w-full bg-slate-900 text-white p-5 rounded-3xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-2xl shadow-slate-300 disabled:bg-slate-400 transition-all"
-              >
-                {isSaving ? (
-                  <div className="w-5 h-5 border-2 border-white/30 rounded-full border-t-white animate-spin"></div>
-                ) : (
-                  <>
-                    <CheckCircle2 size={18} />
-                    Finish Workout
-                  </>
-                )}
-              </motion.button>
-            </div>
-          </div>
         </>
       )}
 
-      <RestTimer seconds={restTimer} onClear={() => {}} />
+      <RestTimer seconds={restTimer} onClear={clearRestTimer} />
     </div>
   );
 };
