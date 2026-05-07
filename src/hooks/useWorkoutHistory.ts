@@ -39,5 +39,14 @@ export const useWorkoutHistory = (maxResults = 50) => {
     return () => unsubscribe();
   }, [user, maxResults]);
 
-  return { history, loading };
+  const deleteWorkout = async (workoutId: string) => {
+    try {
+      await workoutService.deleteWorkout(workoutId);
+    } catch (error) {
+      console.error('Error deleting workout:', error);
+      throw error;
+    }
+  };
+
+  return { history, loading, deleteWorkout };
 };

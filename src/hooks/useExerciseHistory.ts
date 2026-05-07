@@ -26,5 +26,15 @@ export const useExerciseHistory = (exerciseId: string | undefined) => {
     fetchHistory();
   }, [exerciseId, user]);
 
-  return { history, loading };
+  const deleteWorkout = async (workoutId: string) => {
+    try {
+      await workoutService.deleteWorkout(workoutId);
+      setHistory(prev => prev.filter(w => w.id !== workoutId));
+    } catch (error) {
+      console.error('Error deleting workout:', error);
+      throw error;
+    }
+  };
+
+  return { history, loading, deleteWorkout };
 };

@@ -9,27 +9,44 @@ import {
   Tooltip, 
   ResponsiveContainer 
 } from 'recharts';
-import { Search, TrendingUp, Calendar, ArrowRight, History as HistoryIcon, Dumbbell, Clock } from 'lucide-react';
+import { Search, TrendingUp, Calendar, ArrowRight, History as HistoryIcon, Dumbbell, Clock, Trash2 } from 'lucide-react';
 import { useExercises } from '../hooks/useExercises';
 import { useExerciseHistory } from '../hooks/useExerciseHistory';
 import { useWorkoutHistory } from '../hooks/useWorkoutHistory';
 import { Exercise, LoadType, WorkoutExercise } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 
 const ProgressPage: React.FC = () => {
   const navigate = useNavigate();
   const { exercises, loading: exercisesLoading } = useExercises();
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [workoutToDelete, setWorkoutToDelete] = useState<string | null>(null);
 
   const selectedExercise = exercises.find(e => e.id === selectedExerciseId);
-  const { history: exerciseHistory, loading: exerciseHistoryLoading } = useExerciseHistory(selectedExerciseId || undefined);
-  const { history: globalHistory, loading: globalHistoryLoading } = useWorkoutHistory();
+  const { history: exerciseHistory, loading: exerciseHistoryLoading, deleteWorkout: deleteExerciseWorkout } = useExerciseHistory(selectedExerciseId || undefined);
+  const { history: globalHistory, loading: globalHistoryLoading, deleteWorkout: deleteGlobalWorkout } = useWorkoutHistory();
 
   const filteredExercises = exercises.filter(e => 
     e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     e.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleDeleteWorkout = async () => {
+    if (!workoutToDelete) return;
+
+    try {
+      if (selectedExerciseId) {
+        await deleteExerciseWorkout(workoutToDelete);
+      } else {
+        await deleteGlobalWorkout(workoutToDelete);
+      }
+      setWorkoutToDelete(null);
+    } catch (error) {
+      console.error('Failed to delete workout:', error);
+    }
+  };
 
   const chartData = useMemo(() => {
     if (!exerciseHistory || !selectedExercise) return [];
@@ -167,6 +184,17 @@ const ProgressPage: React.FC = () => {
                               </p>
                             </div>
                           </div>
+                          
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setWorkoutToDelete(workout.id);
+                            }}
+                            className="p-2 text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                            title="Изтрий тренировка"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {workout.exercises.slice(0, 4).map((ex, idx) => {
@@ -273,14 +301,22 @@ const ProgressPage: React.FC = () => {
                               </div>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <div className="text-lg font-black text-zinc-900">
-                              {ex?.sets.reduce((max, s) => {
-                                const val = selectedExercise.loadType === 'WEIGHT_REPS' ? (s.weight || 0) : (s.level || 0);
-                                return val > max ? val : max;
-                              }, 0)}
-                              <span className="text-[10px] font-bold text-zinc-400 ml-1 uppercase">{unit}</span>
+                          <div className="flex items-center gap-4">
+                            <div className="text-right">
+                              <div className="text-lg font-black text-zinc-900">
+                                {ex?.sets.reduce((max, s) => {
+                                  const val = selectedExercise.loadType === 'WEIGHT_REPS' ? (s.weight || 0) : (s.level || 0);
+                                  return val > max ? val : max;
+                                }, 0)}
+                                <span className="text-[10px] font-bold text-zinc-400 ml-1 uppercase">{unit}</span>
+                              </div>
                             </div>
+                            <button
+                              onClick={() => setWorkoutToDelete(workout.id)}
+                              className="p-2 text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
                       );
@@ -305,6 +341,17 @@ const ProgressPage: React.FC = () => {
           </AnimatePresence>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={workoutToDelete !== null}
+        title="Изтриване на тренировка"
+        message="Сигурни ли сте, че искате да изтриете тази тренировка? Това действие е необратимо."
+        confirmLabel="Изтрий"
+        cancelLabel="Отказ"
+        onConfirm={handleDeleteWorkout}
+        onCancel={() => setWorkoutToDelete(null)}
+        variant="danger"
+      />
     </div>
   );
 };

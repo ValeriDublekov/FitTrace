@@ -7,7 +7,9 @@ import {
   limit, 
   getDocs, 
   serverTimestamp,
-  Timestamp 
+  Timestamp,
+  doc,
+  deleteDoc
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from './firebase';
 import { Workout, WorkoutExercise } from '../types';
@@ -24,6 +26,15 @@ export const workoutService = {
       return docRef.id;
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, WORKOUTS_COLLECTION);
+      throw error;
+    }
+  },
+
+  async deleteWorkout(workoutId: string): Promise<void> {
+    try {
+      await deleteDoc(doc(db, WORKOUTS_COLLECTION, workoutId));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, WORKOUTS_COLLECTION);
       throw error;
     }
   },

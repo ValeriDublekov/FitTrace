@@ -37,6 +37,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
   const [exerciseToDelete, setExerciseToDelete] = useState<Exercise | null>(null);
+  const [showConfirmFinish, setShowConfirmFinish] = useState(false);
 
   const handleDeleteConfirm = async () => {
     if (exerciseToDelete?.id) {
@@ -81,7 +82,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
         )}
         {onFinishWorkout && (
           <button
-            onClick={onFinishWorkout}
+            onClick={() => setShowConfirmFinish(true)}
             className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
           >
             <CheckCircle2 size={14} />
@@ -141,12 +142,15 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
       </div>
 
       <ConfirmModal
-        isOpen={exerciseToDelete !== null}
-        title="Delete Custom Exercise"
-        message={`Are you sure you want to delete "${exerciseToDelete?.name}"? this will remove it from your custom exercise list.`}
-        confirmLabel="Delete"
-        onConfirm={handleDeleteConfirm}
-        onCancel={() => setExerciseToDelete(null)}
+        isOpen={exerciseToDelete !== null || showConfirmFinish}
+        title={showConfirmFinish ? "Finish Workout" : "Delete Custom Exercise"}
+        message={showConfirmFinish ? "Are you sure you want to finish your workout? You will be able to review your session summary." : `Are you sure you want to delete "${exerciseToDelete?.name}"? this will remove it from your custom exercise list.`}
+        confirmLabel={showConfirmFinish ? "Finish Workout" : "Delete"}
+        onConfirm={showConfirmFinish ? (onFinishWorkout || (() => {})) : handleDeleteConfirm}
+        onCancel={() => {
+          setExerciseToDelete(null);
+          setShowConfirmFinish(false);
+        }}
       />
     </div>
   );

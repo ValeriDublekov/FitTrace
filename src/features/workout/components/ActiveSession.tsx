@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Plus, CheckCircle2 } from 'lucide-react';
 import { ExerciseLogger } from './ExerciseLogger';
 import { RestTimer } from './RestTimer';
 import { useWorkoutContext } from '../context/WorkoutSessionContext';
 import { useExercises } from '../../../hooks/useExercises';
+import { ConfirmModal } from '../../../components/ui/ConfirmModal';
 
 interface ActiveSessionProps {
   onAddClick: () => void;
@@ -27,6 +28,7 @@ export const ActiveSession: React.FC<ActiveSessionProps> = ({
     clearRestTimer
   } = useWorkoutContext();
   const { exercises } = useExercises();
+  const [showConfirmFinish, setShowConfirmFinish] = useState(false);
 
   return (
     <div className="space-y-8 pb-32">
@@ -98,10 +100,27 @@ export const ActiveSession: React.FC<ActiveSessionProps> = ({
               className="w-full p-5 bg-white border border-slate-200 rounded-3xl text-sm font-medium focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all min-h-[100px] resize-none"
             />
           </div>
+          
+          <button
+            onClick={() => setShowConfirmFinish(true)}
+            className="w-full py-5 bg-indigo-600 text-white font-black rounded-2xl uppercase tracking-widest shadow-lg shadow-indigo-100 active:scale-95 transition-all flex items-center justify-center gap-2"
+          >
+            <CheckCircle2 size={20} />
+            Finish Workout
+          </button>
         </>
       )}
 
       <RestTimer seconds={restTimer} onClear={clearRestTimer} />
+      
+      <ConfirmModal
+        isOpen={showConfirmFinish}
+        title="Finish Workout"
+        message="Are you sure you want to finish your workout? You will be able to review your session summary."
+        confirmLabel="Finish Workout"
+        onConfirm={onFinish}
+        onCancel={() => setShowConfirmFinish(false)}
+      />
     </div>
   );
 };
