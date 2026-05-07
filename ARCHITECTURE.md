@@ -31,6 +31,8 @@
 
 ## 4. Auth & Navigation Decisions
 - **Auth Provider**: A high-level `AuthProvider` wraps the application to manage Firebase Auth state.
+- **Routing**: Uses `HashRouter` for maximum compatibility with static hosting (like GitHub Pages) and proper SPA fallback behavior.
+- **Base Path**: Configured as relative (`./`) in `vite.config.ts` to ensure assets load correctly on both root domains and subpaths.
 - **Route Protection**: The `App` component handles conditional rendering based on authentication state.
 - **Admin Verification**: The `useAdmin` hook performs a Firestore lookup to verify admin status against the `admins` collection.
 - **Layout**: A persistent `Navbar` is displayed for authenticated users.
