@@ -23,6 +23,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
   const [name, setName] = useState(exercise?.name || '');
   const [category, setCategory] = useState(exercise?.category || CATEGORIES[0]);
   const [loadType, setLoadType] = useState<LoadType>(exercise?.loadType || 'WEIGHT_REPS');
+  const [url, setUrl] = useState(exercise?.url || '');
   const [notes, setNotes] = useState(exercise?.defaultNotes || '');
   const [thumbnailUrl, setThumbnailUrl] = useState(exercise?.thumbnailUrl || '');
   const [isUploading, setIsUploading] = useState(false);
@@ -39,6 +40,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
         category,
         loadType,
         defaultNotes: notes,
+        url,
         thumbnailUrl
       });
     } catch (error) {
@@ -116,6 +118,17 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
               </div>
             </div>
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">External Link (URL)</label>
+          <input 
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://..."
+            className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium"
+          />
         </div>
 
         <div>

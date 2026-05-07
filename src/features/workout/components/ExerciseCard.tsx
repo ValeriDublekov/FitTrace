@@ -1,6 +1,6 @@
 import React from 'react';
 import { Exercise } from '../../../types';
-import { Plus, Edit3, Trash2 } from 'lucide-react';
+import { Plus, Edit3, Trash2, ExternalLink } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface ExerciseCardProps {
@@ -37,6 +37,17 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, onAdd, onE
           <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.1em]">{exercise.category}</p>
           {exercise.isCustom && (
             <span className="text-[10px] bg-amber-50 text-amber-600 font-black px-1.5 py-0.5 rounded uppercase tracking-[0.1em]">Custom</span>
+          )}
+          {exercise.url && (
+            <a 
+              href={exercise.url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-indigo-500 hover:text-indigo-700 p-0.5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ExternalLink size={12} />
+            </a>
           )}
         </div>
       </div>

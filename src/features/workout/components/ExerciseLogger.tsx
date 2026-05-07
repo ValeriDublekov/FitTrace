@@ -3,7 +3,7 @@ import { Exercise, WorkoutExercise } from '../../../types';
 import { SetLogger } from './SetLogger';
 import { useExerciseHistory } from '../../../hooks/useExerciseHistory';
 import { useWorkoutContext } from '../context/WorkoutSessionContext';
-import { Plus, History, ChevronUp } from 'lucide-react';
+import { Plus, History, ChevronUp, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface ExerciseLoggerProps {
@@ -48,6 +48,16 @@ export const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
         </div>
         
         <div className="flex items-center gap-2">
+          {exercise.url && (
+            <a 
+              href={exercise.url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all"
+            >
+              <ExternalLink size={20} />
+            </a>
+          )}
           <button 
             onClick={() => setShowHistory(!showHistory)}
             className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all"

@@ -1,6 +1,7 @@
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
+import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -17,7 +18,20 @@ async function startServer() {
       appType: 'spa',
     });
     app.use(vite.middlewares);
-    console.log('Vite middleware enabled');
+    
+    // Fallback to index.html for SPA in development
+    app.use('*', async (req: any, res: any, next: any) => {
+      const url = req.originalUrl;
+      try {
+        let template = await fs.readFile(path.resolve(__dirname, 'index.html'), 'utf-8');
+        template = await vite.transformIndexHtml(url, template);
+        res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
+      } catch (e: any) {
+        vite.ssrFixStacktrace(e);
+        next(e);
+      }
+    });
+    console.log('Vite middleware and fallback enabled');
   } else {
     // Serve static files in production
     const distPath = path.resolve(__dirname, 'dist');
