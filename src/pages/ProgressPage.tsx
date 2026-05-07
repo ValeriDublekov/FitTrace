@@ -21,7 +21,7 @@ import { WorkoutDetailsModal } from '../components/ui/WorkoutDetailsModal';
 
 const ProgressPage: React.FC = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { exercises, loading: exercisesLoading } = useExercises();
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -69,7 +69,7 @@ const ProgressPage: React.FC = () => {
         }, 0);
 
         return {
-          date: workout.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          date: workout.date.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' }),
           timestamp: workout.date.getTime(),
           value: maxVal,
           workoutId: workout.id
@@ -188,7 +188,7 @@ const ProgressPage: React.FC = () => {
                             </div>
                             <div>
                               <h3 className="font-bold text-zinc-900">
-                                {workout.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                                {workout.date.toLocaleDateString(i18n.language, { weekday: 'long', month: 'long', day: 'numeric' })}
                               </h3>
                               <p className="text-zinc-500 text-xs">
                                 {workout.exercises.length} Exercises logged
@@ -314,7 +314,7 @@ const ProgressPage: React.FC = () => {
                             </div>
                             <div>
                               <div className="font-bold text-zinc-900">
-                                {workout.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                                {workout.date.toLocaleDateString(i18n.language, { weekday: 'short', month: 'short', day: 'numeric' })}
                               </div>
                               <div className="text-xs text-zinc-400">
                                 {t('workout.progress.sets_logged', { count: totalSets })}

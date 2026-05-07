@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Workout } from '../../types';
 import { X, Dumbbell } from 'lucide-react';
 
@@ -8,12 +9,13 @@ interface WorkoutDetailsModalProps {
 }
 
 export const WorkoutDetailsModal: React.FC<WorkoutDetailsModalProps> = ({ workout, onClose }) => {
+  const { i18n } = useTranslation();
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl">
         <div className="p-4 border-b border-zinc-100 flex justify-between items-center sticky top-0 bg-white">
           <h2 className="font-black text-lg text-zinc-900">
-            {workout.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            {workout.date.toLocaleDateString(i18n.language, { weekday: 'long', month: 'long', day: 'numeric' })}
           </h2>
           <button onClick={onClose} className="p-2 hover:bg-zinc-100 rounded-full">
             <X className="w-5 h-5 text-zinc-500" />
