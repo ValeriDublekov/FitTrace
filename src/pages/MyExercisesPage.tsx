@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useExercises } from '../hooks/useExercises';
 import { ExerciseForm } from '../features/admin/components/ExerciseForm';
 import { Exercise } from '../types';
@@ -7,6 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 
 const MyExercisesPage: React.FC = () => {
+  const { t } = useTranslation();
   const { exercises, loading, error, addExercise, updateExercise, deleteExercise, uploadThumbnail } = useExercises({ adminMode: false });
   const [showForm, setShowForm] = useState(false);
   const [editingExercise, setEditingExercise] = useState<Exercise | undefined>();
@@ -71,9 +73,9 @@ const MyExercisesPage: React.FC = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
             <User className="w-8 h-8 text-amber-500" />
-            My Exercises
+            {t('workout.my_exercises.title')}
           </h1>
-          <p className="text-gray-500 mt-1">Manage your personal custom exercises</p>
+          <p className="text-gray-500 mt-1">{t('workout.my_exercises.description')}</p>
         </div>
         <button 
           onClick={handleCreateNew}
@@ -81,7 +83,7 @@ const MyExercisesPage: React.FC = () => {
           id="btn-add-custom-exercise"
         >
           <Plus className="w-5 h-5" />
-          Create New
+          {t('workout.my_exercises.create_new')}
         </button>
       </header>
 
@@ -103,7 +105,7 @@ const MyExercisesPage: React.FC = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input 
               type="text"
-              placeholder="Search your exercises..."
+              placeholder={t('workout.my_exercises.search_placeholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 transition-all"
@@ -183,12 +185,12 @@ const MyExercisesPage: React.FC = () => {
               <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Dumbbell className="w-8 h-8 text-gray-300" />
               </div>
-              <p className="text-gray-500">You haven't created any custom exercises yet.</p>
+              <p className="text-gray-500">{t('workout.my_exercises.no_exercises')}</p>
               <button 
                 onClick={handleCreateNew}
                 className="mt-4 text-amber-600 font-bold hover:underline"
               >
-                Create your first exercise
+                {t('workout.my_exercises.create_first')}
               </button>
             </div>
           )}

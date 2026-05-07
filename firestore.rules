@@ -71,10 +71,12 @@ service cloud.firestore {
     }
 
     function isValidUserSettings(settings) {
-      return settings.keys().hasAll(['fontSize', 'updatedAt'])
-        && settings.keys().size() == 2
-        && settings.fontSize in ['normal', 'large', 'xlarge']
-        && settings.updatedAt is timestamp;
+      return settings.keys().hasAny(['fontSize', 'language']) && settings.keys().hasAll(['updatedAt'])
+        && settings.updatedAt is timestamp
+        // Validate fontSize if exists
+        && (!('fontSize' in settings) || settings.fontSize in ['normal', 'large', 'xlarge'])
+        // Validate language if exists
+        && (!('language' in settings) || settings.language is string);
     }
 
     // --- Matches ---

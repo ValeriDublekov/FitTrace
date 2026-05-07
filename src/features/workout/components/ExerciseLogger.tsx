@@ -3,8 +3,11 @@ import { Exercise, WorkoutExercise } from '../../../types';
 import { SetLogger } from './SetLogger';
 import { useExerciseHistory } from '../../../hooks/useExerciseHistory';
 import { useWorkoutContext } from '../context/WorkoutSessionContext';
-import { Plus, History, ChevronUp, ExternalLink } from 'lucide-react';
+import { Plus, History, ChevronUp, ExternalLink, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
+import { ConfirmModal } from '../../../components/ui/ConfirmModal';
+import { ActionPromptModal } from '../../../components/ui/ActionPromptModal';
 
 interface ExerciseLoggerProps {
   exercise: Exercise;
@@ -17,57 +20,81 @@ export const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
   workoutExercise,
   onFinish,
 }) => {
-  const { updateSet, addSet, removeSet, clearRestTimer } = useWorkoutContext();
+  const { t } = useTranslation();
+  const { updateSet, addSet, removeSet, clearRestTimer, removeExercise, markExerciseAsCompleted, removeIncompleteSets } = useWorkoutContext();
   const { history, loading: historyLoading } = useExerciseHistory(exercise.id);
   const [showHistory, setShowHistory] = React.useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+  const [showFinishConfirm, setShowFinishConfirm] = React.useState(false);
 
-  const handleFinish = () => {
-    clearRestTimer();
-    if (onFinish) onFinish();
+  const handleFinish = (action: 'finish' | 'delete' | 'cancel') => {
+    if (action === 'delete') {
+      removeIncompleteSets(workoutExercise.id);
+      setShowFinishConfirm(false);
+    } else if (action === 'finish') {
+      markExerciseAsCompleted(workoutExercise.id);
+      clearRestTimer();
+      if (onFinish) onFinish();
+      setShowFinishConfirm(false);
+    } else {
+      setShowFinishConfirm(false);
+    }
+  };
+
+  const handleDelete = () => {
+    removeExercise(workoutExercise.id);
+    setShowDeleteConfirm(false);
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden"
-    >
-      <header className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-white border border-slate-100 overflow-hidden flex-shrink-0">
-            {exercise.thumbnailUrl ? (
-              <img src={exercise.thumbnailUrl} alt={exercise.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-slate-300 uppercase tracking-tighter">No img</div>
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden"
+      >
+        <header className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-white border border-slate-100 overflow-hidden flex-shrink-0">
+              {exercise.thumbnailUrl ? (
+                <img src={exercise.thumbnailUrl} alt={exercise.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-slate-300 uppercase tracking-tighter">No img</div>
+              )}
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-900 tracking-tight">{exercise.name}</h3>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{exercise.category}</span>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {exercise.url && (
+              <a 
+                href={exercise.url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all"
+              >
+                <ExternalLink size={20} />
+              </a>
             )}
-          </div>
-          <div>
-            <h3 className="font-bold text-slate-900 tracking-tight">{exercise.name}</h3>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{exercise.category}</span>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          {exercise.url && (
-            <a 
-              href={exercise.url} 
-              target="_blank" 
-              rel="noopener noreferrer"
+            <button 
+              onClick={() => setShowHistory(!showHistory)}
               className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all"
             >
-              <ExternalLink size={20} />
-            </a>
-          )}
-          <button 
-            onClick={() => setShowHistory(!showHistory)}
-            className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all"
-          >
-            {showHistory ? <ChevronUp size={20} /> : <History size={20} />}
-          </button>
-        </div>
-      </header>
+              {showHistory ? <ChevronUp size={20} /> : <History size={20} />}
+            </button>
+            <button 
+              onClick={() => setShowDeleteConfirm(true)}
+              className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
+            >
+              <X size={20} />
+            </button>
+          </div>
+        </header>
 
-      <AnimatePresence>
+        <AnimatePresence>
         {showHistory && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
@@ -79,7 +106,7 @@ export const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
               <div className="flex items-center justify-between">
                 <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
                   <History size={12} />
-                  Historical Data
+                  {t('workout.historical_data')}
                 </h4>
               </div>
               
@@ -94,7 +121,7 @@ export const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-xs font-bold text-slate-900">{new Date(workout.date).toLocaleDateString()}</span>
                         <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full uppercase tracking-widest">
-                          {workout.exercises.find(e => e.exerciseId === exercise.id)?.sets.length} Sets
+                          {workout.exercises.find(e => e.exerciseId === exercise.id)?.sets.length} {t('workout.sets')}
                         </span>
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -110,42 +137,65 @@ export const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-xs font-bold text-slate-400 py-4 italic">No previous logs for this exercise.</p>
+                <p className="text-center text-xs font-bold text-slate-400 py-4 italic">{t('workout.no_history')}</p>
               )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="p-5 space-y-3">
+      <div className="p-5 space-y-4">
         <div className="space-y-3">
           {workoutExercise.sets.map((set) => (
             <SetLogger
               key={set.setIndex}
               set={set}
-              exerciseId={workoutExercise.exerciseId}
+              exerciseId={workoutExercise.id}
               loadType={exercise.loadType}
             />
           ))}
         </div>
 
-        <button
-          onClick={() => addSet(workoutExercise.exerciseId)}
-          className="w-full py-4 mt-2 flex items-center justify-center gap-2 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-black text-xs uppercase tracking-widest hover:border-indigo-200 hover:text-indigo-400 transition-all active:scale-[0.98]"
-        >
-          <Plus size={16} strokeWidth={3} />
-          Add Set
-        </button>
-
-        {onFinish && (
+        <div className="grid grid-cols-2 gap-3 pt-2">
           <button
-            onClick={handleFinish}
-            className="w-full py-4 mt-4 flex items-center justify-center gap-2 bg-emerald-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-100 active:scale-95"
+            onClick={() => addSet(workoutExercise.id)}
+            className="flex items-center justify-center gap-2 py-4 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-[0.98]"
           >
-            Done
+            <Plus size={16} strokeWidth={3} />
+            {t('workout.add_set')}
           </button>
-        )}
+
+          {onFinish && (
+            <button
+              onClick={() => setShowFinishConfirm(true)}
+              className="flex items-center justify-center gap-2 py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95"
+            >
+              {t('workout.finish_ex')}
+            </button>
+          )}
+        </div>
       </div>
     </motion.div>
-  );
+
+    <ConfirmModal
+      isOpen={showDeleteConfirm}
+      title={t('workout.confirmations.remove_exercise.title')}
+      message={t('workout.confirmations.remove_exercise.message')}
+      confirmLabel={t('common.delete')}
+      onConfirm={handleDelete}
+      onCancel={() => setShowDeleteConfirm(false)}
+    />
+    <ActionPromptModal
+      isOpen={showFinishConfirm}
+      title={t('workout.confirmations.finish_exercise.title')}
+      message={t('workout.confirmations.finish_exercise.message')}
+      yesLabel={t('workout.confirmations.finish_exercise.yes')}
+      noLabel={t('workout.confirmations.finish_exercise.no')}
+      cancelLabel={t('common.cancel')}
+      onYes={() => handleFinish( 'finish' )}
+      onNo={() => handleFinish( 'delete' )}
+      onCancel={() => handleFinish( 'cancel' )}
+    />
+  </>
+);
 };

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { 
   LineChart, 
   Line, 
@@ -13,16 +14,19 @@ import { Search, TrendingUp, Calendar, ArrowRight, History as HistoryIcon, Dumbb
 import { useExercises } from '../hooks/useExercises';
 import { useExerciseHistory } from '../hooks/useExerciseHistory';
 import { useWorkoutHistory } from '../hooks/useWorkoutHistory';
-import { Exercise, LoadType, WorkoutExercise } from '../types';
+import { Workout } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
+import { WorkoutDetailsModal } from '../components/ui/WorkoutDetailsModal';
 
 const ProgressPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { exercises, loading: exercisesLoading } = useExercises();
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [workoutToDelete, setWorkoutToDelete] = useState<string | null>(null);
+  const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
 
   const selectedExercise = exercises.find(e => e.id === selectedExerciseId);
   const { history: exerciseHistory, loading: exerciseHistoryLoading, deleteWorkout: deleteExerciseWorkout } = useExerciseHistory(selectedExerciseId || undefined);
@@ -53,12 +57,15 @@ const ProgressPage: React.FC = () => {
 
     return exerciseHistory
       .map(workout => {
-        const exerciseData = workout.exercises.find(ex => ex.exerciseId === selectedExercise.id);
-        if (!exerciseData) return null;
+        const matchingExercises = workout.exercises.filter(ex => ex.exerciseId === selectedExercise.id);
+        if (matchingExercises.length === 0) return null;
 
-        const maxVal = exerciseData.sets.reduce((max, set) => {
-          const val = selectedExercise.loadType === 'WEIGHT_REPS' ? (set.weight || 0) : (set.level || 0);
-          return val > max ? val : max;
+        const maxVal = matchingExercises.reduce((currentMax, exInstance) => {
+          const instanceMax = exInstance.sets.reduce((setMax, set) => {
+            const val = selectedExercise.loadType === 'WEIGHT_REPS' ? (set.weight || 0) : (set.level || 0);
+            return val > setMax ? val : setMax;
+          }, 0);
+          return instanceMax > currentMax ? instanceMax : currentMax;
         }, 0);
 
         return {
@@ -80,10 +87,10 @@ const ProgressPage: React.FC = () => {
         <div>
           <h1 className="text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-3">
             <TrendingUp className="text-indigo-600" />
-            {selectedExercise ? 'Exercise Progress' : 'Workout History'}
+            {selectedExercise ? t('workout.progress.title') : t('workout.progress.title')}
           </h1>
           <p className="text-zinc-500 mt-1">
-            {selectedExercise ? `Tracking ${selectedExercise.name}` : 'Review all your past workout sessions.'}
+            {selectedExercise ? t('workout.progress.tracking', { name: selectedExercise.name }) : t('workout.progress.description')}
           </p>
         </div>
         
@@ -92,7 +99,7 @@ const ProgressPage: React.FC = () => {
           className="flex items-center justify-center gap-2 px-6 py-3 bg-white border-2 border-zinc-900 text-zinc-900 rounded-2xl hover:bg-zinc-50 active:scale-95 transition-all font-bold shadow-sm"
         >
           <Clock className="w-5 h-5" />
-          Log Past Workout
+          {t('workout.progress.log_past')}
         </button>
       </header>
 
@@ -108,7 +115,7 @@ const ProgressPage: React.FC = () => {
             }`}
           >
             <HistoryIcon className={`w-5 h-5 ${!selectedExerciseId ? 'text-white' : 'text-zinc-400'}`} />
-            <span className="font-bold">All History</span>
+            <span className="font-bold">{t('workout.progress.all_history')}</span>
           </button>
 
           <div className="relative">
@@ -116,7 +123,7 @@ const ProgressPage: React.FC = () => {
             <input 
               id="exercise-search"
               type="text"
-              placeholder="Search exercise..."
+              placeholder={t('workout.progress.search')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
@@ -169,7 +176,11 @@ const ProgressPage: React.FC = () => {
                 ) : globalHistory.length > 0 ? (
                   <div className="space-y-4">
                     {globalHistory.map((workout) => (
-                      <div key={workout.id} className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm group hover:border-indigo-200 transition-all">
+                      <div 
+                        key={workout.id} 
+                        className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm group hover:border-indigo-200 transition-all cursor-pointer"
+                        onClick={() => setSelectedWorkout(workout)}
+                      >
                         <div className="flex justify-between items-start mb-4">
                           <div className="flex items-center gap-3">
                             <div className="bg-indigo-50 p-3 rounded-xl text-indigo-600">
@@ -180,7 +191,7 @@ const ProgressPage: React.FC = () => {
                                 {workout.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                               </h3>
                               <p className="text-zinc-500 text-xs">
-                                {workout.exercises.length} Exercises • {new Date(workout.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                {workout.exercises.length} Exercises logged
                               </p>
                             </div>
                           </div>
@@ -215,8 +226,8 @@ const ProgressPage: React.FC = () => {
                 ) : (
                   <div className="bg-white border border-zinc-200 rounded-3xl p-12 text-center">
                     <HistoryIcon className="w-12 h-12 text-zinc-200 mx-auto mb-4" />
-                    <h3 className="text-xl font-bold text-zinc-900">No workouts yet</h3>
-                    <p className="text-zinc-500">Your completed sessions will appear here.</p>
+                    <h3 className="text-xl font-bold text-zinc-900">{t('workout.progress.no_workouts')}</h3>
+                    <p className="text-zinc-500">{t('workout.progress.no_workouts_desc')}</p>
                   </div>
                 )}
               </motion.div>
@@ -234,7 +245,7 @@ const ProgressPage: React.FC = () => {
                 {/* Chart */}
                 <div className="bg-white border border-zinc-200 rounded-3xl p-6 shadow-sm">
                   <div className="flex justify-between items-center mb-6">
-                    <h2 className="font-bold text-lg text-zinc-900">Performance Over Time</h2>
+                    <h2 className="font-bold text-lg text-zinc-900">{t('workout.progress.performance')}</h2>
                     <span className="bg-indigo-100 text-indigo-700 text-[10px] uppercase font-black px-2 py-1 rounded-md">Peak {unit}</span>
                   </div>
                   <div className="h-64 mt-4">
@@ -281,11 +292,20 @@ const ProgressPage: React.FC = () => {
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 text-zinc-900 font-bold">
                     <HistoryIcon className="w-5 h-5 text-indigo-600" />
-                    Recent Sessions
+                    {t('workout.progress.recent_sessions')}
                   </div>
                   <div className="space-y-3">
                     {exerciseHistory.map((workout) => {
-                      const ex = workout.exercises.find(e => e.exerciseId === selectedExerciseId);
+                      const instances = workout.exercises.filter(e => e.exerciseId === selectedExerciseId);
+                      const totalSets = instances.reduce((sum, ex) => sum + ex.sets.length, 0);
+                      const maxPerformance = instances.reduce((max, ex) => {
+                        const instanceMax = ex.sets.reduce((sMax, s) => {
+                          const val = selectedExercise!.loadType === 'WEIGHT_REPS' ? (s.weight || 0) : (s.level || 0);
+                          return val > sMax ? val : sMax;
+                        }, 0);
+                        return instanceMax > max ? instanceMax : max;
+                      }, 0);
+
                       return (
                         <div key={workout.id} className="bg-white border border-zinc-200 rounded-2xl p-4 flex justify-between items-center group hover:border-indigo-200 transition-colors shadow-sm">
                           <div className="flex items-center gap-4">
@@ -297,17 +317,14 @@ const ProgressPage: React.FC = () => {
                                 {workout.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                               </div>
                               <div className="text-xs text-zinc-400">
-                                {ex?.sets.length} sets logged
+                                {t('workout.progress.sets_logged', { count: totalSets })}
                               </div>
                             </div>
                           </div>
                           <div className="flex items-center gap-4">
                             <div className="text-right">
                               <div className="text-lg font-black text-zinc-900">
-                                {ex?.sets.reduce((max, s) => {
-                                  const val = selectedExercise.loadType === 'WEIGHT_REPS' ? (s.weight || 0) : (s.level || 0);
-                                  return val > max ? val : max;
-                                }, 0)}
+                                {maxPerformance}
                                 <span className="text-[10px] font-bold text-zinc-400 ml-1 uppercase">{unit}</span>
                               </div>
                             </div>
@@ -334,8 +351,8 @@ const ProgressPage: React.FC = () => {
                 <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
                   <HistoryIcon className="text-amber-500" />
                 </div>
-                <h3 className="text-lg font-bold text-zinc-900">No history yet</h3>
-                <p className="text-zinc-500 text-sm">Start a workout with this exercise to see your progress here.</p>
+                <h3 className="text-lg font-bold text-zinc-900">{t('workout.progress.no_history')}</h3>
+                <p className="text-zinc-500 text-sm">{t('workout.progress.no_history_desc')}</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -344,14 +361,20 @@ const ProgressPage: React.FC = () => {
 
       <ConfirmModal
         isOpen={workoutToDelete !== null}
-        title="Изтриване на тренировка"
-        message="Сигурни ли сте, че искате да изтриете тази тренировка? Това действие е необратимо."
-        confirmLabel="Изтрий"
-        cancelLabel="Отказ"
+        title={t('workout.progress.confirmations.delete_workout.title')}
+        message={t('workout.progress.confirmations.delete_workout.message')}
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
         onConfirm={handleDeleteWorkout}
         onCancel={() => setWorkoutToDelete(null)}
         variant="danger"
       />
+      {selectedWorkout && (
+        <WorkoutDetailsModal
+          workout={selectedWorkout}
+          onClose={() => setSelectedWorkout(null)}
+        />
+      )}
     </div>
   );
 };

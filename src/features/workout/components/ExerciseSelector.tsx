@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Search, Plus, ListFilter, CheckCircle2 } from 'lucide-react';
+import { Search, Plus, ListFilter, CheckCircle2, Dumbbell } from 'lucide-react';
 import { Exercise } from '../../../types';
 import { ExerciseCard } from './ExerciseCard';
 import { ExerciseForm } from '../../admin/components/ExerciseForm';
 import { ConfirmModal } from '../../../components/ui/ConfirmModal';
+import { useWorkoutContext } from '../context/WorkoutSessionContext';
 
 interface ExerciseSelectorProps {
   category: string | null;
@@ -38,6 +39,8 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
   const [exerciseToDelete, setExerciseToDelete] = useState<Exercise | null>(null);
   const [showConfirmFinish, setShowConfirmFinish] = useState(false);
+  const { activeExercises } = useWorkoutContext();
+  const completedExercises = activeExercises.filter(ex => ex.sets.some(s => s.isCompleted));
 
   const handleDeleteConfirm = async () => {
     if (exerciseToDelete?.id) {
@@ -90,6 +93,20 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
           </button>
         )}
       </div>
+
+      {completedExercises.length > 0 && (
+        <div className="bg-white p-4 rounded-2xl border border-indigo-100 shadow-sm space-y-3">
+          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400">Completed Exercises</h3>
+          <div className="flex flex-wrap gap-2">
+            {completedExercises.map(ex => (
+              <span key={ex.id} className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full text-xs font-bold">
+                <Dumbbell size={12} />
+                {ex.exerciseName}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="relative group">
         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">

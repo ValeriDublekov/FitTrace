@@ -7,9 +7,11 @@ import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { useAdmin } from './hooks/useAdmin';
+import { WorkoutSessionProvider } from './features/workout/context/WorkoutSessionContext';
 import { useAppSettings } from './hooks/useAppSettings';
 import { useUserSettings } from './hooks/useUserSettings';
 import Navbar from './components/layout/Navbar';
+import { useTranslation } from 'react-i18next';
 import { InstallPrompt } from './components/pwa/InstallPrompt';
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
@@ -42,8 +44,15 @@ const AppContent: React.FC = () => {
   const { isAdmin, loading: adminLoading } = useAdmin();
   const { settings, loading: settingsLoading } = useAppSettings();
   const { settings: userSettings, loading: userSettingsLoading } = useUserSettings();
+  const { i18n } = useTranslation();
 
   const loading = authLoading || adminLoading || settingsLoading || userSettingsLoading;
+
+  React.useEffect(() => {
+    if (userSettings?.language && i18n.language !== userSettings.language) {
+      i18n.changeLanguage(userSettings.language);
+    }
+  }, [userSettings?.language, i18n]);
 
   React.useEffect(() => {
     const fontSize = userSettings?.fontSize || 'normal';
@@ -65,12 +74,10 @@ const AppContent: React.FC = () => {
 
   if (!user) {
     return (
-      <Router>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </Router>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
     );
   }
 
@@ -92,7 +99,7 @@ const AppContent: React.FC = () => {
             onClick={logout}
             className="flex items-center gap-2 text-zinc-500 hover:text-zinc-900 font-medium transition-colors"
           >
-            <LogOut className="w-5 h-5" />
+            <Lock className="w-5 h-5" />
             Sign Out
           </button>
         </div>
@@ -101,36 +108,38 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <Router>
-      <div className="min-h-screen bg-zinc-50 flex flex-col font-sans">
-        <Navbar />
-        <main className="flex-1">
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/new-workout" element={<NewWorkout />} />
-            <Route path="/history" element={<ProgressPage />} />
-            <Route path="/my-exercises" element={<MyExercisesPage />} />
-            <Route 
-              path="/admin" 
-              element={
-                <ProtectedAdminRoute>
-                  <AdminPage />
-                </ProtectedAdminRoute>
-              } 
-            />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </main>
-        <InstallPrompt />
-      </div>
-    </Router>
+    <div className="min-h-screen bg-zinc-50 flex flex-col font-sans">
+      <Navbar />
+      <main className="flex-1">
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/new-workout" element={<NewWorkout />} />
+          <Route path="/history" element={<ProgressPage />} />
+          <Route path="/my-exercises" element={<MyExercisesPage />} />
+          <Route 
+            path="/admin" 
+            element={
+              <ProtectedAdminRoute>
+                <AdminPage />
+              </ProtectedAdminRoute>
+            } 
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+      <InstallPrompt />
+    </div>
   );
 };
 
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <Router>
+        <WorkoutSessionProvider>
+          <AppContent />
+        </WorkoutSessionProvider>
+      </Router>
     </AuthProvider>
   );
 }

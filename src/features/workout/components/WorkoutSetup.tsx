@@ -1,4 +1,6 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Calendar, Clock, Play, Edit3 } from 'lucide-react';
 import { useWorkoutContext } from '../context/WorkoutSessionContext';
 
@@ -8,19 +10,21 @@ interface WorkoutSetupProps {
 
 export const WorkoutSetup: React.FC<WorkoutSetupProps> = ({ onNext }) => {
   const { workoutDate, setWorkoutDate, sessionMode, setSessionMode } = useWorkoutContext();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
 
-  // Format date for datetime-local input (YYYY-MM-DDTHH:mm)
+  // Format date for date input (YYYY-MM-DD)
   const formatDateForInput = (date: Date) => {
-    const tzOffset = date.getTimezoneOffset() * 60000;
-    const localISOTime = (new Date(date.getTime() - tzOffset)).toISOString().slice(0, 16);
-    return localISOTime;
+    return date.toISOString().split('T')[0];
   };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = new Date(e.target.value);
     if (!isNaN(newDate.getTime())) {
       // Don't allow future dates
-      if (newDate > new Date()) {
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      if (newDate > today) {
         setWorkoutDate(new Date());
       } else {
         setWorkoutDate(newDate);
@@ -34,7 +38,7 @@ export const WorkoutSetup: React.FC<WorkoutSetupProps> = ({ onNext }) => {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500" id="workout-setup">
       <div className="space-y-4">
         <h2 className="text-2xl font-black text-slate-900 tracking-tight">Workout Setup</h2>
-        <p className="text-slate-500">First, let's set the time and mode for your session.</p>
+        <p className="text-slate-500">First, let's set the date and mode for your session.</p>
       </div>
 
       <div className="space-y-6">
@@ -46,7 +50,7 @@ export const WorkoutSetup: React.FC<WorkoutSetupProps> = ({ onNext }) => {
           <div className="flex items-center gap-3 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 group transition-all">
             <Calendar size={24} className="text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
             <input
-              type="datetime-local"
+              type="date"
               value={formatDateForInput(workoutDate)}
               onChange={handleDateChange}
               max={maxDate}
@@ -110,6 +114,12 @@ export const WorkoutSetup: React.FC<WorkoutSetupProps> = ({ onNext }) => {
       >
         Continue to Exercises
         <Play size={20} className="fill-current" />
+      </button>
+      <button
+        onClick={() => navigate('/')}
+        className="w-full py-4 mt-3 bg-slate-100 text-slate-900 rounded-2xl font-black text-lg hover:bg-slate-200 active:scale-[0.98] transition-all flex items-center justify-center"
+      >
+        {t('common.cancel')}
       </button>
     </div>
   );

@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../services/firebase';
 import { useAuth } from './useAuth';
-import { UserSettings, FontSize } from '../types';
+import { UserSettings, FontSize, Language } from '../types';
 
 const DEFAULT_SETTINGS: UserSettings = {
   fontSize: 'normal',
+  language: 'bg',
   updatedAt: new Date(),
 };
 
@@ -28,6 +29,7 @@ export const useUserSettings = () => {
         const data = docSnap.data();
         setSettings({
           fontSize: data.fontSize || 'normal',
+          language: data.language || 'bg',
           updatedAt: data.updatedAt?.toDate() || new Date(),
         });
       } else {
@@ -56,5 +58,19 @@ export const useUserSettings = () => {
     }
   };
 
-  return { settings, loading, updateFontSize };
+  const updateLanguage = async (language: Language) => {
+    if (!user) return;
+
+    const docRef = doc(db, 'users', user.uid, 'settings', 'display');
+    try {
+      await setDoc(docRef, {
+        language,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/settings/display`);
+    }
+  };
+
+  return { settings, loading, updateFontSize, updateLanguage };
 };

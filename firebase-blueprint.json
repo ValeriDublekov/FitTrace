@@ -49,6 +49,7 @@
       "description": "An exercise within a workout session",
       "type": "object",
       "properties": {
+        "id": { "type": "string" },
         "exerciseId": { "type": "string" },
         "exerciseName": { "type": "string" },
         "sessionNotes": { "type": "string" },
@@ -59,7 +60,7 @@
           }
         }
       },
-      "required": ["exerciseId", "exerciseName", "sets"]
+      "required": ["id", "exerciseId", "exerciseName", "sets"]
     },
     "ExerciseSet": {
       "title": "ExerciseSet",

@@ -5,10 +5,12 @@ import { ExerciseSelector } from '../features/workout/components/ExerciseSelecto
 import { ActiveSession } from '../features/workout/components/ActiveSession';
 import { WorkoutSessionProvider } from '../features/workout/context/WorkoutSessionContext';
 import { useWorkoutFlow } from '../features/workout/hooks/useWorkoutFlow';
+import { useTranslation } from 'react-i18next';
 
 import { WorkoutSetup } from '../features/workout/components/WorkoutSetup';
 
 const NewWorkoutContent: React.FC = () => {
+  const { t } = useTranslation();
   const {
     viewState,
     setViewState,
@@ -28,10 +30,10 @@ const NewWorkoutContent: React.FC = () => {
   } = useWorkoutFlow();
 
   const getHeaderTitle = () => {
-    if (viewState === 'SETUP') return 'New Workout';
-    if (viewState === 'ACTIVE_SESSION') return 'Workout Session';
-    if (viewState === 'SELECT_CATEGORY') return 'Select Focus';
-    return selectedCategory || 'Exercises';
+    if (viewState === 'SETUP') return t('workout.titles.new_workout');
+    if (viewState === 'ACTIVE_SESSION') return t('workout.titles.active_session');
+    if (viewState === 'SELECT_CATEGORY') return t('workout.titles.select_category');
+    return selectedCategory || t('workout.titles.exercises');
   };
 
   return (
@@ -48,6 +50,7 @@ const NewWorkoutContent: React.FC = () => {
             setSelectedCategory(category);
             setViewState('SELECT_EXERCISE');
           }} 
+          onBack={handleBack}
         />
       )}
       
@@ -83,11 +86,7 @@ const NewWorkoutContent: React.FC = () => {
 };
 
 const NewWorkout: React.FC = () => {
-  return (
-    <WorkoutSessionProvider>
-      <NewWorkoutContent />
-    </WorkoutSessionProvider>
-  );
+  return <NewWorkoutContent />;
 };
 
 export default NewWorkout;

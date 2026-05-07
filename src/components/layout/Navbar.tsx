@@ -1,84 +1,122 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useAdmin } from '../../hooks/useAdmin';
-import { LogOut, User, Dumbbell, ShieldCheck, LayoutDashboard, Settings, TrendingUp, Globe } from 'lucide-react';
+import { useWorkoutContext } from '../../features/workout/context/WorkoutSessionContext';
+import { useTranslation } from 'react-i18next';
+import UserMenu from './UserMenu';
+import { Dumbbell, ShieldCheck, LayoutDashboard, User, TrendingUp, Globe, Timer, Menu, X } from 'lucide-react';
 
 const Navbar: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { isAdmin } = useAdmin();
+  const { activeExercises } = useWorkoutContext();
+  const { t } = useTranslation();
   const location = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   if (!user) return null;
 
+  const hasActiveSession = activeExercises.length > 0;
+  const isWorkoutPage = location.pathname === '/new-workout';
+
   const navLinks = [
-    { name: 'Dashboard', path: '/', icon: LayoutDashboard },
-    { name: 'History', path: '/history', icon: TrendingUp },
-    { name: 'My Exercises', path: '/my-exercises', icon: User },
+    { name: t('navbar.dashboard'), path: '/', icon: LayoutDashboard },
+    { name: t('navbar.history'), path: '/history', icon: TrendingUp },
+    { name: t('navbar.exercises'), path: '/my-exercises', icon: User },
   ];
 
   if (isAdmin) {
-    navLinks.push({ name: 'Global Library', path: '/admin', icon: Globe });
+    navLinks.push({ name: t('navbar.admin'), path: '/admin', icon: Globe });
   }
 
   return (
     <nav className="bg-white border-b border-zinc-100 px-4 py-3 sticky top-0 z-50 safe-top">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4">
+          {/* Hamburger button */}
+          <button 
+            className="sm:hidden p-2 text-zinc-600 hover:text-zinc-900"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+
           <Link to="/" className="flex items-center gap-2">
             <div className="bg-zinc-900 p-1.5 rounded-lg">
               <Dumbbell className="text-white w-5 h-5" />
             </div>
             <span className="font-bold text-lg tracking-tight text-zinc-900">FitTrace</span>
           </Link>
-
-          <div className="hidden sm:flex items-center gap-4 ml-4">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                  location.pathname === link.path
-                    ? 'bg-zinc-100 text-zinc-900'
-                    : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'
-                }`}
-              >
-                <link.icon className="w-4 h-4" />
-                {link.name}
-              </Link>
-            ))}
-          </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 pr-2 border-r border-zinc-200">
+        <div className="hidden sm:flex items-center gap-4 ml-4">
+          {navLinks.map((link) => (
+            <Link
+              key={link.path}
+              to={link.path}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                location.pathname === link.path
+                  ? 'bg-zinc-100 text-zinc-900'
+                  : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'
+              }`}
+            >
+              <link.icon className="w-4 h-4" />
+              {link.name}
+            </Link>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2 sm:gap-4">
+          {hasActiveSession && !isWorkoutPage && (
+            <Link 
+              to="/new-workout"
+              className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-100 hover:bg-indigo-100 transition-all group"
+            >
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-600"></span>
+              </span>
+              <span className="text-[10px] font-black uppercase tracking-widest hidden xs:block">{t('navbar.new_workout')}</span>
+              <Timer className="w-3.5 h-3.5" />
+            </Link>
+          )}
+
+          <div className="flex items-center gap-1">
             {isAdmin && (
               <span className="hidden md:flex bg-amber-100 text-amber-700 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded items-center gap-1 mr-2">
                 <ShieldCheck className="w-3 h-3" />
-                Admin
+                {t('navbar.admin')}
               </span>
             )}
-            {user.photoURL ? (
-              <img src={user.photoURL} alt={user.displayName || ''} className="w-8 h-8 rounded-full border border-zinc-200" referrerPolicy="no-referrer" />
-            ) : (
-              <div className="w-8 h-8 bg-zinc-100 rounded-full flex items-center justify-center">
-                <User className="text-zinc-400 w-5 h-5" />
-              </div>
-            )}
-            <span className="hidden sm:block text-sm font-medium text-zinc-700">{user.displayName?.split(' ')[0]}</span>
+            <UserMenu />
           </div>
-          
-          <button
-            onClick={logout}
-            className="text-zinc-500 hover:text-zinc-900 transition-colors p-1"
-            title="Logout"
-          >
-            <LogOut className="w-5 h-5" />
-          </button>
         </div>
       </div>
+      
+      {/* Mobile menu dropdown */}
+      {isMobileMenuOpen && (
+        <div className="sm:hidden mt-4 border-t border-zinc-100 pt-4 flex flex-col gap-2">
+          {navLinks.map((link) => (
+            <Link
+              key={link.path}
+              to={link.path}
+              className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
+                location.pathname === link.path
+                  ? 'bg-zinc-100 text-zinc-900'
+                  : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'
+              }`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <link.icon className="w-4 h-4" />
+              {link.name}
+            </Link>
+          ))}
+        </div>
+      )}
     </nav>
   );
 };
 
 export default Navbar;
+

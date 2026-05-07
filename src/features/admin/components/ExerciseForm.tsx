@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Exercise, LoadType } from '../../../types';
 import { Save, X, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -20,6 +21,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
   onCancel,
   uploadThumbnail 
 }) => {
+  const { t } = useTranslation();
   const [name, setName] = useState(exercise?.name || '');
   const [category, setCategory] = useState(exercise?.category || CATEGORIES[0]);
   const [loadType, setLoadType] = useState<LoadType>(exercise?.loadType || 'WEIGHT_REPS');
@@ -59,7 +61,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
     >
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-semibold text-gray-900">
-          {exercise ? 'Edit Exercise' : 'New Exercise'}
+          {exercise ? t('workout.exercise_form.title_edit') : t('workout.exercise_form.title_create')}
         </h3>
         <button 
           onClick={onCancel}
@@ -83,7 +85,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
 
           <div className="flex-1 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Exercise Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('workout.exercise_form.name')}</label>
               <input 
                 type="text"
                 value={name}
@@ -96,24 +98,24 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('workout.exercise_form.category')}</label>
                 <select 
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium"
                 >
-                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  {CATEGORIES.map(c => <option key={c} value={c}>{t(`workout.categories.${c.toLowerCase().replace(' ', '_')}`)}</option>)}
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Load Type</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('workout.exercise_form.load_type')}</label>
                 <select 
                   value={loadType}
                   onChange={(e) => setLoadType(e.target.value as LoadType)}
                   className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium"
                 >
-                  {LOAD_TYPES.map(t => <option key={t} value={t}>{t.replace('_', ' ')}</option>)}
+                  {LOAD_TYPES.map(tOption => <option key={tOption} value={tOption}>{t(`workout.load_types.${tOption.toLowerCase()}`)}</option>)}
                 </select>
               </div>
             </div>
@@ -121,7 +123,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">External Link (URL)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">URL (Optional)</label>
           <input 
             type="url"
             value={url}
@@ -132,7 +134,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Notes / Instructions</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('workout.exercise_form.notes')}</label>
           <textarea 
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -148,7 +150,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
             onClick={onCancel}
             className="px-6 py-2 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-bold text-sm"
           >
-            Cancel
+            {t('workout.exercise_form.cancel')}
           </button>
           <button 
             type="submit"
@@ -156,7 +158,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
             className="flex items-center gap-2 px-8 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-bold text-sm"
           >
             {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-            {exercise ? 'Update' : 'Create'}
+            {exercise ? t('workout.exercise_form.save') : t('common.save')}
           </button>
         </div>
       </form>

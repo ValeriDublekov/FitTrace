@@ -28,6 +28,7 @@ export interface ExerciseSet {
 }
 
 export interface WorkoutExercise {
+  id: string; // Internal instance ID for the session
   exerciseId: string;
   exerciseName: string;
   sessionNotes?: string;
@@ -50,8 +51,10 @@ export interface AppSettings {
 }
 
 export type FontSize = 'normal' | 'large' | 'xlarge';
+export type Language = 'bg' | 'en';
 
 export interface UserSettings {
   fontSize: FontSize;
+  language?: Language;
   updatedAt: Date;
 }
