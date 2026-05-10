@@ -24,6 +24,7 @@ export const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
   const { updateSet, addSet, removeSet, clearRestTimer, removeExercise, markExerciseAsCompleted, removeIncompleteSets } = useWorkoutContext();
   const { history, loading: historyLoading } = useExerciseHistory(exercise.id);
   const [showHistory, setShowHistory] = React.useState(false);
+  const [showAllHistory, setShowAllHistory] = React.useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
   const [showFinishConfirm, setShowFinishConfirm] = React.useState(false);
 
@@ -115,26 +116,54 @@ export const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
                   <div className="w-5 h-5 border-2 border-indigo-600 rounded-full border-t-transparent animate-spin"></div>
                 </div>
               ) : history.length > 0 ? (
-                <div className="space-y-3">
-                  {history.map((workout, idx) => (
-                    <div key={workout.id || idx} className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs font-bold text-slate-900">{new Date(workout.date).toLocaleDateString()}</span>
-                        <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full uppercase tracking-widest">
-                          {workout.exercises.find(e => e.exerciseId === exercise.id)?.sets.length} {t('workout.sets')}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {workout.exercises.find(e => e.exerciseId === exercise.id)?.sets.map((s, i) => (
-                          <span key={i} className="text-[10px] font-bold text-slate-600 bg-slate-50 px-2 py-1 rounded-lg">
-                            {exercise.loadType === 'WEIGHT_REPS' ? `${s.weight}kg × ${s.reps}` : 
-                             exercise.loadType === 'LEVEL_REPS' ? `L${s.level} × ${s.reps}` : 
-                             `D${s.level} × ${s.duration}m`}
+                <div className="space-y-4">
+                  {(showAllHistory ? history : [history[0]]).map((workout, idx) => {
+                    const workoutExercise = workout.exercises.find(e => e.exerciseId === exercise.id);
+                    if (!workoutExercise) return null;
+                    
+                    const isLast = !showAllHistory || idx === 0;
+
+                    return (
+                      <div key={workout.id || idx} className={`bg-white p-4 rounded-2xl border ${isLast ? 'border-indigo-100 shadow-md ring-1 ring-indigo-50' : 'border-slate-100 shadow-sm'}`}>
+                        <div className="flex justify-between items-center mb-3">
+                          <span className={`${isLast ? 'text-xs' : 'text-[10px]'} font-bold text-slate-500 uppercase tracking-tight`}>
+                            {new Date(workout.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
                           </span>
-                        ))}
+                          <span className={`font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full uppercase tracking-widest ${isLast ? 'text-[10px]' : 'text-[8px]'}`}>
+                            {workoutExercise.sets.length} {t('workout.sets')}
+                          </span>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-2">
+                          {workoutExercise.sets.map((s, i) => (
+                            <div key={i} className={`flex flex-col items-center justify-center bg-slate-50 rounded-xl border border-slate-100 ${isLast ? 'p-3 min-w-[70px]' : 'p-2 min-w-[50px]'}`}>
+                              <span className={`${isLast ? 'text-2xl' : 'text-sm'} font-black text-slate-900 leading-none`}>
+                                {exercise.loadType === 'WEIGHT_REPS' ? s.weight : 
+                                 exercise.loadType === 'LEVEL_REPS' ? s.level : 
+                                 s.level}
+                                <small className="text-[10px] ml-0.5 text-slate-400 font-bold uppercase">
+                                  {exercise.loadType === 'WEIGHT_REPS' ? 'kg' : 
+                                   exercise.loadType === 'LEVEL_REPS' ? 'L' : 'D'}
+                                </small>
+                              </span>
+                              <span className={`${isLast ? 'text-xs' : 'text-[10px]'} font-bold text-slate-400 mt-1`}>
+                                × {exercise.loadType === 'CARDIO' ? `${s.duration}m` : s.reps}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
+
+                  {history.length > 1 && (
+                    <button
+                      onClick={() => setShowAllHistory(!showAllHistory)}
+                      className="w-full py-2 text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:bg-white rounded-xl border border-dashed border-indigo-200 transition-colors"
+                    >
+                      {showAllHistory ? t('common.back') : t('workout.progress.all_history')}
+                    </button>
+                  )}
                 </div>
               ) : (
                 <p className="text-center text-xs font-bold text-slate-400 py-4 italic">{t('workout.no_history')}</p>
@@ -167,7 +196,14 @@ export const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
 
           {onFinish && (
             <button
-              onClick={() => setShowFinishConfirm(true)}
+              onClick={() => {
+                const hasIncompleteSets = workoutExercise.sets.some(s => !s.isCompleted);
+                if (hasIncompleteSets) {
+                  setShowFinishConfirm(true);
+                } else {
+                  handleFinish('finish');
+                }
+              }}
               className="flex items-center justify-center gap-2 py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95"
             >
               {t('workout.finish_ex')}

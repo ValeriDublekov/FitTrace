@@ -7,6 +7,7 @@ import { ImageUploader } from './ImageUploader';
 
 interface ExerciseFormProps {
   exercise?: Exercise;
+  defaultCategory?: string;
   onSubmit: (data: Omit<Exercise, 'id' | 'createdAt'>) => Promise<void>;
   onCancel: () => void;
   uploadThumbnail: (file: File) => Promise<string>;
@@ -17,13 +18,14 @@ const LOAD_TYPES: LoadType[] = ['WEIGHT_REPS', 'LEVEL_REPS', 'CARDIO'];
 
 export const ExerciseForm: React.FC<ExerciseFormProps> = ({ 
   exercise, 
+  defaultCategory,
   onSubmit, 
   onCancel,
   uploadThumbnail 
 }) => {
   const { t } = useTranslation();
   const [name, setName] = useState(exercise?.name || '');
-  const [category, setCategory] = useState(exercise?.category || CATEGORIES[0]);
+  const [category, setCategory] = useState(exercise?.category || defaultCategory || CATEGORIES[0]);
   const [loadType, setLoadType] = useState<LoadType>(exercise?.loadType || 'WEIGHT_REPS');
   const [url, setUrl] = useState(exercise?.url || '');
   const [notes, setNotes] = useState(exercise?.defaultNotes || '');

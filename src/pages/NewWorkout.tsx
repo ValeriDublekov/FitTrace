@@ -62,8 +62,6 @@ const NewWorkoutContent: React.FC = () => {
           filteredExercises={filteredExercises}
           onAddExercise={handleAddExercise}
           onAddCustomExercise={createExercise}
-          onUpdateCustomExercise={updateExercise}
-          onDeleteCustomExercise={deleteExercise}
           uploadThumbnail={uploadThumbnail}
           loading={loading}
           onFinishWorkout={handleFinish}
@@ -76,7 +74,7 @@ const NewWorkoutContent: React.FC = () => {
 
       {viewState === 'ACTIVE_SESSION' && (
         <ActiveSession 
-          onAddClick={() => setViewState('SELECT_CATEGORY')}
+          onAddClick={() => setViewState(selectedCategory ? 'SELECT_EXERCISE' : 'SELECT_CATEGORY')}
           onFinish={handleFinish}
           onExerciseFinish={() => setViewState('SELECT_EXERCISE')}
         />

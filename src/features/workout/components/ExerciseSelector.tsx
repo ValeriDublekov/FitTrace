@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Plus, ListFilter, CheckCircle2, Dumbbell } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Exercise } from '../../../types';
 import { ExerciseCard } from './ExerciseCard';
 import { ExerciseForm } from '../../admin/components/ExerciseForm';
@@ -13,8 +14,6 @@ interface ExerciseSelectorProps {
   filteredExercises: Exercise[];
   onAddExercise: (exercise: Exercise) => void;
   onAddCustomExercise: (data: Omit<Exercise, 'id' | 'createdAt'>) => Promise<string>;
-  onUpdateCustomExercise: (id: string, data: Partial<Omit<Exercise, 'id' | 'createdAt'>>) => Promise<void>;
-  onDeleteCustomExercise: (id: string) => Promise<void>;
   uploadThumbnail: (file: File) => Promise<string>;
   onFinishWorkout?: () => void;
   onChangeCategory?: () => void;
@@ -28,43 +27,33 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
   filteredExercises,
   onAddExercise,
   onAddCustomExercise,
-  onUpdateCustomExercise,
-  onDeleteCustomExercise,
   uploadThumbnail,
   onFinishWorkout,
   onChangeCategory,
   loading
 }) => {
+  const { t } = useTranslation();
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
-  const [exerciseToDelete, setExerciseToDelete] = useState<Exercise | null>(null);
   const [showConfirmFinish, setShowConfirmFinish] = useState(false);
   const { activeExercises } = useWorkoutContext();
   const completedExercises = activeExercises.filter(ex => ex.sets.some(s => s.isCompleted));
 
-  const handleDeleteConfirm = async () => {
-    if (exerciseToDelete?.id) {
-      await onDeleteCustomExercise(exerciseToDelete.id);
-      setExerciseToDelete(null);
-    }
-  };
-
-  if (showCreateForm || editingExercise) {
+  if (showCreateForm) {
     return (
       <ExerciseForm 
-        exercise={editingExercise || undefined}
+        defaultCategory={category || undefined}
         onSubmit={async (data) => {
-          if (editingExercise?.id) {
-            await onUpdateCustomExercise(editingExercise.id, data);
-          } else {
-            await onAddCustomExercise(data);
-          }
+          const newId = await onAddCustomExercise(data);
+          // Automatically add the new exercise to the session and go to ACTIVE_SESSION (handled by onAddExercise)
+          onAddExercise({
+            ...data,
+            id: newId,
+            createdAt: new Date()
+          });
           setShowCreateForm(false);
-          setEditingExercise(null);
         }}
         onCancel={() => {
           setShowCreateForm(false);
-          setEditingExercise(null);
         }}
         uploadThumbnail={uploadThumbnail}
       />
@@ -80,7 +69,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
             className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-all shadow-sm"
           >
             <ListFilter size={14} />
-            Change Category
+            {t('workout.titles.select_category')}
           </button>
         )}
         {onFinishWorkout && (
@@ -89,7 +78,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
             className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
           >
             <CheckCircle2 size={14} />
-            Finish Workout
+            {t('workout.finish_workout')}
           </button>
         )}
       </div>
@@ -115,7 +104,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
         <input
           id="exercise-search"
           type="text"
-          placeholder={`Search ${category || 'all'} exercises...`}
+          placeholder={`${t('workout.progress.search')} ${category ? `(${t(`workout.categories.${category.toLowerCase().replace(' ', '_')}`)})` : ''}...`}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all shadow-sm"
@@ -123,22 +112,24 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
       </div>
 
       <div className="space-y-4">
-        <header className="flex items-center justify-between px-1">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Available Exercises</h3>
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+            {t('workout.available_exercises')}
+          </h3>
           <button
             onClick={() => setShowCreateForm(true)}
-            className="flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600 hover:text-indigo-700"
+            className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95"
           >
-            <Plus size={12} />
-            Add Custom
+            <Plus size={16} strokeWidth={3} />
+            {t('workout.add_custom')}
           </button>
-        </header>
+        </div>
         
         <div className="space-y-3">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
               <div className="w-10 h-10 border-4 border-indigo-600 rounded-full border-t-transparent animate-spin"></div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Loading Library...</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t('common.loading')}</p>
             </div>
           ) : filteredExercises.length > 0 ? (
             filteredExercises.map((exercise) => (
@@ -146,26 +137,23 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
                 key={exercise.id} 
                 exercise={exercise} 
                 onAdd={onAddExercise}
-                onEdit={setEditingExercise}
-                onDelete={setExerciseToDelete}
               />
             ))
           ) : (
             <div className="text-center py-20 px-6 bg-white rounded-3xl border border-dashed border-slate-200">
-              <p className="text-sm font-bold text-slate-500">No exercises found.</p>
+              <p className="text-sm font-bold text-slate-500">{t('workout.progress.no_history')}</p>
             </div>
           )}
         </div>
       </div>
 
       <ConfirmModal
-        isOpen={exerciseToDelete !== null || showConfirmFinish}
-        title={showConfirmFinish ? "Finish Workout" : "Delete Custom Exercise"}
-        message={showConfirmFinish ? "Are you sure you want to finish your workout? You will be able to review your session summary." : `Are you sure you want to delete "${exerciseToDelete?.name}"? this will remove it from your custom exercise list.`}
-        confirmLabel={showConfirmFinish ? "Finish Workout" : "Delete"}
-        onConfirm={showConfirmFinish ? (onFinishWorkout || (() => {})) : handleDeleteConfirm}
+        isOpen={showConfirmFinish}
+        title={t('workout.finish_workout')}
+        message={t('workout.confirmations.finish_workout.message')}
+        confirmLabel={t('workout.finish_workout')}
+        onConfirm={onFinishWorkout || (() => {})}
         onCancel={() => {
-          setExerciseToDelete(null);
           setShowConfirmFinish(false);
         }}
       />

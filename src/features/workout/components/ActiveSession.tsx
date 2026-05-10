@@ -165,7 +165,15 @@ export const ActiveSession: React.FC<ActiveSessionProps> = ({
           </div>
           
           <button
-            onClick={() => setShowConfirmFinish(true)}
+            onClick={() => {
+              const lastExercise = activeExercises[activeExercises.length - 1];
+              const hasIncompleteSets = lastExercise?.sets.some(s => !s.isCompleted);
+              if (hasIncompleteSets) {
+                setShowConfirmFinish(true);
+              } else {
+                handleFinishWorkout('finish');
+              }
+            }}
             className="w-full py-5 bg-indigo-600 text-white font-black rounded-2xl uppercase tracking-widest shadow-lg shadow-indigo-100 active:scale-95 transition-all flex items-center justify-center gap-2"
           >
             <CheckCircle2 size={20} />

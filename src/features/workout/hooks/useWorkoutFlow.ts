@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useExercises } from '../../../hooks/useExercises';
+import { useWorkoutHistory } from '../../../hooks/useWorkoutHistory';
 import { useWorkoutContext } from '../context/WorkoutSessionContext';
 import { Exercise } from '../../../types';
 
@@ -11,7 +12,20 @@ export const useWorkoutFlow = () => {
   const [searchParams] = useSearchParams();
   const mode = searchParams.get('mode');
   const { exercises, loading, addExercise: createExercise, updateExercise, deleteExercise, uploadThumbnail } = useExercises();
+  const { history: workoutHistory } = useWorkoutHistory(100);
   const { activeExercises, addExercise, finishWorkout } = useWorkoutContext();
+
+  const exerciseFrequency = useMemo(() => {
+    const counts: Record<string, number> = {};
+    workoutHistory.forEach(workout => {
+      workout.exercises.forEach(ex => {
+        if (ex.exerciseId) {
+          counts[ex.exerciseId] = (counts[ex.exerciseId] || 0) + 1;
+        }
+      });
+    });
+    return counts;
+  }, [workoutHistory]);
 
   const [viewState, setViewState] = useState<ViewState>(() => {
     if (activeExercises.length > 0) return 'ACTIVE_SESSION';
@@ -22,12 +36,18 @@ export const useWorkoutFlow = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredExercises = useMemo(() => {
-    return exercises.filter(ex => {
-      const matchesCategory = !selectedCategory || ex.category === selectedCategory;
-      const matchesSearch = ex.name.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
-    });
-  }, [exercises, selectedCategory, searchQuery]);
+    return exercises
+      .filter(ex => {
+        const matchesCategory = !selectedCategory || ex.category === selectedCategory;
+        const matchesSearch = ex.name.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesCategory && matchesSearch;
+      })
+      .sort((a, b) => {
+        const freqA = a.id ? (exerciseFrequency[a.id] || 0) : 0;
+        const freqB = b.id ? (exerciseFrequency[b.id] || 0) : 0;
+        return freqB - freqA;
+      });
+  }, [exercises, selectedCategory, searchQuery, exerciseFrequency]);
 
   const handleAddExercise = async (exercise: Exercise) => {
     await addExercise(exercise);

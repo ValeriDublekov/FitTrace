@@ -45,20 +45,46 @@ export const useWorkoutSession = () => {
   
   const [isSaving, setIsSaving] = useState(false);
   const [restTimer, setRestTimer] = useState<number | null>(null);
+  const [restTimerEndTime, setRestTimerEndTime] = useState<number | null>(() => {
+    const saved = localStorage.getItem('rest_timer_end_time');
+    return saved ? parseInt(saved, 10) : null;
+  });
   const [expandedExerciseId, setExpandedExerciseId] = useState<string | null>(null);
 
   const clearRestTimer = useCallback(() => {
     setRestTimer(null);
+    setRestTimerEndTime(null);
+    localStorage.removeItem('rest_timer_end_time');
   }, []);
 
-  // ... rest timer logic ...
+  // Update restTimer based on restTimerEndTime
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (restTimer !== null && restTimer > 0) {
-      interval = setInterval(() => {
-        setRestTimer((prev) => (prev !== null && prev > 0 ? prev - 1 : null));
-      }, 1000);
-    } else if (restTimer === 0) {
+    if (restTimerEndTime === null) {
+      setRestTimer(null);
+      return;
+    }
+
+    const updateTimer = () => {
+      const now = Date.now();
+      const remainingProgress = Math.max(0, Math.ceil((restTimerEndTime - now) / 1000));
+      
+      if (remainingProgress <= 0) {
+        setRestTimer(0); // This will trigger the sound effect in the other effect
+        setRestTimerEndTime(null);
+        localStorage.removeItem('rest_timer_end_time');
+      } else {
+        setRestTimer(remainingProgress);
+      }
+    };
+
+    updateTimer(); // Initial check
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [restTimerEndTime]);
+
+  // Handle sound feedback when restTimer hits 0
+  useEffect(() => {
+    if (restTimer === 0) {
       setRestTimer(null);
       // Play light sound notification
       try {
@@ -86,12 +112,14 @@ export const useWorkoutSession = () => {
         console.warn('Audio feedback failed', e);
       }
     }
-    return () => clearInterval(interval);
   }, [restTimer]);
 
   const startRestTimer = useCallback((seconds: number = 60) => {
     // Only auto-start timer in LIVE mode
     if (sessionMode === 'MANUAL') return;
+    const endTime = Date.now() + (seconds * 1000);
+    setRestTimerEndTime(endTime);
+    localStorage.setItem('rest_timer_end_time', endTime.toString());
     setRestTimer(seconds);
   }, [sessionMode]);
 

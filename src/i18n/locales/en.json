@@ -89,6 +89,8 @@
     "empty_session": "Session is empty",
     "pick_exercise": "Pick an exercise to start.",
     "select_first": "Select first exercise",
+    "available_exercises": "Available Exercises",
+    "add_custom": "Add Custom",
     "notes_placeholder": "How are you feeling today? Any specific goals...",
     "finish_workout": "Finish Workout",
     "historical_data": "Historical Data",
