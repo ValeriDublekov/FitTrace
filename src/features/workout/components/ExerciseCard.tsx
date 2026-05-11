@@ -92,9 +92,14 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, onAdd, onE
       )}
 
       <div className="flex-1 min-w-0 pointer-events-none">
-        <h3 className="font-bold text-slate-900 truncate tracking-tight">{exercise.name}</h3>
-        <div className="flex items-center gap-2 mt-0.5">
+        <h3 className="font-bold text-slate-900 leading-tight tracking-tight break-words">{exercise.name}</h3>
+        <div className="flex items-center gap-2 mt-1 [.font-size-large_&]:hidden [.font-size-xlarge_&]:hidden">
           <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.1em]">{exercise.category}</p>
+          {exercise.loadType && (
+            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
+              • {exercise.loadType.replace('_', ' ')}
+            </span>
+          )}
           {exercise.isCustom && (
             <span className="text-[10px] bg-amber-50 text-amber-600 font-black px-1.5 py-0.5 rounded uppercase tracking-[0.1em]">Custom</span>
           )}

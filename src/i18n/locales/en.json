@@ -48,7 +48,7 @@
   },
   "workout": {
     "start_session": "Start Session",
-    "finish_session": "Finish Session",
+    "finish_session": "DONE",
     "add_exercise": "Add Exercise",
     "rest_timer": "Rest Timer",
     "sets": "Sets",
@@ -92,7 +92,7 @@
     "available_exercises": "Available Exercises",
     "add_custom": "Add Custom",
     "notes_placeholder": "How are you feeling today? Any specific goals...",
-    "finish_workout": "Finish Workout",
+    "finish_workout": "DONE",
     "historical_data": "Historical Data",
     "no_history": "No previous records for this exercise.",
     "add_set": "Add Set",

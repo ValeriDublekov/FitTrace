@@ -97,9 +97,9 @@ export const ActiveSession: React.FC<ActiveSessionProps> = ({
                             <div className="text-[8px] font-bold text-slate-300">N/A</div>
                           )}
                         </div>
-                        <div className="text-left font-sans">
-                          <p className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{exercise.name}</p>
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{workoutEx.sets.length} {t('workout.sets')}</p>
+                        <div className="text-left font-sans min-w-0">
+                          <p className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors uppercase tracking-tight break-words leading-tight">{exercise.name}</p>
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5 [.font-size-large_&]:hidden [.font-size-xlarge_&]:hidden">{workoutEx.sets.length} {t('workout.sets')}</p>
                         </div>
                       </div>
                       <div className="text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">

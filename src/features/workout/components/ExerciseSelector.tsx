@@ -64,20 +64,29 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
     <div className="space-y-6 pb-32">
       <div className="flex flex-wrap gap-3 mb-2">
         {onChangeCategory && (
-          <button
-            onClick={onChangeCategory}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-all shadow-sm"
-          >
-            <ListFilter size={14} />
-            {t('workout.titles.select_category')}
-          </button>
+          <div className="flex-1 flex items-center bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden min-w-0">
+            <div className="flex-1 px-4 py-3 flex flex-col justify-center min-w-0 leading-tight">
+              <span className="text-[7px] font-black uppercase tracking-[0.2em] text-slate-400 truncate">
+                {t('workout.titles.select_category')}
+              </span>
+              <span className="text-[10px] font-bold text-indigo-600 truncate uppercase mt-0.5">
+                {category ? t(`workout.categories.${category.toLowerCase().replace(' ', '_')}`) : t('workout.categories.all')}
+              </span>
+            </div>
+            <button
+              onClick={onChangeCategory}
+              className="px-4 py-3 bg-slate-50 border-l border-slate-100 text-slate-600 hover:text-indigo-600 transition-colors flex items-center shrink-0 active:bg-slate-100"
+            >
+              <ListFilter size={16} strokeWidth={2.5} />
+            </button>
+          </div>
         )}
         {onFinishWorkout && (
           <button
             onClick={() => setShowConfirmFinish(true)}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-slate-200 active:scale-95"
           >
-            <CheckCircle2 size={14} />
+            <CheckCircle2 size={16} strokeWidth={2.5} />
             {t('workout.finish_workout')}
           </button>
         )}
@@ -112,13 +121,13 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
       </div>
 
       <div className="space-y-4">
-        <div className="flex items-center justify-between px-1">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+        <div className="flex flex-col gap-2 px-1 sm:flex-row sm:items-center sm:justify-between [.font-size-large_&]:flex-col [.font-size-xlarge_&]:flex-col">
+          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 [.font-size-large_&]:hidden [.font-size-xlarge_&]:hidden">
             {t('workout.available_exercises')}
           </h3>
           <button
             onClick={() => setShowCreateForm(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95"
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95 w-full sm:w-auto"
           >
             <Plus size={16} strokeWidth={3} />
             {t('workout.add_custom')}

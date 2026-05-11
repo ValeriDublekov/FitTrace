@@ -25,12 +25,18 @@ const ProgressPage: React.FC = () => {
   const { exercises, loading: exercisesLoading } = useExercises();
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showExerciseSelector, setShowExerciseSelector] = useState(false);
   const [workoutToDelete, setWorkoutToDelete] = useState<string | null>(null);
   const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
 
   const selectedExercise = exercises.find(e => e.id === selectedExerciseId);
   const { history: exerciseHistory, loading: exerciseHistoryLoading, deleteWorkout: deleteExerciseWorkout } = useExerciseHistory(selectedExerciseId || undefined);
   const { history: globalHistory, loading: globalHistoryLoading, deleteWorkout: deleteGlobalWorkout } = useWorkoutHistory();
+
+  const handleSelectExercise = (id: string | null) => {
+    setSelectedExerciseId(id);
+    setShowExerciseSelector(false); // Close on mobile after selection
+  };
 
   const filteredExercises = exercises.filter(e => 
     e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -104,10 +110,24 @@ const ProgressPage: React.FC = () => {
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Sidebar: Exercise Selector */}
-        <div className="lg:col-span-1 space-y-4">
+        {/* Mobile Toggle for Exercise Selector */}
+        <div className="lg:hidden mb-2">
           <button
-            onClick={() => setSelectedExerciseId(null)}
+            onClick={() => setShowExerciseSelector(!showExerciseSelector)}
+            className="w-full flex items-center justify-between p-4 bg-white border border-zinc-200 rounded-2xl shadow-sm font-bold text-zinc-900"
+          >
+            <div className="flex items-center gap-2">
+              <Dumbbell className="w-5 h-5 text-indigo-600" />
+              <span>{selectedExercise ? selectedExercise.name : t('workout.progress.all_history')}</span>
+            </div>
+            <Search className="w-4 h-4 text-zinc-400" />
+          </button>
+        </div>
+
+        {/* Sidebar: Exercise Selector */}
+        <div className={`lg:col-span-1 space-y-4 ${showExerciseSelector ? 'block' : 'hidden lg:block'}`}>
+          <button
+            onClick={() => handleSelectExercise(null)}
             className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center gap-3 shadow-sm ${
               !selectedExerciseId 
                 ? 'bg-zinc-900 border-zinc-900 text-white' 
@@ -140,7 +160,7 @@ const ProgressPage: React.FC = () => {
                 {filteredExercises.map((ex) => (
                   <button
                     key={ex.id}
-                    onClick={() => setSelectedExerciseId(ex.id || null)}
+                    onClick={() => handleSelectExercise(ex.id || null)}
                     className={`w-full text-left p-4 hover:bg-zinc-50 transition-colors flex items-center gap-3 ${
                       selectedExerciseId === ex.id ? 'bg-indigo-50 text-indigo-700' : 'text-zinc-600'
                     }`}
@@ -148,9 +168,9 @@ const ProgressPage: React.FC = () => {
                     <div className="bg-zinc-100 p-2 rounded-lg shrink-0">
                       <Dumbbell className={`w-4 h-4 ${selectedExerciseId === ex.id ? 'text-indigo-600' : 'text-zinc-400'}`} />
                     </div>
-                    <div>
-                      <div className="text-sm font-bold truncate">{ex.name}</div>
-                      <div className="text-[10px] uppercase tracking-wider text-zinc-400 mt-0.5">{ex.category}</div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-bold break-words leading-tight">{ex.name}</div>
+                      <div className="text-[10px] uppercase tracking-wider text-zinc-400 mt-0.5 [.font-size-large_&]:hidden [.font-size-xlarge_&]:hidden">{ex.category}</div>
                     </div>
                   </button>
                 ))}
@@ -187,11 +207,11 @@ const ProgressPage: React.FC = () => {
                               <Calendar className="w-6 h-6" />
                             </div>
                             <div>
-                              <h3 className="font-bold text-zinc-900">
+                              <h3 className="font-bold text-zinc-900 text-base sm:text-lg">
                                 {workout.date.toLocaleDateString(i18n.language, { weekday: 'long', month: 'long', day: 'numeric' })}
                               </h3>
-                              <p className="text-zinc-500 text-xs">
-                                {workout.exercises.length} Exercises logged
+                              <p className="text-zinc-500 text-[10px] sm:text-xs hidden sm:block">
+                                {t('workout.progress.exercises_logged', { count: workout.exercises.length })}
                               </p>
                             </div>
                           </div>
@@ -207,7 +227,7 @@ const ProgressPage: React.FC = () => {
                             <Trash2 className="w-5 h-5" />
                           </button>
                         </div>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2 hidden sm:flex">
                           {workout.exercises.slice(0, 4).map((ex, idx) => {
                             const exerciseInfo = exercises.find(e => e.id === ex.exerciseId);
                             return (
@@ -219,6 +239,18 @@ const ProgressPage: React.FC = () => {
                           {workout.exercises.length > 4 && (
                             <span className="text-[10px] text-zinc-400 font-bold px-2 py-1">+{workout.exercises.length - 4} more</span>
                           )}
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-1.5 sm:hidden">
+                          {Array.from(new Set(
+                            workout.exercises
+                              .map(ex => exercises.find(e => e.id === ex.exerciseId)?.category)
+                              .filter(Boolean)
+                          )).map((cat, i) => (
+                            <span key={i} className="text-[10px] font-black text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg uppercase tracking-tight">
+                              {cat}
+                            </span>
+                          ))}
                         </div>
                       </div>
                     ))}

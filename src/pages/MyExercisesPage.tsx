@@ -151,8 +151,8 @@ const MyExercisesPage: React.FC = () => {
                 </div>
                 
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-gray-900 truncate">{exercise.name}</h4>
-                  <div className="flex items-center gap-3 mt-1">
+                  <h4 className="font-semibold text-gray-900 break-words leading-tight">{exercise.name}</h4>
+                  <div className="flex items-center gap-3 mt-1 [.font-size-large_&]:hidden [.font-size-xlarge_&]:hidden">
                     <span className="px-2 py-0.5 bg-amber-50 text-amber-700 rounded text-xs font-bold uppercase tracking-wider">
                       {exercise.category}
                     </span>
