@@ -27,6 +27,7 @@
   /pages         # Route components
   /utils         # Global helpers
   /types         # Shared interfaces
+  /constants     # Global constants
 ```
 
 ## 4. Auth & Navigation Decisions
