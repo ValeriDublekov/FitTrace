@@ -67,6 +67,8 @@
       "legs": "Legs",
       "shoulders": "Shoulders",
       "arms": "Arms",
+      "biceps": "Biceps",
+      "triceps": "Triceps",
       "core": "Core",
       "cardio": "Cardio",
       "full_body": "Full Body"
