@@ -64,6 +64,11 @@ export const ExerciseSessionList: React.FC<ExerciseSessionListProps> = ({
                 <div>
                   <div className="font-bold text-zinc-900">
                     {workout.date.toLocaleDateString(i18n.language, { weekday: 'short', month: 'short', day: 'numeric' })}
+                    {instances.some(ex => ex.sessionNotes) && (
+                      <span className="ml-2 text-[10px] font-medium text-slate-500 italic">
+                        ({instances.map(ex => ex.sessionNotes).filter(Boolean).join('; ')})
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 text-xs text-zinc-400">
                     <span>{t('workout.progress.sets_logged', { count: totalSets })}</span>

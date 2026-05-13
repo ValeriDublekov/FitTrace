@@ -71,6 +71,14 @@ export const ExerciseHistoryView: React.FC<ExerciseHistoryViewProps> = ({
                     </div>
                   ))}
                 </div>
+
+                {workoutExercise.sessionNotes && (
+                  <div className="mt-3 p-3 bg-indigo-50/50 rounded-xl border border-indigo-100/50">
+                    <p className="text-[11px] font-medium text-slate-600 italic leading-relaxed">
+                      “{workoutExercise.sessionNotes}”
+                    </p>
+                  </div>
+                )}
               </div>
             );
           })}

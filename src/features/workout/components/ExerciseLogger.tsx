@@ -23,7 +23,7 @@ export const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
   onFinish,
 }) => {
   const { t } = useTranslation();
-  const { updateSet, addSet, removeSet, clearRestTimer, removeExercise, markExerciseAsCompleted, removeIncompleteSets } = useWorkoutContext();
+  const { updateSet, addSet, removeSet, clearRestTimer, removeExercise, markExerciseAsCompleted, removeIncompleteSets, updateExerciseNotes } = useWorkoutContext();
   const { history, loading: historyLoading } = useExerciseHistory(exercise.id);
   const [showHistory, setShowHistory] = useState(false);
   const [showAllHistory, setShowAllHistory] = useState(false);
@@ -118,6 +118,18 @@ export const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
                 {t('workout.finish_ex')}
               </button>
             )}
+          </div>
+
+          <div className="pt-2">
+            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 px-1">
+              {t('workout.exercise_notes')}
+            </h4>
+            <textarea
+              value={workoutExercise.sessionNotes || ''}
+              onChange={(e) => updateExerciseNotes(workoutExercise.id, e.target.value)}
+              placeholder={t('workout.exercise_notes_placeholder')}
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none text-sm min-h-[80px]"
+            />
           </div>
         </div>
       </motion.div>

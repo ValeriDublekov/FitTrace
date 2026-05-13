@@ -56,9 +56,16 @@ export const WorkoutDetailsModal: React.FC<WorkoutDetailsModalProps> = ({
         <div className="p-6 space-y-8 overflow-y-auto flex-1">
           {workout.exercises.map((ex, exIdx) => (
             <div key={exIdx} className="space-y-2">
-              <div className="flex items-center gap-2 font-bold text-zinc-900">
-                <Dumbbell className="w-4 h-4 text-indigo-600" />
-                {ex.exerciseName}
+              <div className="flex items-center justify-between font-bold text-zinc-900">
+                <div className="flex items-center gap-2">
+                  <Dumbbell className="w-4 h-4 text-indigo-600" />
+                  {ex.exerciseName}
+                </div>
+                {ex.sessionNotes && (
+                  <span className="text-[10px] font-medium text-slate-500 italic">
+                    {ex.sessionNotes}
+                  </span>
+                )}
               </div>
               <div className="grid grid-cols-4 gap-2 text-center text-xs font-bold text-zinc-500 bg-zinc-50 py-2 rounded-lg">
                 <div>SET</div>

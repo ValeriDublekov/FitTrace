@@ -34,9 +34,16 @@ export const CollapsedExerciseItem: React.FC<CollapsedExerciseItemProps> = ({
           </div>
           <div className="text-left font-sans min-w-0">
             <p className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors uppercase tracking-tight break-words leading-tight">{exercise.name}</p>
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5 [.font-size-large_&]:hidden [.font-size-xlarge_&]:hidden">
-              {workoutEx.sets.length} {t('workout.sets')}
-            </p>
+            <div className="mt-0.5">
+              <p className="inline-block text-[9px] font-black text-slate-400 uppercase tracking-widest [.font-size-large_&]:hidden [.font-size-xlarge_&]:hidden">
+                {workoutEx.sets.length} {t('workout.sets')}
+              </p>
+              {workoutEx.sessionNotes && (
+                <p className="text-[10px] font-medium text-indigo-500 italic mt-0.5 border-l-2 border-indigo-100 pl-2 py-0.5 bg-indigo-50/30 rounded-r-md">
+                  {workoutEx.sessionNotes}
+                </p>
+              )}
+            </div>
           </div>
         </div>
         <div className="text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">

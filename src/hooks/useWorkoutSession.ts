@@ -237,6 +237,13 @@ export const useWorkoutSession = () => {
     }
   }, [expandedExerciseId]);
 
+  const updateExerciseNotes = useCallback((id: string, notes: string) => {
+    setActiveExercises((prev) => prev.map(ex => {
+      if (ex.id !== id) return ex;
+      return { ...ex, sessionNotes: notes };
+    }));
+  }, []);
+
   return {
     activeExercises,
     workoutNotes,
@@ -258,6 +265,7 @@ export const useWorkoutSession = () => {
     expandedExerciseId,
     setExpandedExerciseId,
     startRestTimer,
-    clearRestTimer
+    clearRestTimer,
+    updateExerciseNotes
   };
 };

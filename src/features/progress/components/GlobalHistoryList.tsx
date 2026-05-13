@@ -87,30 +87,19 @@ export const GlobalHistoryList: React.FC<GlobalHistoryListProps> = ({
               <Trash2 className="w-5 h-5" />
             </button>
           </div>
-          <div className="flex flex-wrap gap-2 hidden sm:flex">
-            {workout.exercises.slice(0, 4).map((ex, idx) => {
-              const exerciseInfo = exercises.find(e => e.id === ex.exerciseId);
-              return (
-                <span key={idx} className="bg-zinc-100 text-zinc-600 text-[10px] font-bold px-2 py-1 rounded-md">
-                  {exerciseInfo?.name || 'Exercise'} ({ex.sets.length} sets)
+          <div className="flex flex-wrap gap-2 mt-1">
+            {(() => {
+              const cats: string[] = Array.from(new Set(
+                workout.exercises
+                  .map(ex => exercises.find(e => e.id === ex.exerciseId)?.category)
+                  .filter((cat): cat is string => !!cat)
+              ));
+              return cats.map((cat, i) => (
+                <span key={i} className="text-xs font-black text-indigo-600 bg-indigo-50/50 border border-indigo-100 px-3 py-1.5 rounded-xl uppercase tracking-tighter shadow-sm">
+                  {t(`workout.categories.${cat.toLowerCase().replace(' ', '_')}`)}
                 </span>
-              );
-            })}
-            {workout.exercises.length > 4 && (
-              <span className="text-[10px] text-zinc-400 font-bold px-2 py-1">+{workout.exercises.length - 4} more</span>
-            )}
-          </div>
-          
-          <div className="flex flex-wrap gap-1.5 sm:hidden">
-            {Array.from(new Set(
-              workout.exercises
-                .map(ex => exercises.find(e => e.id === ex.exerciseId)?.category)
-                .filter(Boolean)
-            )).map((cat, i) => (
-              <span key={i} className="text-[10px] font-black text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg uppercase tracking-tight">
-                {cat}
-              </span>
-            ))}
+              ));
+            })()}
           </div>
         </div>
       ))}
