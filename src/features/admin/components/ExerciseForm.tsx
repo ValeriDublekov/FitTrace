@@ -13,7 +13,7 @@ interface ExerciseFormProps {
   uploadThumbnail: (file: File) => Promise<string>;
 }
 
-const CATEGORIES = ['Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Biceps', 'Triceps', 'Core', 'Cardio', 'Full Body'];
+const CATEGORIES = ['Chest', 'Back', 'Legs', 'Shoulders', 'Biceps', 'Triceps', 'Core', 'Cardio', 'Full Body'];
 const LOAD_TYPES: LoadType[] = ['WEIGHT_REPS', 'LEVEL_REPS', 'CARDIO'];
 
 export const ExerciseForm: React.FC<ExerciseFormProps> = ({ 

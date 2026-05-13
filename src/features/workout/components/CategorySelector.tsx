@@ -4,7 +4,7 @@ import { ChevronRight, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const CATEGORIES = [
-  'Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Biceps', 'Triceps', 'Core', 'Cardio', 'Full Body'
+  'Chest', 'Back', 'Legs', 'Shoulders', 'Biceps', 'Triceps', 'Core', 'Cardio', 'Full Body'
 ];
 
 interface CategorySelectorProps {
