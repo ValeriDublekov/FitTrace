@@ -36,7 +36,7 @@
 - **Base Path**: Configured as relative (`./`) in `vite.config.ts` to ensure assets load correctly on both root domains and subpaths.
 - **Route Protection**: The `App` component handles conditional rendering based on authentication state.
 - **Admin Verification**: The `useAdmin` hook performs a Firestore lookup to verify admin status against the `admins` collection.
-- **Layout**: A persistent `Navbar` is displayed for authenticated users.
+- **Layout**: A persistent `Navbar` is displayed for authenticated users on desktop. A `BottomNav` is used on mobile for primary navigation items (Dashboard, History, Exercises, Admin).
 
 ## 5. Firestore Database Schema
 

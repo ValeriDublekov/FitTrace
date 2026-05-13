@@ -9,24 +9,63 @@ import {
   serverTimestamp,
   Timestamp,
   doc,
-  deleteDoc
+  deleteDoc,
+  updateDoc
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from './firebase';
 import { Workout, WorkoutExercise } from '../types';
 
 const WORKOUTS_COLLECTION = 'workouts';
 
+const cleanUndefined = (obj: any): any => {
+  if (Array.isArray(obj)) {
+    return obj.map(v => cleanUndefined(v));
+  } else if (obj !== null && typeof obj === 'object' && !(obj instanceof Date) && !(obj instanceof Timestamp)) {
+    return Object.entries(obj).reduce((acc: any, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = cleanUndefined(value);
+      }
+      return acc;
+    }, {});
+  }
+  return obj;
+};
+
 export const workoutService = {
   async saveWorkout(workout: Omit<Workout, 'id'>): Promise<string> {
     try {
-      const docRef = await addDoc(collection(db, WORKOUTS_COLLECTION), {
+      const cleanedWorkout = cleanUndefined({
         ...workout,
         date: workout.date instanceof Date ? Timestamp.fromDate(workout.date) : serverTimestamp(),
       });
+      const docRef = await addDoc(collection(db, WORKOUTS_COLLECTION), cleanedWorkout);
       return docRef.id;
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, WORKOUTS_COLLECTION);
       throw error;
+    }
+  },
+
+  async updateWorkout(workoutId: string, updates: Partial<Workout>): Promise<void> {
+    try {
+      const workoutRef = doc(db, WORKOUTS_COLLECTION, workoutId);
+      const firestoreUpdates: any = { ...updates };
+      
+      if (updates.date instanceof Date) {
+        firestoreUpdates.date = Timestamp.fromDate(updates.date);
+      }
+      
+      firestoreUpdates.updatedAt = serverTimestamp();
+      
+      // Remove id from updates if it exists to avoid Firestore errors
+      delete firestoreUpdates.id;
+      
+      const cleanedUpdates = cleanUndefined(firestoreUpdates);
+      
+      await updateDoc(workoutRef, cleanedUpdates);
+    } catch (error) {
+       handleFirestoreError(error, OperationType.UPDATE, WORKOUTS_COLLECTION);
+       throw error;
     }
   },
 

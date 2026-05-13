@@ -33,6 +33,8 @@ export interface WorkoutExercise {
   exerciseName: string;
   sessionNotes?: string;
   sets: ExerciseSet[];
+  startedAt?: Date;
+  durationSeconds?: number;
 }
 
 export interface Workout {
@@ -42,6 +44,8 @@ export interface Workout {
   updatedAt?: Date;
   notes?: string;
   exercises: WorkoutExercise[];
+  startedAt?: Date;
+  durationSeconds?: number;
 }
 
 export interface AppSettings {

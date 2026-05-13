@@ -40,7 +40,9 @@
           "items": {
             "$ref": "#/entities/WorkoutExercise"
           }
-        }
+        },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "durationSeconds": { "type": "number" }
       },
       "required": ["userId", "date", "exercises"]
     },
@@ -58,7 +60,9 @@
           "items": {
             "$ref": "#/entities/ExerciseSet"
           }
-        }
+        },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "durationSeconds": { "type": "number" }
       },
       "required": ["id", "exerciseId", "exerciseName", "sets"]
     },

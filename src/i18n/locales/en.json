@@ -152,6 +152,14 @@
         "title": "Remove Exercise",
         "message": "Are you sure you want to remove this exercise from the session? All sets for it will be lost."
       }
+    },
+    "edit_workout": {
+      "title": "Edit Workout",
+      "change_date": "Change Date",
+      "remove_exercise": "Remove Exercise",
+      "add_exercise": "Add Exercise",
+      "save_success": "Workout updated successfully!",
+      "save_error": "Error updating workout."
     }
   }
 }

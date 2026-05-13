@@ -3,131 +3,70 @@ import { useSearchParams } from 'react-router-dom';
 import { Workout, WorkoutExercise, ExerciseSet, Exercise } from '../types';
 import { useAuth } from './useAuth';
 import { workoutService } from '../services/workoutService';
+import { STORAGE_KEYS } from '../constants';
+import { useWorkoutRestTimer } from '../features/workout/hooks/useWorkoutRestTimer';
 
 export const useWorkoutSession = () => {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
+  
   const [activeExercises, setActiveExercises] = useState<WorkoutExercise[]>(() => {
-    const saved = localStorage.getItem('active_exercises');
+    const saved = localStorage.getItem(STORAGE_KEYS.ACTIVE_EXERCISES);
     return saved ? JSON.parse(saved) : [];
   });
+  
   const [workoutNotes, setWorkoutNotes] = useState(() => {
-    return localStorage.getItem('workout_notes') || '';
-  });
-  const [workoutDate, setWorkoutDate] = useState<Date>(() => {
-    const saved = localStorage.getItem('workout_date');
-    return saved ? new Date(saved) : new Date();
+    return localStorage.getItem(STORAGE_KEYS.WORKOUT_NOTES) || '';
   });
   
-  // Initialize mode from URL (?mode=manual)
+  const [workoutDate, setWorkoutDate] = useState<Date>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.WORKOUT_DATE);
+    return saved ? new Date(saved) : new Date();
+  });
+
+  const [workoutStartedAt, setWorkoutStartedAt] = useState<Date | null>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.WORKOUT_STARTED_AT);
+    return saved ? new Date(saved) : null;
+  });
+  
   const initialMode = searchParams.get('mode') === 'manual' ? 'MANUAL' : 'LIVE';
   const [sessionMode, setSessionMode] = useState<'LIVE' | 'MANUAL'>(() => {
-    const saved = localStorage.getItem('session_mode');
+    const saved = localStorage.getItem(STORAGE_KEYS.SESSION_MODE);
     return (saved as 'LIVE' | 'MANUAL') || initialMode;
   });
 
-  // Persist state to localStorage
+  const { restTimer, startRestTimer, clearRestTimer } = useWorkoutRestTimer(sessionMode);
+  const [isSaving, setIsSaving] = useState(false);
+  const [expandedExerciseId, setExpandedExerciseId] = useState<string | null>(null);
+
+  // Persistence to localStorage
   useEffect(() => {
-    localStorage.setItem('active_exercises', JSON.stringify(activeExercises));
+    localStorage.setItem(STORAGE_KEYS.ACTIVE_EXERCISES, JSON.stringify(activeExercises));
   }, [activeExercises]);
 
   useEffect(() => {
-    localStorage.setItem('workout_notes', workoutNotes);
+    localStorage.setItem(STORAGE_KEYS.WORKOUT_NOTES, workoutNotes);
   }, [workoutNotes]);
 
   useEffect(() => {
-    localStorage.setItem('workout_date', workoutDate.toISOString());
+    localStorage.setItem(STORAGE_KEYS.WORKOUT_DATE, workoutDate.toISOString());
   }, [workoutDate]);
 
   useEffect(() => {
-    localStorage.setItem('session_mode', sessionMode);
-  }, [sessionMode]);
-  
-  const [isSaving, setIsSaving] = useState(false);
-  const [restTimer, setRestTimer] = useState<number | null>(null);
-  const [restTimerEndTime, setRestTimerEndTime] = useState<number | null>(() => {
-    const saved = localStorage.getItem('rest_timer_end_time');
-    return saved ? parseInt(saved, 10) : null;
-  });
-  const [expandedExerciseId, setExpandedExerciseId] = useState<string | null>(null);
-
-  const clearRestTimer = useCallback(() => {
-    setRestTimer(null);
-    setRestTimerEndTime(null);
-    localStorage.removeItem('rest_timer_end_time');
-  }, []);
-
-  // Update restTimer based on restTimerEndTime
-  useEffect(() => {
-    if (restTimerEndTime === null) {
-      setRestTimer(null);
-      return;
+    if (workoutStartedAt) {
+      localStorage.setItem(STORAGE_KEYS.WORKOUT_STARTED_AT, workoutStartedAt.toISOString());
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.WORKOUT_STARTED_AT);
     }
+  }, [workoutStartedAt]);
 
-    const updateTimer = () => {
-      const now = Date.now();
-      const remainingProgress = Math.max(0, Math.ceil((restTimerEndTime - now) / 1000));
-      
-      if (remainingProgress <= 0) {
-        setRestTimer(0); // This will trigger the sound effect in the other effect
-        setRestTimerEndTime(null);
-        localStorage.removeItem('rest_timer_end_time');
-      } else {
-        setRestTimer(remainingProgress);
-      }
-    };
-
-    updateTimer(); // Initial check
-    const interval = setInterval(updateTimer, 1000);
-    return () => clearInterval(interval);
-  }, [restTimerEndTime]);
-
-  // Handle sound feedback when restTimer hits 0
   useEffect(() => {
-    if (restTimer === 0) {
-      setRestTimer(null);
-      // Play light sound notification
-      try {
-        const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-        if (audioCtx.state === 'suspended') {
-          audioCtx.resume();
-        }
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        
-        oscillator.type = 'sine'; // Lighter sound
-        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // Higher pitch, cleaner
-        oscillator.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.3);
-        
-        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.05, audioCtx.currentTime + 0.05); // Fade in
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); // Fade out
-        
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + 0.3);
-      } catch (e) {
-        console.warn('Audio feedback failed', e);
-      }
-    }
-  }, [restTimer]);
-
-  const startRestTimer = useCallback((seconds: number = 60) => {
-    // Only auto-start timer in LIVE mode
-    if (sessionMode === 'MANUAL') return;
-    const endTime = Date.now() + (seconds * 1000);
-    setRestTimerEndTime(endTime);
-    localStorage.setItem('rest_timer_end_time', endTime.toString());
-    setRestTimer(seconds);
+    localStorage.setItem(STORAGE_KEYS.SESSION_MODE, sessionMode);
   }, [sessionMode]);
 
   const addExercise = useCallback(async (exercise: Exercise) => {
     if (!user) return;
 
-    // First check if we have this exercise in the current session
-    // We look for the most recent instance (last in array)
     const currentSessionInstance = [...activeExercises]
       .reverse()
       .find(ex => ex.exerciseId === exercise.id);
@@ -137,20 +76,22 @@ export const useWorkoutSession = () => {
     if (currentSessionInstance) {
       baseSets = currentSessionInstance.sets;
     } else {
-      // If not in current session, fetch from history
       const lastHistoricalSession = await workoutService.getLastExerciseSession(exercise.id!, user.uid);
       baseSets = lastHistoricalSession?.sets || [];
     }
 
-    const setLength = 1; // Default to 1 set as requested
-
     const instanceId = `ex_idx_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+    if (activeExercises.length === 0) {
+      setWorkoutStartedAt(new Date());
+    }
 
     const newExercise: WorkoutExercise = {
       id: instanceId,
       exerciseId: exercise.id!,
       exerciseName: exercise.name,
-      sets: Array.from({ length: setLength }, (_, i) => {
+      startedAt: new Date(),
+      sets: Array.from({ length: 1 }, (_, i) => {
         const prevSet = baseSets[i] || baseSets[baseSets.length - 1]; 
         return {
           setIndex: i + 1,
@@ -164,8 +105,6 @@ export const useWorkoutSession = () => {
     };
 
     setActiveExercises((prev) => [...prev, newExercise]);
-
-    // Expand the exercise
     setExpandedExerciseId(instanceId);
   }, [sessionMode, user, activeExercises]);
 
@@ -177,12 +116,9 @@ export const useWorkoutSession = () => {
         sets: ex.sets.map(s => {
           if (s.setIndex !== setIndex) return s;
           const updatedSet = { ...s, ...data };
-          
-          // If marking as completed for the first time, start timer
           if (data.isCompleted && !s.isCompleted && sessionMode === 'LIVE') {
             startRestTimer();
           }
-          
           return updatedSet;
         })
       };
@@ -202,7 +138,7 @@ export const useWorkoutSession = () => {
           weight: lastSet?.weight ?? 0,
           level: lastSet?.level ?? 0,
           duration: lastSet?.duration ?? 0,
-          isCompleted: sessionMode === 'MANUAL' // Pre-complete in manual mode
+          isCompleted: sessionMode === 'MANUAL'
         }]
       };
     }));
@@ -232,52 +168,58 @@ export const useWorkoutSession = () => {
     setActiveExercises((prev) => {
       const nextExercises = prev.map(ex => {
         if (ex.id !== id) return ex;
-        
         const completedSets = ex.sets.filter(s => s.isCompleted);
-        
         return {
           ...ex,
           sets: completedSets.map((s, i) => ({ ...s, setIndex: i + 1 }))
         };
       });
-
       return nextExercises.filter(ex => ex.id !== id || ex.sets.length > 0);
     });
   }, []);
 
+  const clearSession = useCallback(() => {
+    setActiveExercises([]);
+    setWorkoutNotes('');
+    setWorkoutDate(new Date());
+    setWorkoutStartedAt(null);
+    setSessionMode('LIVE');
+    setExpandedExerciseId(null);
+    localStorage.removeItem(STORAGE_KEYS.ACTIVE_EXERCISES);
+    localStorage.removeItem(STORAGE_KEYS.WORKOUT_NOTES);
+    localStorage.removeItem(STORAGE_KEYS.WORKOUT_DATE);
+    localStorage.removeItem(STORAGE_KEYS.WORKOUT_STARTED_AT);
+    localStorage.removeItem(STORAGE_KEYS.SESSION_MODE);
+  }, []);
+
   const finishWorkout = useCallback(async () => {
     if (!user || activeExercises.length === 0) return;
-    
     setIsSaving(true);
     try {
+      const now = new Date();
       const workout: Omit<Workout, 'id'> = {
         userId: user.uid,
         date: workoutDate,
         notes: workoutNotes,
+        startedAt: workoutStartedAt || undefined,
+        durationSeconds: workoutStartedAt ? Math.floor((now.getTime() - workoutStartedAt.getTime()) / 1000) : undefined,
         exercises: activeExercises.map(ex => {
           const filteredSets = ex.sets.filter(s => {
-            const hasData = (s.reps !== undefined && s.reps > 0) || 
-                            (s.weight !== undefined && s.weight > 0) || 
-                            (s.level !== undefined && s.level > 0) || 
-                            (s.duration !== undefined && s.duration > 0);
-            
+            const hasData = (s.reps ?? 0) > 0 || (s.weight ?? 0) > 0 || (s.level ?? 0) > 0 || (s.duration ?? 0) > 0;
             if (sessionMode === 'LIVE') return s.isCompleted && hasData;
             return hasData;
           });
-
-          return {
-            ...ex,
-            sets: filteredSets
+          return { 
+            ...ex, 
+            sets: filteredSets,
+            durationSeconds: ex.startedAt ? Math.floor((now.getTime() - new Date(ex.startedAt).getTime()) / 1000) : undefined
           };
         }).filter(ex => ex.sets.length > 0)
       };
 
-      if (workout.exercises.length === 0) {
-        clearSession();
-        return true;
+      if (workout.exercises.length > 0) {
+        await workoutService.saveWorkout(workout);
       }
-
-      await workoutService.saveWorkout(workout);
       clearSession();
       return true;
     } catch (error) {
@@ -286,19 +228,7 @@ export const useWorkoutSession = () => {
     } finally {
       setIsSaving(false);
     }
-  }, [user, activeExercises, workoutNotes, workoutDate, sessionMode]);
-
-  const clearSession = useCallback(() => {
-    setActiveExercises([]);
-    setWorkoutNotes('');
-    setWorkoutDate(new Date());
-    setSessionMode('LIVE');
-    setExpandedExerciseId(null);
-    localStorage.removeItem('active_exercises');
-    localStorage.removeItem('workout_notes');
-    localStorage.removeItem('workout_date');
-    localStorage.removeItem('session_mode');
-  }, []);
+  }, [user, activeExercises, workoutNotes, workoutDate, workoutStartedAt, sessionMode, clearSession]);
 
   const removeExercise = useCallback((id: string) => {
     setActiveExercises((prev) => prev.filter(ex => ex.id !== id));

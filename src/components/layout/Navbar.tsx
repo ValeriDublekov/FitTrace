@@ -34,14 +34,6 @@ const Navbar: React.FC = () => {
     <nav className="bg-white border-b border-zinc-100 px-4 py-3 sticky top-0 z-50 safe-top">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         <div className="flex items-center gap-4">
-          {/* Hamburger button */}
-          <button 
-            className="sm:hidden p-2 text-zinc-600 hover:text-zinc-900"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-
           <Link to="/" className="flex items-center gap-2">
             <div className="bg-zinc-900 p-1.5 rounded-lg">
               <Dumbbell className="text-white w-5 h-5" />
@@ -93,27 +85,6 @@ const Navbar: React.FC = () => {
           </div>
         </div>
       </div>
-      
-      {/* Mobile menu dropdown */}
-      {isMobileMenuOpen && (
-        <div className="sm:hidden mt-4 border-t border-zinc-100 pt-4 flex flex-col gap-2">
-          {navLinks.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-                location.pathname === link.path
-                  ? 'bg-zinc-100 text-zinc-900'
-                  : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'
-              }`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <link.icon className="w-4 h-4" />
-              {link.name}
-            </Link>
-          ))}
-        </div>
-      )}
     </nav>
   );
 };

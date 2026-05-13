@@ -6,16 +6,17 @@ This document tracks coding patterns, architectural issues, and technical debt t
 
 The following files exceed the 200-line limit and should be refactored into smaller components or utility functions:
 
-- **`src/pages/ProgressPage.tsx` (~415 lines):** Largest file in the project. Manages heavy visualization logic, global history, and exercise-specific history in one place.
-- **`src/hooks/useWorkoutSession.ts` (~334 lines):** This hook handles too many responsibilities including state management, localStorage persistence, rest timer logic, and audio feedback.
-- **`src/features/workout/components/ExerciseLogger.tsx` (~238 lines):** Contains dense logic for history viewing and individual set logging.
-- **`src/features/workout/components/ActiveSession.tsx` (~213 lines):** Manages the entire session list and completion logic.
+- **`src/pages/ProgressPage.tsx` [DONE]**
+- **`src/hooks/useWorkoutSession.ts` [DONE]**
+- **`src/features/workout/components/ExerciseLogger.tsx` [DONE]**
+- **`src/features/workout/components/ActiveSession.tsx` [DONE]**
 
 ## 2. Architectural Concerns
 
-- **Separation of Concerns (Hooks):** `useWorkoutSession` is effectively a monolithic hook. It should be split into smaller, focused hooks (e.g., `useRestTimer`, `useWorkoutPersistence`, `useWorkoutState`).
-- **Logic in Components:** `ExerciseLogger.tsx` and `ProgressPage.tsx` contain significant data mapping and historical data rendering. This should be moved to sub-components or descriptive helper components.
-- **Audio Logic:** The Web Audio API implementation inside `useWorkoutSession` is an implementation detail that should be extracted to a utility function (`utils/audio.ts`) or a dedicated hook.
+- **Separation of Concerns (Hooks): [DONE]** `useWorkoutSession` was refactored into smaller pieces.
+- **Logic in Components: [DONE]** Extracted sub-components for `ExerciseLogger.tsx` and `ProgressPage.tsx`.
+- **Audio Logic: [DONE]** Extracted to `src/utils/audioUtils.ts`.
+- **LocalStorage Keys: [DONE]** Moved to `src/constants/index.ts`.
 - **Mobile Optimized Navigation:** `AGENTS.md` mentions a "bottom nav", but the app currently uses a `Navbar` top bar. A true bottom navigation bar would better suit an Android PWA experience.
 
 ## 3. Code Quality

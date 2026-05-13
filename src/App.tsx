@@ -11,6 +11,7 @@ import { WorkoutSessionProvider } from './features/workout/context/WorkoutSessio
 import { useAppSettings } from './hooks/useAppSettings';
 import { useUserSettings } from './hooks/useUserSettings';
 import Navbar from './components/layout/Navbar';
+import { BottomNav } from './components/layout/BottomNav';
 import { useTranslation } from 'react-i18next';
 import { InstallPrompt } from './components/pwa/InstallPrompt';
 import LoginPage from './pages/LoginPage';
@@ -110,7 +111,7 @@ const AppContent: React.FC = () => {
   return (
     <div className="min-h-screen bg-zinc-50 flex flex-col font-sans">
       <Navbar />
-      <main className="flex-1">
+      <main className="flex-1 pb-20 sm:pb-0">
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/new-workout" element={<NewWorkout />} />
@@ -127,6 +128,7 @@ const AppContent: React.FC = () => {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+      <BottomNav />
       <InstallPrompt />
     </div>
   );
