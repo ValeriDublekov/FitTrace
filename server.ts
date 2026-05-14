@@ -11,6 +11,28 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // API routes
+  app.get('/api/sounds', async (req, res) => {
+    try {
+      const soundsPath = path.resolve(__dirname, 'public/sounds');
+      
+      // Ensure directory exists
+      await fs.mkdir(soundsPath, { recursive: true });
+      
+      const files = await fs.readdir(soundsPath);
+      const soundFiles = files
+        .filter(file => {
+          const lower = file.toLowerCase();
+          return (lower.endsWith('.mp3') || lower.endsWith('.wav')) && !file.startsWith('.');
+        });
+      
+      res.json(soundFiles);
+    } catch (error) {
+      console.error('Error reading sounds directory:', error);
+      res.status(500).json([]);
+    }
+  });
+
   // Use Vite middleware in development
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({

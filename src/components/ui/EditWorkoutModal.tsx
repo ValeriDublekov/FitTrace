@@ -134,7 +134,7 @@ export const EditWorkoutModal: React.FC<EditWorkoutModalProps> = ({ workout, onC
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
       <div className="bg-white rounded-[2rem] w-full max-w-lg max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
         <div className="p-6 border-b border-zinc-100 flex justify-between items-center bg-white">
           <h2 className="font-black text-xl text-zinc-900">{t('workout.edit_workout.title')}</h2>

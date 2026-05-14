@@ -22,6 +22,12 @@
     "analytics_desc": "Charts and progress",
     "display_settings": "Display Settings",
     "display_settings_desc": "Comfort for training without glasses",
+    "notification_settings": "Notification Settings",
+    "enable_notifications": "Enable Notifications",
+    "preview": "Preview",
+    "notification_sounds": {
+      "zen": "Zen (Built-in)"
+    },
     "font_size": "Font Size:",
     "font_sizes": {
       "normal": "Normal",

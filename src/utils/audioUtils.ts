@@ -1,28 +1,44 @@
+import { NotificationSound } from '../types';
+
 /**
- * Play a light sound notification using the Web Audio API
+ * Play a notification sound based on type.
+ * If type is a filename, it tries to play /sounds/filename.mp3
+ * Otherwise it plays a synthesized fallback sound.
  */
-export const playNotificationSound = () => {
+export const playNotificationSound = async (type: string = 'default') => {
   try {
+    // If it's a specific file from the folder, try playing it
+    if (type !== 'default' && type !== 'beep') {
+      const audio = new Audio(`/sounds/${type}`);
+      await audio.play();
+      return;
+    }
+
+    // Fallback synthesized sound (refined "modern" style)
     const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
     if (audioCtx.state === 'suspended') {
-      audioCtx.resume();
+      await audioCtx.resume();
     }
+    
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
     
     oscillator.connect(gainNode);
     gainNode.connect(audioCtx.destination);
     
-    oscillator.type = 'sine'; // Lighter sound
-    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // Higher pitch, cleaner
-    oscillator.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.3);
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime);
     
     gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.05, audioCtx.currentTime + 0.05); // Fade in
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); // Fade out
+    gainNode.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 0.01);
+    gainNode.gain.setValueAtTime(0, audioCtx.currentTime + 0.08);
+    gainNode.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 0.1);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+    
+    oscillator.frequency.setValueAtTime(1500, audioCtx.currentTime + 0.1);
     
     oscillator.start();
-    oscillator.stop(audioCtx.currentTime + 0.3);
+    oscillator.stop(audioCtx.currentTime + 0.2);
   } catch (e) {
     console.warn('Audio feedback failed', e);
   }

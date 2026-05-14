@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { STORAGE_KEYS } from '../../../constants';
 import { playNotificationSound } from '../../../utils/audioUtils';
+import { useUserSettings } from '../../../hooks/useUserSettings';
 
 export const useWorkoutRestTimer = (sessionMode: 'LIVE' | 'MANUAL') => {
   const [restTimer, setRestTimer] = useState<number | null>(null);
@@ -8,6 +9,7 @@ export const useWorkoutRestTimer = (sessionMode: 'LIVE' | 'MANUAL') => {
     const saved = localStorage.getItem(STORAGE_KEYS.REST_TIMER_END_TIME);
     return saved ? parseInt(saved, 10) : null;
   });
+  const { settings } = useUserSettings();
 
   const clearRestTimer = useCallback(() => {
     setRestTimer(null);
@@ -54,9 +56,11 @@ export const useWorkoutRestTimer = (sessionMode: 'LIVE' | 'MANUAL') => {
   useEffect(() => {
     if (restTimer === 0) {
       setRestTimer(null);
-      playNotificationSound();
+      if (settings?.isNotificationsEnabled) {
+        playNotificationSound(settings.notificationSound).catch(console.warn);
+      }
     }
-  }, [restTimer]);
+  }, [restTimer, settings]);
 
   return {
     restTimer,

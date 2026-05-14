@@ -56,9 +56,12 @@ export interface AppSettings {
 
 export type FontSize = 'normal' | 'large' | 'xlarge';
 export type Language = 'bg' | 'en';
+export type NotificationSound = string;
 
 export interface UserSettings {
   fontSize: FontSize;
   language?: Language;
+  notificationSound: NotificationSound;
+  isNotificationsEnabled: boolean;
   updatedAt: Date;
 }

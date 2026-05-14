@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../services/firebase';
 import { useAuth } from './useAuth';
-import { UserSettings, FontSize, Language } from '../types';
+import { UserSettings, FontSize, Language, NotificationSound } from '../types';
 
 const DEFAULT_SETTINGS: UserSettings = {
   fontSize: 'normal',
   language: 'bg',
+  notificationSound: 'default',
+  isNotificationsEnabled: true,
   updatedAt: new Date(),
 };
 
@@ -30,6 +32,8 @@ export const useUserSettings = () => {
         setSettings({
           fontSize: data.fontSize || 'normal',
           language: data.language || 'bg',
+          notificationSound: data.notificationSound || 'default',
+          isNotificationsEnabled: typeof data.isNotificationsEnabled === 'boolean' ? data.isNotificationsEnabled : true,
           updatedAt: data.updatedAt?.toDate() || new Date(),
         });
       } else {
@@ -72,5 +76,33 @@ export const useUserSettings = () => {
     }
   };
 
-  return { settings, loading, updateFontSize, updateLanguage };
+  const updateNotificationSound = async (notificationSound: NotificationSound) => {
+    if (!user) return;
+
+    const docRef = doc(db, 'users', user.uid, 'settings', 'display');
+    try {
+      await setDoc(docRef, {
+        notificationSound,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/settings/display`);
+    }
+  };
+
+  const updateIsNotificationsEnabled = async (isNotificationsEnabled: boolean) => {
+    if (!user) return;
+
+    const docRef = doc(db, 'users', user.uid, 'settings', 'display');
+    try {
+      await setDoc(docRef, {
+        isNotificationsEnabled,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/settings/display`);
+    }
+  };
+
+  return { settings, loading, updateFontSize, updateLanguage, updateNotificationSound, updateIsNotificationsEnabled };
 };

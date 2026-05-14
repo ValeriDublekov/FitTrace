@@ -22,6 +22,12 @@
     "analytics_desc": "Графики и прогрес",
     "display_settings": "Настройки на дисплея",
     "display_settings_desc": "Удобство при тренировка без очила",
+    "notification_settings": "Настройки на звука",
+    "enable_notifications": "Включи нотификации",
+    "preview": "Преглед",
+    "notification_sounds": {
+      "zen": "Zen (Вграден)"
+    },
     "font_size": "Размер на шрифта:",
     "font_sizes": {
       "normal": "Нормален",

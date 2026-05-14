@@ -3,16 +3,31 @@ import { useAuth } from '../../hooks/useAuth';
 import { useUserSettings } from '../../hooks/useUserSettings';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './LanguageSwitcher';
-import { Settings, Type, LogOut, User as UserIcon, ChevronDown } from 'lucide-react';
+import { Settings, Type, LogOut, User as UserIcon, ChevronDown, Bell } from 'lucide-react';
+import { playNotificationSound } from '../../utils/audioUtils';
 import { motion, AnimatePresence } from 'motion/react';
 import { FontSize } from '../../types';
 
 const UserMenu: React.FC = () => {
   const { user, logout } = useAuth();
-  const { settings: userSettings, updateFontSize } = useUserSettings();
+  const { settings: userSettings, updateFontSize, updateNotificationSound, updateIsNotificationsEnabled } = useUserSettings();
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
+  const [availableSounds, setAvailableSounds] = useState<string[]>([]);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const fetchSounds = async () => {
+      try {
+        const response = await fetch('/api/sounds');
+        const data = await response.json();
+        setAvailableSounds(data);
+      } catch (error) {
+        console.error('Failed to fetch sounds:', error);
+      }
+    };
+    fetchSounds();
+  }, [isOpen]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -82,6 +97,40 @@ const UserMenu: React.FC = () => {
                 ))}
               </div>
 
+              <div className="flex items-center gap-2 mb-3 text-zinc-400">
+                <Settings className="w-4 h-4" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">{t('dashboard.notification_settings')}</span>
+              </div>
+              <div className="flex items-center gap-2 mb-2">
+                <input
+                  type="checkbox"
+                  checked={userSettings.isNotificationsEnabled}
+                  onChange={(e) => updateIsNotificationsEnabled(e.target.checked)}
+                  className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-xs text-zinc-600">{t('dashboard.enable_notifications')}</span>
+              </div>
+              <div className="flex gap-2 mb-4">
+                <select
+                  value={userSettings.notificationSound}
+                  onChange={(e) => updateNotificationSound(e.target.value)}
+                  disabled={!userSettings.isNotificationsEnabled}
+                  className="flex-1 text-xs p-2 rounded-lg border border-zinc-200 focus:ring-1 focus:ring-indigo-500 bg-white"
+                >
+                  <option value="default">{t('dashboard.notification_sounds.zen')}</option>
+                  {availableSounds.map(sound => (
+                    <option key={sound} value={sound}>{sound}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => playNotificationSound(userSettings.notificationSound)}
+                  disabled={!userSettings.isNotificationsEnabled}
+                  className="px-3 py-2 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 disabled:opacity-50"
+                >
+                  {t('dashboard.preview')}
+                </button>
+              </div>
+            
               <div className="flex items-center gap-2 mb-3 text-zinc-400">
                 <Settings className="w-4 h-4" />
                 <span className="text-[10px] font-bold uppercase tracking-wider">{t('dashboard.language_settings')}</span>

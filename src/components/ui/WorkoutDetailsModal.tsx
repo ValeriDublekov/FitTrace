@@ -25,7 +25,7 @@ export const WorkoutDetailsModal: React.FC<WorkoutDetailsModalProps> = ({
     return exercises.find(e => e.id === exerciseId);
   };
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
       <div className="bg-white rounded-3xl w-full max-w-lg max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
         <div className="p-6 border-b border-zinc-100 flex justify-between items-center bg-white">
           <div>
