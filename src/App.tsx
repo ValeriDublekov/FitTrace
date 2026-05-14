@@ -14,11 +14,13 @@ import Navbar from './components/layout/Navbar';
 import { BottomNav } from './components/layout/BottomNav';
 import { useTranslation } from 'react-i18next';
 import { InstallPrompt } from './components/pwa/InstallPrompt';
+import { useWorkoutContext } from './features/workout/context/WorkoutSessionContext';
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import AdminPage from './pages/AdminPage';
 import NewWorkout from './pages/NewWorkout';
 import ProgressPage from './pages/ProgressPage';
+import HistoryPage from './pages/HistoryPage';
 import MyExercisesPage from './pages/MyExercisesPage';
 import { Lock, LogOut } from 'lucide-react';
 
@@ -46,6 +48,7 @@ const AppContent: React.FC = () => {
   const { settings, loading: settingsLoading } = useAppSettings();
   const { settings: userSettings, loading: userSettingsLoading } = useUserSettings();
   const { i18n } = useTranslation();
+  const { hasActiveSession } = useWorkoutContext();
 
   const loading = authLoading || adminLoading || settingsLoading || userSettingsLoading;
 
@@ -111,11 +114,12 @@ const AppContent: React.FC = () => {
   return (
     <div className="min-h-screen bg-zinc-50 flex flex-col font-sans">
       <Navbar />
-      <main className="flex-1 pb-20 sm:pb-0">
+      <main className={`flex-1 ${hasActiveSession ? 'pb-0' : 'pb-20 sm:pb-0'}`}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/new-workout" element={<NewWorkout />} />
-          <Route path="/history" element={<ProgressPage />} />
+          <Route path="/history" element={<HistoryPage />} />
+          <Route path="/progress" element={<ProgressPage />} />
           <Route path="/my-exercises" element={<MyExercisesPage />} />
           <Route 
             path="/admin" 

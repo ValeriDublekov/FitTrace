@@ -17,6 +17,7 @@ import {
 } from 'firebase/storage';
 import { db, storage, handleFirestoreError, OperationType } from './firebase';
 import { Exercise } from '../types';
+import { workoutService } from './workoutService';
 
 const EXERCISES_COLLECTION = 'exercises';
 
@@ -97,6 +98,19 @@ export const exerciseService = {
       await deleteDoc(doc(db, EXERCISES_COLLECTION, id));
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `${EXERCISES_COLLECTION}/${id}`);
+      throw error;
+    }
+  },
+
+  async mergeCustomExercise(customExerciseId: string, systemExerciseId: string, systemExerciseName: string, userId: string): Promise<void> {
+    try {
+      // 1. Migrate all workout history
+      await workoutService.migrateExerciseData(customExerciseId, systemExerciseId, systemExerciseName, userId);
+      
+      // 2. Delete the custom exercise
+      await this.deleteExercise(customExerciseId);
+    } catch (error) {
+      console.error('Error merging exercises:', error);
       throw error;
     }
   }

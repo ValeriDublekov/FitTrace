@@ -77,6 +77,17 @@ export const useExercises = (options: { adminMode?: boolean } = {}) => {
     }
   };
 
+  const mergeCustomExercise = async (customExerciseId: string, systemExerciseId: string, systemExerciseName: string) => {
+    if (!user?.uid) return;
+    try {
+      await exerciseService.mergeCustomExercise(customExerciseId, systemExerciseId, systemExerciseName, user.uid);
+      await fetchExercises();
+    } catch (err) {
+      setError('Failed to merge exercise');
+      throw err;
+    }
+  };
+
   return {
     exercises,
     loading,
@@ -85,6 +96,7 @@ export const useExercises = (options: { adminMode?: boolean } = {}) => {
     updateExercise,
     deleteExercise,
     uploadThumbnail,
+    mergeCustomExercise,
     refresh: fetchExercises
   };
 };

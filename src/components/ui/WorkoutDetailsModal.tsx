@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Workout } from '../../types';
+import { Workout, Exercise } from '../../types';
 import { X, Dumbbell, Pencil, Clock } from 'lucide-react';
 import { formatDuration } from '../../utils/dateUtils';
 
@@ -9,15 +9,21 @@ interface WorkoutDetailsModalProps {
   onClose: () => void;
   onEdit?: (workout: Workout) => void;
   onDelete?: (id: string) => void;
+  exercises?: Exercise[];
 }
 
 export const WorkoutDetailsModal: React.FC<WorkoutDetailsModalProps> = ({ 
   workout, 
   onClose,
   onEdit,
-  onDelete
+  onDelete,
+  exercises = []
 }) => {
   const { t, i18n } = useTranslation();
+
+  const getExerciseInfo = (exerciseId: string) => {
+    return exercises.find(e => e.id === exerciseId);
+  };
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
       <div className="bg-white rounded-3xl w-full max-w-lg max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
@@ -54,37 +60,54 @@ export const WorkoutDetailsModal: React.FC<WorkoutDetailsModalProps> = ({
           </div>
         </div>
         <div className="p-6 space-y-8 overflow-y-auto flex-1">
-          {workout.exercises.map((ex, exIdx) => (
-            <div key={exIdx} className="space-y-2">
-              <div className="flex items-center justify-between font-bold text-zinc-900">
-                <div className="flex items-center gap-2">
-                  <Dumbbell className="w-4 h-4 text-indigo-600" />
-                  {ex.exerciseName}
-                </div>
-                {ex.sessionNotes && (
-                  <span className="text-[10px] font-medium text-slate-500 italic">
-                    {ex.sessionNotes}
-                  </span>
-                )}
-              </div>
-              <div className="grid grid-cols-4 gap-2 text-center text-xs font-bold text-zinc-500 bg-zinc-50 py-2 rounded-lg">
-                <div>SET</div>
-                <div>KG</div>
-                <div>REPS</div>
-                <div>Status</div>
-              </div>
-              {ex.sets.map((set, setIdx) => (
-                <div key={setIdx} className="grid grid-cols-4 gap-2 text-center text-sm py-2 border-b border-zinc-50 last:border-0">
-                  <div className="font-bold text-zinc-900">{setIdx + 1}</div>
-                  <div className="text-zinc-600">{set.weight || '-'}</div>
-                  <div className="text-zinc-600">{set.reps || '-'}</div>
-                  <div className={`text-[10px] font-bold ${set.isCompleted ? 'text-green-600' : 'text-zinc-300'}`}>
-                    {set.isCompleted ? '✓' : '—'}
+          {workout.exercises.map((ex, exIdx) => {
+            const exerciseInfo = getExerciseInfo(ex.exerciseId);
+            const loadType = exerciseInfo?.loadType || 'WEIGHT_REPS';
+            const isWeight = loadType === 'WEIGHT_REPS';
+            const isLevel = loadType === 'LEVEL_REPS';
+            const isCardio = loadType === 'CARDIO';
+
+            return (
+              <div key={exIdx} className="space-y-2">
+                <div className="flex items-center justify-between font-bold text-zinc-900">
+                  <div className="flex items-center gap-2">
+                    <Dumbbell className="w-4 h-4 text-indigo-600" />
+                    {ex.exerciseName}
                   </div>
+                  {ex.sessionNotes && (
+                    <span className="text-[10px] font-medium text-slate-500 italic">
+                      {ex.sessionNotes}
+                    </span>
+                  )}
                 </div>
-              ))}
-            </div>
-          ))}
+                <div className="grid grid-cols-4 gap-2 text-center text-[10px] font-black text-zinc-400 uppercase bg-zinc-50 py-2 rounded-lg tracking-widest">
+                  <div>{t('workout.sets')}</div>
+                  <div>
+                    {isWeight ? t('workout.weight') : (isLevel || isCardio) ? t('workout.level') : t('workout.weight')}
+                  </div>
+                  <div>
+                    {isCardio ? t('workout.duration') : t('workout.reps')}
+                  </div>
+                  <div className="text-right pr-2">Status</div>
+                </div>
+                {ex.sets.map((set, setIdx) => (
+                  <div key={setIdx} className="grid grid-cols-4 gap-2 text-center text-sm py-2 border-b border-zinc-50 last:border-0 items-center">
+                    <div className="font-bold text-zinc-900">{setIdx + 1}</div>
+                    <div className="text-zinc-600 font-medium">
+                      {(isWeight ? set.weight : (isLevel || isCardio) ? set.level : set.weight) ?? '-'}
+                    </div>
+                    <div className="text-zinc-600 font-medium">
+                      {(isCardio ? set.duration : set.reps) ?? '-'}
+                      {isCardio && <span className="text-[10px] ml-0.5">m</span>}
+                    </div>
+                    <div className={`flex justify-end pr-3 font-bold ${set.isCompleted ? 'text-green-600' : 'text-zinc-300'}`}>
+                      {set.isCompleted ? '✓' : '—'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

@@ -29,15 +29,39 @@ export const useWorkoutSession = () => {
     return saved ? new Date(saved) : null;
   });
   
-  const initialMode = searchParams.get('mode') === 'manual' ? 'MANUAL' : 'LIVE';
+  const urlMode = searchParams.get('mode') === 'manual' ? 'MANUAL' : 'LIVE';
   const [sessionMode, setSessionMode] = useState<'LIVE' | 'MANUAL'>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.SESSION_MODE);
-    return (saved as 'LIVE' | 'MANUAL') || initialMode;
+    // If we have active exercises, stick to the saved mode
+    const savedExercises = localStorage.getItem(STORAGE_KEYS.ACTIVE_EXERCISES);
+    const hasSavedExercises = savedExercises && JSON.parse(savedExercises).length > 0;
+    
+    if (hasSavedExercises) {
+      const saved = localStorage.getItem(STORAGE_KEYS.SESSION_MODE);
+      return (saved as 'LIVE' | 'MANUAL') || urlMode;
+    }
+    
+    // Otherwise, prioritize URL mode for a fresh start
+    return urlMode;
   });
+
+  useEffect(() => {
+    // If the mode in URL changes and we don't have active exercises, update session mode
+    const urlMode = searchParams.get('mode') === 'manual' ? 'MANUAL' : 'LIVE';
+    if (activeExercises.length === 0 && sessionMode !== urlMode) {
+      setSessionMode(urlMode);
+      if (urlMode === 'LIVE') {
+        setWorkoutDate(new Date());
+      }
+    }
+  }, [searchParams, activeExercises.length, sessionMode]);
 
   const { restTimer, startRestTimer, clearRestTimer } = useWorkoutRestTimer(sessionMode);
   const [isSaving, setIsSaving] = useState(false);
   const [expandedExerciseId, setExpandedExerciseId] = useState<string | null>(null);
+
+  const hasActiveSession = activeExercises.length > 0;
+  const isActiveLive = hasActiveSession && sessionMode === 'LIVE';
+  const isActiveManual = hasActiveSession && sessionMode === 'MANUAL';
 
   // Persistence to localStorage
   useEffect(() => {
@@ -83,7 +107,11 @@ export const useWorkoutSession = () => {
     const instanceId = `ex_idx_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
     if (activeExercises.length === 0) {
-      setWorkoutStartedAt(new Date());
+      const now = new Date();
+      setWorkoutStartedAt(now);
+      if (sessionMode === 'LIVE') {
+        setWorkoutDate(now);
+      }
     }
 
     const newExercise: WorkoutExercise = {
@@ -266,6 +294,10 @@ export const useWorkoutSession = () => {
     setExpandedExerciseId,
     startRestTimer,
     clearRestTimer,
-    updateExerciseNotes
+    updateExerciseNotes,
+    hasActiveSession,
+    isActiveLive,
+    isActiveManual,
+    clearSession
   };
 };

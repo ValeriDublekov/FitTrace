@@ -2,16 +2,24 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAdmin } from '../../hooks/useAdmin';
-import { LayoutDashboard, TrendingUp, User, Globe } from 'lucide-react';
+import { useWorkoutContext } from '../../features/workout/context/WorkoutSessionContext';
+import { LayoutDashboard, History as HistoryIcon, TrendingUp, User, Globe } from 'lucide-react';
 
 export const BottomNav: React.FC = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const { isAdmin } = useAdmin();
+  const { hasActiveSession } = useWorkoutContext();
+
+  // Hide bottom nav during active workout session to save space on mobile
+  if (hasActiveSession) {
+    return null;
+  }
 
   const navLinks = [
     { name: t('navbar.dashboard'), path: '/', icon: LayoutDashboard },
-    { name: t('navbar.history'), path: '/history', icon: TrendingUp },
+    { name: t('navbar.history'), path: '/history', icon: HistoryIcon },
+    { name: t('navbar.progress'), path: '/progress', icon: TrendingUp },
     { name: t('navbar.exercises'), path: '/my-exercises', icon: User },
   ];
 

@@ -5,7 +5,7 @@ import { useAdmin } from '../../hooks/useAdmin';
 import { useWorkoutContext } from '../../features/workout/context/WorkoutSessionContext';
 import { useTranslation } from 'react-i18next';
 import UserMenu from './UserMenu';
-import { Dumbbell, ShieldCheck, LayoutDashboard, User, TrendingUp, Globe, Timer, Menu, X } from 'lucide-react';
+import { Dumbbell, ShieldCheck, LayoutDashboard, User, TrendingUp, History as HistoryIcon, Globe, Timer, Menu, X } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const { user } = useAuth();
@@ -22,7 +22,8 @@ const Navbar: React.FC = () => {
 
   const navLinks = [
     { name: t('navbar.dashboard'), path: '/', icon: LayoutDashboard },
-    { name: t('navbar.history'), path: '/history', icon: TrendingUp },
+    { name: t('navbar.history'), path: '/history', icon: HistoryIcon },
+    { name: t('navbar.progress'), path: '/progress', icon: TrendingUp },
     { name: t('navbar.exercises'), path: '/my-exercises', icon: User },
   ];
 

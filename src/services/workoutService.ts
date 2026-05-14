@@ -119,5 +119,43 @@ export const workoutService = {
       console.error('Error getting last exercise session:', error);
       return null;
     }
+  },
+
+  async migrateExerciseData(oldExerciseId: string, newExerciseId: string, newExerciseName: string, userId: string): Promise<void> {
+    try {
+      // Find all workouts that contain this exercise for this user
+      const q = query(
+        collection(db, WORKOUTS_COLLECTION),
+        where('userId', '==', userId)
+      );
+      
+      const snapshot = await getDocs(q);
+      const workoutsToUpdate = snapshot.docs.filter(doc => {
+        const data = doc.data() as Workout;
+        return data.exercises.some(ex => ex.exerciseId === oldExerciseId);
+      });
+
+      for (const workoutDoc of workoutsToUpdate) {
+        const data = workoutDoc.data() as Workout;
+        const updatedExercises = data.exercises.map(ex => {
+          if (ex.exerciseId === oldExerciseId) {
+            return {
+              ...ex,
+              exerciseId: newExerciseId,
+              exerciseName: newExerciseName
+            };
+          }
+          return ex;
+        });
+
+        await updateDoc(workoutDoc.ref, {
+          exercises: updatedExercises,
+          updatedAt: serverTimestamp()
+        });
+      }
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, WORKOUTS_COLLECTION);
+      throw error;
+    }
   }
 };

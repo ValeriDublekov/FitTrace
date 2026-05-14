@@ -13,7 +13,7 @@ export const useWorkoutFlow = () => {
   const mode = searchParams.get('mode');
   const { exercises, loading, addExercise: createExercise, updateExercise, deleteExercise, uploadThumbnail } = useExercises();
   const { history: workoutHistory } = useWorkoutHistory(100);
-  const { activeExercises, addExercise, finishWorkout } = useWorkoutContext();
+  const { activeExercises, addExercise, finishWorkout, clearSession } = useWorkoutContext();
 
   const exerciseFrequency = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -66,6 +66,9 @@ export const useWorkoutFlow = () => {
 
   const handleBack = () => {
     if (viewState === 'SETUP') {
+      if (activeExercises.length === 0) {
+        clearSession();
+      }
       navigate('/');
     } else if (viewState === 'SELECT_CATEGORY') {
       if (activeExercises.length > 0) setViewState('ACTIVE_SESSION');

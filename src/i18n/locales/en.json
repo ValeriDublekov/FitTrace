@@ -5,6 +5,13 @@
     "continue_session": "Continue Workout",
     "active_session_desc": "You have an active session right now",
     "active": "Active",
+    "continue_manual": "Continue Manual Entry",
+    "draft_for": "Draft for",
+    "started_at": "Started at",
+    "manual_draft_active": "Active Manual Draft",
+    "manual_draft_desc": "You have a manual workout draft in progress. Do you want to continue editing or discard it to start a new live session?",
+    "live_session_active": "Active Live Session",
+    "live_session_desc": "You have a live session in progress. You cannot log past workouts until you finish or discard the current session.",
     "new_workout": "New Workout",
     "new_workout_desc": "Record exercises in real-time",
     "add_past": "Add from Past",
@@ -44,7 +51,9 @@
     "delete": "Delete",
     "edit": "Edit",
     "back": "Back",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "continue": "Continue",
+    "discard": "Discard"
   },
   "workout": {
     "start_session": "Start Session",
@@ -83,6 +92,12 @@
       "select_category": "Select Focus",
       "exercises": "Exercises"
     },
+    "setup": {
+      "desc": "First, let's set the date and mode for your session.",
+      "date_label": "When did you train?",
+      "mode_label": "Session Mode",
+      "live_date_hint": "Live sessions always use the current date."
+    },
     "modes": {
       "live": "🔴 Live Workout",
       "manual": "📝 Manual Entry"
@@ -116,6 +131,15 @@
       "sets_logged": "{{count}} sets logged",
       "no_history": "No history yet",
       "no_history_desc": "Start a workout with this exercise to see your progress here.",
+      "participation_count": "{{count}} participations",
+      "sort_by": "Sort by:",
+      "sort_options": {
+        "participation": "Usage",
+        "name": "Name",
+        "recent": "Recent"
+      },
+      "filter_category": "Category:",
+      "all_categories": "All Groups",
       "confirmations": {
         "delete_workout": {
           "title": "Delete Workout",
@@ -163,6 +187,53 @@
       "add_exercise": "Add Exercise",
       "save_success": "Workout updated successfully!",
       "save_error": "Error updating workout."
+    },
+    "admin_migration": {
+      "title": "Exercise Migration",
+      "description": "Replace your custom exercises with system ones while preserving your progress.",
+      "col_type": "Type",
+      "col_name": "Name",
+      "col_replace": "Replace with system",
+      "col_action": "Action",
+      "apply_replace": "Apply",
+      "copy_success": "Name copied!",
+      "match_error": "Error: Load type mismatch (e.g. kg vs levels).",
+      "success": "Exercise replaced successfully!",
+      "no_custom": "No custom exercises found.",
+      "select_system": "Select system exercise..."
+    },
+    "admin": {
+      "title": "Admin Dashboard",
+      "subtitle": "Manage application settings and global exercises",
+      "tabs": {
+        "settings": "General Settings",
+        "exercises": "Global Exercises",
+        "migration": "Migration"
+      },
+      "settings": {
+        "title": "General Settings",
+        "subtitle": "Control application-wide behavior and accessibility.",
+        "public_access": "Public Access",
+        "public_desc": "Anyone logged in can use the app. This is the standard operational mode.",
+        "private_desc": "Only administrators can access the application. Non-admins will see a maintenance message.",
+        "make_private": "Make Private",
+        "make_public": "Make Public"
+      },
+      "exercises": {
+        "title": "Global Exercises",
+        "subtitle": "Standard exercises available to all users.",
+        "add_new": "Add New",
+        "search": "Search exercises...",
+        "no_found": "No exercises found.",
+        "no_found_desc": "Try adjusting your search or filters.",
+        "delete_confirm_title": "Delete Exercise",
+        "delete_confirm_msg": "Are you sure you want to delete this exercise? This action is irreversible and may affect workout history.",
+        "delete_btn": "Delete Permanently"
+      },
+      "migration": {
+        "title": "Exercise Migration",
+        "subtitle": "Merge custom user exercises into the global database to standardize records."
+      }
     }
   }
 }
