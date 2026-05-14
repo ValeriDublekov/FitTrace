@@ -19,11 +19,22 @@ const UserMenu: React.FC = () => {
   useEffect(() => {
     const fetchSounds = async () => {
       try {
-        const response = await fetch('/api/sounds');
+        const response = await fetch('/sounds.json');
+        if (!response.ok) throw new Error('Failed to load sounds.json');
         const data = await response.json();
         setAvailableSounds(data);
       } catch (error) {
         console.error('Failed to fetch sounds:', error);
+        // Fallback to API if JSON fails (useful for local dev environment)
+        try {
+          const apiResponse = await fetch('/api/sounds');
+          if (apiResponse.ok) {
+            const apiData = await apiResponse.json();
+            setAvailableSounds(apiData);
+          }
+        } catch (apiError) {
+          console.error('API fallback failed:', apiError);
+        }
       }
     };
     fetchSounds();
