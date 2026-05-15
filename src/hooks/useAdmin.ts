@@ -17,12 +17,10 @@ export const useAdmin = () => {
       }
 
       const path = `admins/${user.uid}`;
-      console.log('Checking admin status for UID:', user.uid);
       try {
         const adminDoc = await getDoc(doc(db, 'admins', user.uid));
-        console.log('Admin document exists:', adminDoc.exists());
         if (adminDoc.exists()) {
-          console.log('Admin data:', adminDoc.data());
+          // Admin data found
         }
         setIsAdmin(adminDoc.exists());
       } catch (error) {

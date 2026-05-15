@@ -223,7 +223,10 @@
         "public_desc": "Anyone logged in can use the app. This is the standard operational mode.",
         "private_desc": "Only administrators can access the application. Non-admins will see a maintenance message.",
         "make_private": "Make Private",
-        "make_public": "Make Public"
+        "make_public": "Make Public",
+        "system_info_title": "System Information",
+        "version": "App Version",
+        "deployed_at": "Deployed at"
       },
       "exercises": {
         "title": "Global Exercises",

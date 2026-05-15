@@ -154,6 +154,38 @@ const AdminPage: React.FC = () => {
                   {settings?.isPublic ? t('workout.admin.settings.make_private') : t('workout.admin.settings.make_public')}
                 </button>
               </div>
+
+              {/* System Information Section */}
+              <div className="mt-12 pt-8 border-t border-gray-100" id="admin-system-info">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <span className="w-1.5 h-6 bg-blue-600 rounded-full"></span>
+                  {t('workout.admin.settings.system_info_title')}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
+                      {t('workout.admin.settings.version')}
+                    </p>
+                    <p className="text-xl font-mono font-bold text-blue-600">
+                      v{__APP_VERSION__}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
+                      {t('workout.admin.settings.deployed_at')}
+                    </p>
+                    <p className="text-sm font-medium text-gray-700">
+                      {new Date(__BUILD_TIME__).toLocaleString(undefined, {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </section>
           )}
 
