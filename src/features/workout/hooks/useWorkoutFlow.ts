@@ -5,7 +5,7 @@ import { useWorkoutHistory } from '../../../hooks/useWorkoutHistory';
 import { useWorkoutContext } from '../context/WorkoutSessionContext';
 import { Exercise } from '../../../types';
 
-export type ViewState = 'SETUP' | 'ACTIVE_SESSION' | 'SELECT_CATEGORY' | 'SELECT_EXERCISE';
+export type ViewState = 'SETUP' | 'ACTIVE_SESSION' | 'SELECT_CATEGORY' | 'SELECT_EXERCISE' | 'SUMMARY';
 
 export const useWorkoutFlow = () => {
   const navigate = useNavigate();
@@ -34,6 +34,7 @@ export const useWorkoutFlow = () => {
   });
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [finishedWorkout, setFinishedWorkout] = useState<any>(null);
 
   const filteredExercises = useMemo(() => {
     return exercises
@@ -57,8 +58,13 @@ export const useWorkoutFlow = () => {
 
   const handleFinish = async () => {
     try {
-      await finishWorkout();
-      navigate('/');
+      const result = await finishWorkout();
+      if (result) {
+        setFinishedWorkout(result);
+        setViewState('SUMMARY');
+      } else {
+        navigate('/');
+      }
     } catch (error) {
       throw error;
     }
@@ -96,6 +102,7 @@ export const useWorkoutFlow = () => {
     handleFinish,
     handleBack,
     activeExercises,
+    finishedWorkout,
     createExercise,
     updateExercise,
     deleteExercise,

@@ -164,6 +164,14 @@
       "cancel": "Cancel",
       "save": "Save"
     },
+    "summary": {
+      "title": "Great job!",
+      "subtitle": "Another successful workout completed.",
+      "duration": "Duration",
+      "exercises_done": "Exercises completed",
+      "sets": "sets",
+      "finish": "Go to Dashboard"
+    },
     "confirmations": {
       "delete_exercise": {
         "title": "Delete Exercise",

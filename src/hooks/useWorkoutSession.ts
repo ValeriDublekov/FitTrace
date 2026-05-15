@@ -248,8 +248,9 @@ export const useWorkoutSession = () => {
       if (workout.exercises.length > 0) {
         await workoutService.saveWorkout(workout);
       }
+      const finishedWorkout = { ...workout };
       clearSession();
-      return true;
+      return finishedWorkout;
     } catch (error) {
       console.error('Error saving workout:', error);
       throw error;
