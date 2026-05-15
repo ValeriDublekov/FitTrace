@@ -22,35 +22,40 @@ const UserMenu: React.FC = () => {
       const baseUrl = import.meta.env.BASE_URL || '/';
       const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
       const origin = window.location.origin;
+      const isGitHubPages = window.location.hostname.includes('github.io');
       
       const apiPath = `${origin}${cleanBaseUrl}api/sounds?t=${Date.now()}`;
       const manifestPath = `${origin}${cleanBaseUrl}sounds.json?t=${Date.now()}`;
       
-      console.log('Sound fetch config:', { apiPath, manifestPath, baseUrl, origin });
+      console.log('Sound fetch config:', { apiPath, manifestPath, baseUrl, origin, isGitHubPages });
       
-      try {
-        const apiResponse = await fetch(apiPath);
-        if (apiResponse.ok) {
-          const apiData = await apiResponse.json();
-          if (isMounted) {
-            setAvailableSounds(Array.isArray(apiData) ? apiData : []);
-            return;
-          }
-        }
-      } catch (apiError) {
-        console.warn('API fetch failed:', apiError);
-      }
-
+      // Try manifest first as it's the primary way for static hosts like GitHub Pages
       try {
         const response = await fetch(manifestPath);
         if (response.ok) {
           const data = await response.json();
           if (isMounted) {
             setAvailableSounds(Array.isArray(data) ? data : []);
+            return; // Successfully got sounds from manifest
           }
         }
       } catch (error) {
-        console.error('Manifest fetch failed:', error);
+        console.warn('Manifest fetch failed, trying API...:', error);
+      }
+
+      // Only try API if not on GitHub Pages (static host)
+      if (!isGitHubPages) {
+        try {
+          const apiResponse = await fetch(apiPath);
+          if (apiResponse.ok) {
+            const apiData = await apiResponse.json();
+            if (isMounted) {
+              setAvailableSounds(Array.isArray(apiData) ? apiData : []);
+            }
+          }
+        } catch (apiError) {
+          console.warn('API fetch failed:', apiError);
+        }
       }
     };
     fetchSounds();
