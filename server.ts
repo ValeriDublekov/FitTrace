@@ -11,27 +11,40 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  // API routes
-  app.get('/api/sounds', async (req, res) => {
-    try {
-      const soundsPath = path.resolve(__dirname, 'public/sounds');
-      
-      // Ensure directory exists
-      await fs.mkdir(soundsPath, { recursive: true });
-      
-      const files = await fs.readdir(soundsPath);
-      const soundFiles = files
-        .filter(file => {
-          const lower = file.toLowerCase();
-          return (lower.endsWith('.mp3') || lower.endsWith('.wav')) && !file.startsWith('.');
-        });
-      
-      res.json(soundFiles);
-    } catch (error) {
-      console.error('Error reading sounds directory:', error);
-      res.status(500).json([]);
-    }
-  });
+    const soundsPath = path.resolve(process.cwd(), 'public/sounds');
+    
+    // API routes
+    app.get('/api/sounds', async (req, res) => {
+      try {
+        console.log(`Searching for sounds in: ${soundsPath}`);
+        // Ensure directory exists
+        await fs.mkdir(soundsPath, { recursive: true });
+        
+        const files = await fs.readdir(soundsPath);
+        const soundFiles = files
+          .filter(file => {
+            const lower = file.toLowerCase();
+            return (lower.endsWith('.mp3') || lower.endsWith('.wav')) && !file.startsWith('.');
+          });
+        
+        console.log(`Found ${soundFiles.length} sound files`);
+
+        // Also update/create sounds.json for static fallback
+        try {
+          await fs.writeFile(
+            path.resolve(process.cwd(), 'public/sounds.json'),
+            JSON.stringify(soundFiles, null, 2)
+          );
+        } catch (we) {
+          console.warn('Could not write sounds.json manifest', we);
+        }
+
+        res.json(soundFiles);
+      } catch (error) {
+        console.error('Error reading sounds directory:', error);
+        res.status(500).json([]);
+      }
+    });
 
   // Use Vite middleware in development
   if (process.env.NODE_ENV !== 'production') {

@@ -5,8 +5,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const soundsDir = path.join(__dirname, '../public/sounds');
-const outputFile = path.join(__dirname, '../public/sounds.json');
+const soundsDir = path.resolve(process.cwd(), 'public/sounds');
+const outputFile = path.resolve(process.cwd(), 'public/sounds.json');
 
 try {
   if (!fs.existsSync(soundsDir)) {

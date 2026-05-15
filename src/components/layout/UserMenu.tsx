@@ -17,28 +17,46 @@ const UserMenu: React.FC = () => {
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchSounds = async () => {
+      const origin = window.location.origin;
+      const apiPath = `${origin}/api/sounds?t=${Date.now()}`;
+      const manifestPath = `${origin}/sounds.json?t=${Date.now()}`;
+      
+      console.log('Fetching sounds from:', { apiPath, manifestPath });
+      
       try {
-        const response = await fetch('/sounds.json');
-        if (!response.ok) throw new Error('Failed to load sounds.json');
-        const data = await response.json();
-        setAvailableSounds(data);
-      } catch (error) {
-        console.error('Failed to fetch sounds:', error);
-        // Fallback to API if JSON fails (useful for local dev environment)
-        try {
-          const apiResponse = await fetch('/api/sounds');
-          if (apiResponse.ok) {
-            const apiData = await apiResponse.json();
-            setAvailableSounds(apiData);
+        const apiResponse = await fetch(apiPath);
+        if (apiResponse.ok) {
+          const apiData = await apiResponse.json();
+          if (isMounted) {
+            setAvailableSounds(Array.isArray(apiData) ? apiData : []);
+            return;
           }
-        } catch (apiError) {
-          console.error('API fallback failed:', apiError);
         }
+      } catch (apiError) {
+        console.warn('API fetch failed:', apiError);
+      }
+
+      try {
+        const response = await fetch(manifestPath);
+        if (response.ok) {
+          const data = await response.json();
+          if (isMounted) {
+            setAvailableSounds(Array.isArray(data) ? data : []);
+          }
+        }
+      } catch (error) {
+        console.error('Manifest fetch failed:', error);
       }
     };
     fetchSounds();
-  }, [isOpen]);
+    return () => { isMounted = false; };
+  }, []);
+
+  const formatSoundName = (filename: string) => {
+    return filename.replace(/\.(mp3|wav)$/i, '').replace(/[_-]/g, ' ');
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -80,7 +98,7 @@ const UserMenu: React.FC = () => {
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="absolute right-0 mt-2 w-72 bg-white rounded-3xl shadow-xl border border-zinc-200 py-3 z-50 overflow-hidden"
+            className="absolute right-0 mt-2 w-72 bg-white rounded-3xl shadow-xl border border-zinc-200 py-3 z-50"
           >
             <div className="px-5 py-3 border-b border-zinc-100 mb-2">
               <p className="font-bold text-zinc-900 truncate">{user.displayName}</p>
@@ -130,7 +148,7 @@ const UserMenu: React.FC = () => {
                 >
                   <option value="default">{t('dashboard.notification_sounds.zen')}</option>
                   {availableSounds.map(sound => (
-                    <option key={sound} value={sound}>{sound}</option>
+                    <option key={sound} value={sound}>{formatSoundName(sound)}</option>
                   ))}
                 </select>
                 <button
