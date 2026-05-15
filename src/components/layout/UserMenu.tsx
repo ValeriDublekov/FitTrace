@@ -19,11 +19,11 @@ const UserMenu: React.FC = () => {
   useEffect(() => {
     let isMounted = true;
     const fetchSounds = async () => {
-      const origin = window.location.origin;
-      const apiPath = `${origin}/api/sounds?t=${Date.now()}`;
-      const manifestPath = `${origin}/sounds.json?t=${Date.now()}`;
+      const baseUrl = import.meta.env.BASE_URL || '/';
+      const apiPath = `${baseUrl}api/sounds?t=${Date.now()}`;
+      const manifestPath = `${baseUrl}sounds.json?t=${Date.now()}`;
       
-      console.log('Fetching sounds from:', { apiPath, manifestPath });
+      console.log('Fetching sounds from:', { apiPath, manifestPath, baseUrl });
       
       try {
         const apiResponse = await fetch(apiPath);

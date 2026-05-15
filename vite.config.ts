@@ -6,8 +6,10 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
+  const isProduction = mode === 'production';
+  
   return {
-    base: './',
+    base: isProduction ? '/FitTrace/' : '/',
     plugins: [
       react(), 
       tailwindcss(),

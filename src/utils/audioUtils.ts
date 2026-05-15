@@ -9,7 +9,8 @@ export const playNotificationSound = async (type: string = 'default') => {
   try {
     // If it's a specific file from the folder, try playing it
     if (type !== 'default' && type !== 'beep') {
-      const audio = new Audio(`/sounds/${type}`);
+      const baseUrl = import.meta.env.BASE_URL || '/';
+      const audio = new Audio(`${baseUrl}sounds/${type}`);
       await audio.play();
       return;
     }
