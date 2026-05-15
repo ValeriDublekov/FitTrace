@@ -20,10 +20,13 @@ const UserMenu: React.FC = () => {
     let isMounted = true;
     const fetchSounds = async () => {
       const baseUrl = import.meta.env.BASE_URL || '/';
-      const apiPath = `${baseUrl}api/sounds?t=${Date.now()}`;
-      const manifestPath = `${baseUrl}sounds.json?t=${Date.now()}`;
+      const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+      const origin = window.location.origin;
       
-      console.log('Fetching sounds from:', { apiPath, manifestPath, baseUrl });
+      const apiPath = `${origin}${cleanBaseUrl}api/sounds?t=${Date.now()}`;
+      const manifestPath = `${origin}${cleanBaseUrl}sounds.json?t=${Date.now()}`;
+      
+      console.log('Sound fetch config:', { apiPath, manifestPath, baseUrl, origin });
       
       try {
         const apiResponse = await fetch(apiPath);
