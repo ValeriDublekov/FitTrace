@@ -120,7 +120,7 @@ export const useWorkoutSession = () => {
       exerciseName: exercise.name,
       startedAt: new Date(),
       sets: Array.from({ length: 1 }, (_, i) => {
-        const prevSet = baseSets[i] || baseSets[baseSets.length - 1]; 
+        const prevSet = baseSets[baseSets.length - 1]; 
         return {
           setIndex: i + 1,
           reps: prevSet?.reps ?? 10,
