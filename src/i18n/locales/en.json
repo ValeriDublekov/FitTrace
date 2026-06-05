@@ -146,6 +146,10 @@
       },
       "filter_category": "Category:",
       "all_categories": "All Groups",
+      "view_workouts": "Workouts",
+      "view_exercises": "Exercises",
+      "filter_muscle_groups": "Filter by Muscle Groups:",
+      "no_matching_exercises": "No exercises found matching the selected muscle groups.",
       "confirmations": {
         "delete_workout": {
           "title": "Delete Workout",

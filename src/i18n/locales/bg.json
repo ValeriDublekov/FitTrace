@@ -149,6 +149,10 @@
       },
       "filter_category": "Мускулна група:",
       "all_categories": "Всички групи",
+      "view_workouts": "Тренировки",
+      "view_exercises": "Упражнения",
+      "filter_muscle_groups": "Филтрирай по мускулни групи:",
+      "no_matching_exercises": "Няма намерени упражнения с избраните мускулни групи.",
       "confirmations": {
         "delete_workout": {
           "title": "Изтриване на тренировка",
