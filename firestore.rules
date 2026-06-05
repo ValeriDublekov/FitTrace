@@ -37,9 +37,9 @@ service cloud.firestore {
 
     function isValidExercise(exercise) {
       // Mandatory fields for both create and update
-      let mandatoryFields = ['name', 'category', 'loadType', 'createdAt'];
+      let mandatoryFields = ['name', 'category', 'loadType'];
       // Optional fields that might be present
-      let optionalFields = ['thumbnailUrl', 'defaultNotes', 'updatedAt', 'userId', 'isCustom', 'url'];
+      let optionalFields = ['thumbnailUrl', 'defaultNotes', 'description', 'updatedAt', 'userId', 'isCustom', 'url', 'id', 'createdAt'];
       
       return exercise.keys().hasAll(mandatoryFields)
         && exercise.keys().size() <= mandatoryFields.size() + optionalFields.size()
@@ -48,10 +48,13 @@ service cloud.firestore {
         && exercise.loadType in ['WEIGHT_REPS', 'LEVEL_REPS', 'CARDIO']
         && (exercise.get('thumbnailUrl', '') is string)
         && (exercise.get('defaultNotes', '') is string)
+        && (exercise.get('description', '') is string && exercise.get('description', '').size() <= 10000)
         && (exercise.get('url', '') is string)
         && (exercise.get('userId', '') == '' || exercise.userId is string)
         && (exercise.get('isCustom', false) is bool)
-        && exercise.createdAt == (resource == null ? request.time : resource.data.createdAt);
+        && (exercise.get('id', '') is string)
+        && (!('createdAt' in exercise) || exercise.createdAt is timestamp)
+        && (resource == null || !('createdAt' in resource.data) || !('createdAt' in exercise) || exercise.createdAt == resource.data.createdAt);
     }
 
     function isValidWorkout(workout) {
@@ -107,7 +110,7 @@ service cloud.firestore {
           isAdmin() || 
           (resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid)
         )
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'category', 'loadType', 'thumbnailUrl', 'defaultNotes', 'url', 'updatedAt', 'userId', 'isCustom'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'category', 'loadType', 'thumbnailUrl', 'defaultNotes', 'description', 'url', 'updatedAt', 'userId', 'isCustom'])
         && request.resource.data.updatedAt == request.time;
       allow delete: if isAdmin() || (resource.data.userId == request.auth.uid);
     }

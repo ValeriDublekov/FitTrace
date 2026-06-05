@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { ExerciseForm } from '../features/admin/components/ExerciseForm';
 import { CustomExerciseMigration } from '../features/admin/components/CustomExerciseMigration';
 import { Exercise } from '../types';
-import { Plus, Edit3, Trash2, Search, Filter, Dumbbell, Globe, ShieldAlert, Lock, Unlock, History } from 'lucide-react';
+import { Plus, Edit3, Trash2, Search, Filter, Dumbbell, Globe, ShieldAlert, Lock, Unlock, History, Download, Upload, CheckCircle2, AlertCircle, ArrowUpDown, FileSpreadsheet } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 
@@ -16,11 +16,22 @@ const AdminPage: React.FC = () => {
   const { exercises, loading: exercisesLoading, error, addExercise, updateExercise, deleteExercise, uploadThumbnail, mergeCustomExercise } = useExercises({ adminMode: true });
   const { settings, loading: settingsLoading, updateSettings } = useAppSettings();
   
-  const [activeTab, setActiveTab] = useState<'settings' | 'exercises' | 'migration'>('settings');
+  const [activeTab, setActiveTab] = useState<'settings' | 'exercises' | 'migration' | 'import_export'>('settings');
   const [showForm, setShowForm] = useState(false);
   const [editingExercise, setEditingExercise] = useState<Exercise | undefined>();
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
+  
+  // CSV Import/Export States
+  const [includeCustomExercises, setIncludeCustomExercises] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importStatus, setImportStatus] = useState<{
+    success: number;
+    errors: number;
+    total: number;
+    details: string[];
+  } | null>(null);
   
   // Modal state
   const [exerciseToDelete, setExerciseToDelete] = useState<string | null>(null);
@@ -70,6 +81,185 @@ const AdminPage: React.FC = () => {
     setEditingExercise(undefined);
   };
 
+  const handleExport = () => {
+    // Determine which exercises to export
+    const listToExport = includeCustomExercises 
+      ? exercises 
+      : exercises.filter(e => !e.isCustom);
+      
+    // CSV columns: мускулна група;id;name;текст на текущото описание ако има
+    let csvContent = '\uFEFF'; // UTF-8 BOM so Excel/Cyrillic renders perfectly
+    csvContent += 'мускулна група;id;name;описание\n';
+    
+    const escapeCSVField = (field: string | undefined | null): string => {
+      if (field === undefined || field === null) return '';
+      const str = String(field);
+      const needsEscaping = str.includes(';') || str.includes('"') || str.includes('\n') || str.includes('\r');
+      if (needsEscaping) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    listToExport.forEach(e => {
+      const row = [
+        escapeCSVField(e.category),
+        escapeCSVField(e.id),
+        escapeCSVField(e.name),
+        escapeCSVField(e.description || '')
+      ];
+      csvContent += row.join(';') + '\n';
+    });
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `exercises_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const parseCSV = (text: string): string[][] => {
+    const lines: string[][] = [];
+    let row: string[] = [];
+    let currentField = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const nextChar = text[i + 1];
+
+      if (inQuotes) {
+        if (char === '"') {
+          if (nextChar === '"') {
+            currentField += '"';
+            i++;
+          } else {
+            inQuotes = false;
+          }
+        } else {
+          currentField += char;
+        }
+      } else {
+        if (char === '"') {
+          inQuotes = true;
+        } else if (char === ';') {
+          row.push(currentField);
+          currentField = '';
+        } else if (char === '\n' || char === '\r') {
+          row.push(currentField);
+          if (row.length > 1 || row[0] !== '') {
+            lines.push(row);
+          }
+          row = [];
+          currentField = '';
+          if (char === '\r' && nextChar === '\n') {
+            i++;
+          }
+        } else {
+          currentField += char;
+        }
+      }
+    }
+
+    if (row.length > 0 || currentField !== '') {
+      row.push(currentField);
+      lines.push(row);
+    }
+
+    return lines;
+  };
+
+  const handleImport = async () => {
+    if (!importFile) return;
+    setImporting(true);
+    setImportStatus(null);
+    
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const text = event.target?.result as string;
+        if (!text) {
+          setImporting(false);
+          return;
+        }
+
+        const rows = parseCSV(text);
+        if (rows.length === 0) {
+          setImporting(false);
+          return;
+        }
+
+        const firstCol = rows[0]?.[0]?.trim().toLowerCase();
+        const startIndex = (firstCol === 'id' || firstCol === 'мускулна група' || firstCol === 'category') ? 1 : 0;
+        
+        let successCount = 0;
+        let errorCount = 0;
+        const detailsLog: string[] = [];
+
+        for (let i = startIndex; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row || row.length < 2) continue;
+
+          let id = '';
+          let name = '';
+          let description = '';
+
+          const isExportHeader = rows[0]?.[0]?.trim().toLowerCase() === 'мускулна група' || rows[0]?.[0]?.trim().toLowerCase() === 'category';
+          
+          if (isExportHeader) {
+            id = row[1]?.trim();
+            name = row[2]?.trim();
+            description = row[3]?.trim();
+          } else {
+            id = row[0]?.trim();
+            name = row[1]?.trim();
+            description = row[2]?.trim() || '';
+          }
+
+          if (!id || !name) {
+            errorCount++;
+            detailsLog.push(`Ред ${i + 1}: Липсва ИД или Име.`);
+            continue;
+          }
+
+          const existingEx = exercises.find(ex => ex.id === id);
+          if (!existingEx) {
+            errorCount++;
+            detailsLog.push(`Ред ${i + 1}: Упражнение с ИД "${id}" не е намерено.`);
+            continue;
+          }
+
+          try {
+            await updateExercise(id, { name, description });
+            successCount++;
+            detailsLog.push(`Ред ${i + 1}: Успешно обновено "${name}" (ИД: ${id}).`);
+          } catch (err: any) {
+            errorCount++;
+            const errMsg = err?.message || err?.toString() || '';
+            detailsLog.push(`Ред ${i + 1}: Грешка при запис във Firestore за "${name}". ${errMsg}`);
+          }
+        }
+
+        setImportStatus({
+          success: successCount,
+          errors: errorCount,
+          total: rows.length - startIndex,
+          details: detailsLog
+        });
+        setImporting(false);
+        setImportFile(null);
+      };
+
+      reader.readAsText(importFile, 'UTF-8');
+    } catch (err) {
+      console.error(err);
+      setImporting(false);
+    }
+  };
+
   if (loading && exercises.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -82,6 +272,7 @@ const AdminPage: React.FC = () => {
     { id: 'settings' as const, label: t('workout.admin.tabs.settings'), icon: Globe },
     { id: 'exercises' as const, label: t('workout.admin.tabs.exercises'), icon: Dumbbell },
     { id: 'migration' as const, label: t('workout.admin.tabs.migration'), icon: History },
+    { id: 'import_export' as const, label: t('workout.admin.tabs.import_export'), icon: ArrowUpDown },
   ];
 
   return (
@@ -343,6 +534,157 @@ const AdminPage: React.FC = () => {
                 systemExercises={globalExercises}
                 onMerge={mergeCustomExercise}
               />
+            </section>
+          )}
+
+          {activeTab === 'import_export' && (
+            <section className="space-y-6" id="admin-import-export-section">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('workout.admin.import_export.title')}</h2>
+                <p className="text-gray-500 text-sm">{t('workout.admin.import_export.subtitle')}</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Export Card */}
+                <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 flex flex-col justify-between space-y-6">
+                  <div className="space-y-4">
+                    <div className="w-12 h-12 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600">
+                      <Download className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">{t('workout.admin.import_export.export_card')}</h3>
+                      <p className="text-gray-500 text-sm mt-1 leading-relaxed">
+                        {t('workout.admin.import_export.export_desc')}
+                      </p>
+                    </div>
+
+                    <label className="flex items-start gap-3 p-4 bg-gray-50 border border-gray-100 rounded-2xl cursor-pointer hover:bg-gray-100/50 transition-all select-none">
+                      <input 
+                        type="checkbox" 
+                        checked={includeCustomExercises} 
+                        onChange={(e) => setIncludeCustomExercises(e.target.checked)}
+                        className="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" 
+                      />
+                      <span className="text-sm text-gray-600 font-medium">
+                        {t('workout.admin.import_export.include_custom')}
+                      </span>
+                    </label>
+                  </div>
+
+                  <button
+                    onClick={handleExport}
+                    className="w-full py-4 bg-zinc-900 text-white rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-zinc-800 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Download className="w-4 h-4" />
+                    {t('workout.admin.import_export.export_btn')}
+                  </button>
+                </div>
+
+                {/* Import Card */}
+                <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 flex flex-col justify-between space-y-6">
+                  <div className="space-y-4">
+                    <div className="w-12 h-12 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600">
+                      <Upload className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">{t('workout.admin.import_export.import_card')}</h3>
+                      <p className="text-gray-500 text-sm mt-1 leading-relaxed">
+                        {t('workout.admin.import_export.import_desc')}
+                      </p>
+                    </div>
+
+                    {/* Drag and Drop File Input Area */}
+                    <div 
+                      className={`border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${importFile ? 'border-indigo-500 bg-indigo-50/25' : 'border-gray-200 bg-gray-50/50 hover:bg-gray-100/50'}`}
+                      onClick={() => document.getElementById('csv-import-file')?.click()}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const file = e.dataTransfer.files?.[0];
+                        if (file && (file.type === 'text/csv' || file.name.endsWith('.csv'))) {
+                          setImportFile(file);
+                        }
+                      }}
+                    >
+                      <input 
+                        type="file" 
+                        id="csv-import-file" 
+                        accept=".csv"
+                        className="hidden" 
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) setImportFile(file);
+                        }}
+                      />
+                      <FileSpreadsheet className={`w-8 h-8 mb-2 ${importFile ? 'text-indigo-600' : 'text-gray-400'}`} />
+                      <span className="text-sm font-bold text-gray-700">
+                        {importFile ? importFile.name : t('workout.admin.import_export.upload_or_drag')}
+                      </span>
+                      {importFile && (
+                        <span className="text-xs text-gray-400 mt-1">
+                          {(importFile.size / 1024).toFixed(1)} KB
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleImport}
+                    disabled={importing || !importFile}
+                    className={`w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 ${importing || !importFile ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  >
+                    {importing ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Upload className="w-4 h-4" />
+                    )}
+                    {t('workout.admin.import_export.import_btn')}
+                  </button>
+                </div>
+              </div>
+
+              {/* Import status and logs console */}
+              {importStatus && (
+                <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 space-y-4">
+                  <div className="flex items-center gap-2 text-gray-900">
+                    <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+                    <h3 className="text-xl font-bold">{t('workout.admin.import_export.status_label')}</h3>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 text-center">
+                      <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest block">{t('workout.admin.import_export.status_updated')}</span>
+                      <span className="text-2xl font-black text-emerald-950">{importStatus.success}</span>
+                    </div>
+                    <div className="bg-rose-50/50 border border-rose-100 rounded-2xl p-4 text-center">
+                      <span className="text-[10px] font-black text-rose-700 uppercase tracking-widest block">{t('workout.admin.import_export.status_errors')}</span>
+                      <span className="text-2xl font-black text-rose-950">{importStatus.errors}</span>
+                    </div>
+                    <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-center">
+                      <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest block">{t('workout.admin.import_export.status_total')}</span>
+                      <span className="text-2xl font-black text-slate-950">{importStatus.total}</span>
+                    </div>
+                  </div>
+
+                  {importStatus.details.length > 0 && (
+                    <div className="space-y-2">
+                      <span className="text-xs font-black text-gray-400 uppercase tracking-widest block">Детайлен лог на процеса</span>
+                      <div className="bg-zinc-950 text-zinc-300 font-mono text-[11px] rounded-2xl p-6 h-60 overflow-y-auto space-y-1.5 scrollbar-thin">
+                        {importStatus.details.map((log, idx) => (
+                          <div 
+                            key={idx} 
+                            className={log.includes('Успешно') ? 'text-emerald-400' : log.includes('Грешка') || log.includes('не е намерено') ? 'text-rose-450' : 'text-zinc-400'}
+                          >
+                            {log}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </section>
           )}
         </motion.div>

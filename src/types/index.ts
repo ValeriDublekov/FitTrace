@@ -12,6 +12,7 @@ export interface Exercise {
   loadType: LoadType;
   thumbnailUrl?: string;
   defaultNotes?: string;
+  description?: string;
   url?: string;
   userId?: string;
   isCustom?: boolean;

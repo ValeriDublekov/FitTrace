@@ -29,6 +29,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
   const [loadType, setLoadType] = useState<LoadType>(exercise?.loadType || 'WEIGHT_REPS');
   const [url, setUrl] = useState(exercise?.url || '');
   const [notes, setNotes] = useState(exercise?.defaultNotes || '');
+  const [description, setDescription] = useState(exercise?.description || '');
   const [thumbnailUrl, setThumbnailUrl] = useState(exercise?.thumbnailUrl || '');
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,6 +45,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
         category,
         loadType,
         defaultNotes: notes,
+        description,
         url,
         thumbnailUrl
       });
@@ -142,6 +144,17 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
             placeholder="Technical tips or default notes..."
+            className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('workout.exercise_form.description')}</label>
+          <textarea 
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={4}
+            placeholder="Detailed execution tips, proper technique, common mistakes to avoid (AI generated advice format)..."
             className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium"
           />
         </div>

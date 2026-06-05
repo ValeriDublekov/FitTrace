@@ -72,6 +72,12 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, onAdd, onE
                 {exercise.defaultNotes && (
                   <p className="text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-xl">{exercise.defaultNotes}</p>
                 )}
+                {exercise.description && (
+                  <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 space-y-1">
+                    <span className="text-[10px] font-black text-indigo-700 uppercase tracking-widest block">AI Техника и съвети</span>
+                    <p className="text-xs text-slate-700 leading-relaxed font-medium whitespace-pre-wrap">{exercise.description}</p>
+                  </div>
+                )}
                 
                 <button
                   onClick={(e) => {

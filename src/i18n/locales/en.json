@@ -165,6 +165,7 @@
       "load_type": "Load Type",
       "thumbnail": "Thumbnail",
       "notes": "Notes",
+      "description": "Description / Technique (AI tips)",
       "cancel": "Cancel",
       "save": "Save"
     },
@@ -226,7 +227,8 @@
       "tabs": {
         "settings": "General Settings",
         "exercises": "Global Exercises",
-        "migration": "Migration"
+        "migration": "Migration",
+        "import_export": "Import / Export"
       },
       "settings": {
         "title": "General Settings",
@@ -254,6 +256,24 @@
       "migration": {
         "title": "Exercise Migration",
         "subtitle": "Merge custom user exercises into the global database to standardize records."
+      },
+      "import_export": {
+        "title": "Import / Export Exercises",
+        "subtitle": "Export the exercise database to CSV, generate new guides with AI, and import them back.",
+        "export_card": "Export Database",
+        "export_desc": "Generate a CSV containing the current exercises. You can use an AI externally (like Gemini) to fill or update the descriptions, then upload the file using the Import form.",
+        "include_custom": "Include user-created custom exercises in the export",
+        "export_btn": "Download CSV",
+        "import_card": "Import Database",
+        "import_desc": "Upload a CSV file with `;` delimiters and columns: `id;name;описание`. The system will update both the names and descriptions of matching exercises.",
+        "upload_or_drag": "Click or drag a CSV file here to upload",
+        "import_btn": "Import CSV",
+        "status_label": "Import Status",
+        "status_updated": "Updated exercises",
+        "status_errors": "Not found / Errors",
+        "status_total": "Total Rows",
+        "select_file": "Choose file...",
+        "no_file_selected": "Please select a valid CSV file first."
       }
     }
   }
