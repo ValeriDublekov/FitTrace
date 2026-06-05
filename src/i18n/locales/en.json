@@ -119,6 +119,8 @@
     "no_history": "No previous records for this exercise.",
     "add_set": "Add Set",
     "finish_ex": "Finish Exercise",
+    "show_tips": "AI Tips",
+    "no_tips_available": "No AI tips available for this exercise. You can add them from the admin panel.",
     "exercise_notes": "Exercise Notes",
     "exercise_notes_placeholder": "Details about form, seat position, etc...",
     "progress": {

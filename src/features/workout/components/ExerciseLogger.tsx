@@ -26,6 +26,7 @@ export const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
   const { updateSet, addSet, removeSet, clearRestTimer, removeExercise, markExerciseAsCompleted, removeIncompleteSets, updateExerciseNotes } = useWorkoutContext();
   const { history, loading: historyLoading } = useExerciseHistory(exercise.id);
   const [showHistory, setShowHistory] = useState(false);
+  const [showDescription, setShowDescription] = useState(false);
   const [showAllHistory, setShowAllHistory] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
@@ -59,11 +60,37 @@ export const ExerciseLogger: React.FC<ExerciseLoggerProps> = ({
         <ExerciseLoggerHeader
           exercise={exercise}
           showHistory={showHistory}
-          onToggleHistory={() => setShowHistory(!showHistory)}
+          onToggleHistory={() => {
+            setShowHistory(!showHistory);
+            if (!showHistory) setShowDescription(false);
+          }}
+          showDescription={showDescription}
+          onToggleDescription={() => {
+            setShowDescription(!showDescription);
+            if (!showDescription) setShowHistory(false);
+          }}
           onDeleteRequest={() => setShowDeleteConfirm(true)}
         />
 
         <AnimatePresence>
+          {showDescription && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden bg-indigo-50/40 border-b border-indigo-100/50"
+            >
+              <div className="p-6 space-y-3">
+                <span className="text-[10px] font-black text-indigo-700 uppercase tracking-widest block">
+                  {t('workout.show_tips')} / AI Техника и съвети
+                </span>
+                <p className="text-base sm:text-lg md:text-xl text-slate-800 font-bold leading-relaxed whitespace-pre-wrap">
+                  {exercise.description || exercise.defaultNotes || t('workout.no_tips_available')}
+                </p>
+              </div>
+            </motion.div>
+          )}
+
           {showHistory && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}

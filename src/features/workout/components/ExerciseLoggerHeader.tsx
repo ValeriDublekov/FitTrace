@@ -1,11 +1,13 @@
 import React from 'react';
-import { ExternalLink, ChevronUp, History, X } from 'lucide-react';
+import { ExternalLink, ChevronUp, History, X, Sparkles } from 'lucide-react';
 import { Exercise } from '../../../types';
 
 interface ExerciseLoggerHeaderProps {
   exercise: Exercise;
   showHistory: boolean;
   onToggleHistory: () => void;
+  showDescription: boolean;
+  onToggleDescription: () => void;
   onDeleteRequest: () => void;
 }
 
@@ -13,6 +15,8 @@ export const ExerciseLoggerHeader: React.FC<ExerciseLoggerHeaderProps> = ({
   exercise,
   showHistory,
   onToggleHistory,
+  showDescription,
+  onToggleDescription,
   onDeleteRequest
 }) => {
   return (
@@ -32,6 +36,13 @@ export const ExerciseLoggerHeader: React.FC<ExerciseLoggerHeaderProps> = ({
       </div>
       
       <div className="flex items-center gap-2">
+        <button 
+          onClick={onToggleDescription}
+          className={`w-10 h-10 flex items-center justify-center rounded-full transition-all ${showDescription ? 'text-indigo-600 bg-indigo-50 font-bold border border-indigo-150' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'}`}
+          title="Инструкции и AI съвети"
+        >
+          <Sparkles size={20} className={showDescription ? 'animate-pulse' : ''} />
+        </button>
         {exercise.url && (
           <a 
             href={exercise.url} 
