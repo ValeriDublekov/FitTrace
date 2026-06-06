@@ -30,7 +30,9 @@ export const ExerciseLoggerHeader: React.FC<ExerciseLoggerHeaderProps> = ({
           )}
         </div>
         <div className="min-w-0">
-          <h3 className="font-bold text-slate-900 tracking-tight break-words leading-tight">{exercise.name}</h3>
+          <h3 className="font-bold text-slate-900 tracking-tight break-words leading-tight">
+            {exercise.name} {exercise.affectedPart ? `(${exercise.affectedPart})` : ''}
+          </h3>
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest [.font-size-large_&]:hidden [.font-size-xlarge_&]:hidden">{exercise.category}</span>
         </div>
       </div>

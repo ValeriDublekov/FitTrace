@@ -17,6 +17,7 @@ export interface Exercise {
   userId?: string;
   isCustom?: boolean;
   createdAt: Date;
+  affectedPart?: string;
 }
 
 export interface ExerciseSet {
@@ -36,6 +37,7 @@ export interface WorkoutExercise {
   sets: ExerciseSet[];
   startedAt?: Date;
   durationSeconds?: number;
+  affectedPart?: string;
 }
 
 export interface Workout {

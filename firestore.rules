@@ -18,7 +18,7 @@ service cloud.firestore {
     function isAdmin() {
       return isSignedIn() && (
         exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
-        (request.auth.token.email == 'v.dublekov@gmail.com' && request.auth.token.email_verified == true)
+        (request.auth.token.get('email', '') == 'v.dublekov@gmail.com' && request.auth.token.get('email_verified', false) == true)
       );
     }
 
@@ -39,20 +39,21 @@ service cloud.firestore {
       // Mandatory fields for both create and update
       let mandatoryFields = ['name', 'category', 'loadType'];
       // Optional fields that might be present
-      let optionalFields = ['thumbnailUrl', 'defaultNotes', 'description', 'updatedAt', 'userId', 'isCustom', 'url', 'id', 'createdAt'];
+      let optionalFields = ['thumbnailUrl', 'defaultNotes', 'description', 'updatedAt', 'userId', 'isCustom', 'url', 'id', 'createdAt', 'affectedPart'];
       
       return exercise.keys().hasAll(mandatoryFields)
         && exercise.keys().size() <= mandatoryFields.size() + optionalFields.size()
         && exercise.name is string && exercise.name.size() <= 200
         && exercise.category is string && exercise.category.size() <= 100
         && exercise.loadType in ['WEIGHT_REPS', 'LEVEL_REPS', 'CARDIO']
-        && (exercise.get('thumbnailUrl', '') is string)
-        && (exercise.get('defaultNotes', '') is string)
-        && (exercise.get('description', '') is string && exercise.get('description', '').size() <= 10000)
-        && (exercise.get('url', '') is string)
-        && (exercise.get('userId', '') == '' || exercise.userId is string)
-        && (exercise.get('isCustom', false) is bool)
-        && (exercise.get('id', '') is string)
+        && (!('thumbnailUrl' in exercise) || exercise.thumbnailUrl == null || exercise.thumbnailUrl is string)
+        && (!('defaultNotes' in exercise) || exercise.defaultNotes == null || exercise.defaultNotes is string)
+        && (!('description' in exercise) || exercise.description == null || (exercise.description is string && exercise.description.size() <= 10000))
+        && (!('url' in exercise) || exercise.url == null || exercise.url is string)
+        && (!('userId' in exercise) || exercise.userId == null || exercise.userId is string)
+        && (!('isCustom' in exercise) || exercise.isCustom == null || exercise.isCustom is bool)
+        && (!('id' in exercise) || exercise.id == null || exercise.id is string)
+        && (!('affectedPart' in exercise) || exercise.affectedPart == null || (exercise.affectedPart is string && exercise.affectedPart.size() <= 200))
         && (!('createdAt' in exercise) || exercise.createdAt is timestamp)
         && (resource == null || !('createdAt' in resource.data) || !('createdAt' in exercise) || exercise.createdAt == resource.data.createdAt);
     }
@@ -110,7 +111,7 @@ service cloud.firestore {
           isAdmin() || 
           (resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid)
         )
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'category', 'loadType', 'thumbnailUrl', 'defaultNotes', 'description', 'url', 'updatedAt', 'userId', 'isCustom'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'category', 'loadType', 'thumbnailUrl', 'defaultNotes', 'description', 'url', 'updatedAt', 'userId', 'isCustom', 'affectedPart'])
         && request.resource.data.updatedAt == request.time;
       allow delete: if isAdmin() || (resource.data.userId == request.auth.uid);
     }

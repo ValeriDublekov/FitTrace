@@ -31,6 +31,7 @@ export const EditWorkoutModal: React.FC<EditWorkoutModalProps> = ({ workout, onC
       id: uuidv4(),
       exerciseId: exercise.id!,
       exerciseName: exercise.name,
+      affectedPart: exercise.affectedPart,
       sets: [
         { setIndex: 0, isCompleted: true }
       ]
@@ -119,7 +120,9 @@ export const EditWorkoutModal: React.FC<EditWorkoutModalProps> = ({ workout, onC
                 className="w-full flex items-center justify-between p-4 bg-zinc-50 hover:bg-indigo-50 border border-zinc-100 hover:border-indigo-200 rounded-2xl transition-all group"
               >
                 <div className="flex flex-col items-start px-1">
-                  <span className="font-bold text-zinc-900 group-hover:text-indigo-600 text-left">{ex.name}</span>
+                  <span className="font-bold text-zinc-900 group-hover:text-indigo-600 text-left">
+                    {ex.name} {ex.affectedPart ? `(${ex.affectedPart})` : ''}
+                  </span>
                   <span className="text-[10px] uppercase font-black text-zinc-400 tracking-widest">{t(`workout.categories.${ex.category.toLowerCase().replace(' ', '_')}`)}</span>
                 </div>
                 <div className="bg-white p-2 rounded-xl text-zinc-400 group-hover:text-indigo-600 group-hover:bg-white shadow-sm">
@@ -181,7 +184,7 @@ export const EditWorkoutModal: React.FC<EditWorkoutModalProps> = ({ workout, onC
                       <div className="bg-indigo-100 p-2 rounded-lg text-indigo-600">
                         <Dumbbell className="w-4 h-4" />
                       </div>
-                      {ex.exerciseName}
+                      {ex.exerciseName} {ex.affectedPart ? `(${ex.affectedPart})` : ''}
                     </div>
                     <button 
                       onClick={() => handleRemoveExercise(exIdx)}

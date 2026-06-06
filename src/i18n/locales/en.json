@@ -169,7 +169,8 @@
       "notes": "Notes",
       "description": "Description / Technique (AI tips)",
       "cancel": "Cancel",
-      "save": "Save"
+      "save": "Save",
+      "affected_part": "Affected Part / Muscle Zone"
     },
     "summary": {
       "title": "Great job!",

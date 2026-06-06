@@ -118,6 +118,7 @@ export const useWorkoutSession = () => {
       id: instanceId,
       exerciseId: exercise.id!,
       exerciseName: exercise.name,
+      affectedPart: exercise.affectedPart,
       startedAt: new Date(),
       sets: Array.from({ length: 1 }, (_, i) => {
         const prevSet = baseSets[baseSets.length - 1]; 

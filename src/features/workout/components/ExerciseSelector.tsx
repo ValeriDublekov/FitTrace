@@ -99,7 +99,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
             {completedExercises.map(ex => (
               <span key={ex.id} className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full text-xs font-bold">
                 <Dumbbell size={12} />
-                {ex.exerciseName}
+                {ex.exerciseName} {ex.affectedPart ? `(${ex.affectedPart})` : ''}
               </span>
             ))}
           </div>

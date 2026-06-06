@@ -87,9 +87,9 @@ const AdminPage: React.FC = () => {
       ? exercises 
       : exercises.filter(e => !e.isCustom);
       
-    // CSV columns: мускулна група;id;name;текст на текущото описание ако има
+    // CSV columns: мускулна група;id;name;описание;засегната част
     let csvContent = '\uFEFF'; // UTF-8 BOM so Excel/Cyrillic renders perfectly
-    csvContent += 'мускулна група;id;name;описание\n';
+    csvContent += 'мускулна група;id;name;описание;засегната част\n';
     
     const escapeCSVField = (field: string | undefined | null): string => {
       if (field === undefined || field === null) return '';
@@ -106,7 +106,8 @@ const AdminPage: React.FC = () => {
         escapeCSVField(e.category),
         escapeCSVField(e.id),
         escapeCSVField(e.name),
-        escapeCSVField(e.description || '')
+        escapeCSVField(e.description || ''),
+        escapeCSVField(e.affectedPart || '')
       ];
       csvContent += row.join(';') + '\n';
     });
@@ -206,17 +207,27 @@ const AdminPage: React.FC = () => {
           let id = '';
           let name = '';
           let description = '';
+          let affectedPart = '';
 
-          const isExportHeader = rows[0]?.[0]?.trim().toLowerCase() === 'мускулна група' || rows[0]?.[0]?.trim().toLowerCase() === 'category';
+          const isNewFormat = rows[0]?.[0]?.trim().toLowerCase() === 'мускулна група' || row.length >= 5;
           
-          if (isExportHeader) {
-            id = row[1]?.trim();
-            name = row[2]?.trim();
-            description = row[3]?.trim();
+          if (isNewFormat) {
+            id = row[1]?.trim() || '';
+            name = row[2]?.trim() || '';
+            description = row[3]?.trim() || '';
+            affectedPart = row[4]?.trim() || '';
           } else {
-            id = row[0]?.trim();
-            name = row[1]?.trim();
-            description = row[2]?.trim() || '';
+            // Fallback for older export formats
+            const isExportHeader = firstCol === 'category';
+            if (isExportHeader) {
+              id = row[1]?.trim() || '';
+              name = row[2]?.trim() || '';
+              description = row[3]?.trim() || '';
+            } else {
+              id = row[0]?.trim() || '';
+              name = row[1]?.trim() || '';
+              description = row[2]?.trim() || '';
+            }
           }
 
           if (!id || !name) {
@@ -233,7 +244,7 @@ const AdminPage: React.FC = () => {
           }
 
           try {
-            await updateExercise(id, { name, description });
+            await updateExercise(id, { name, description, affectedPart });
             successCount++;
             detailsLog.push(`Ред ${i + 1}: Успешно обновено "${name}" (ИД: ${id}).`);
           } catch (err: any) {

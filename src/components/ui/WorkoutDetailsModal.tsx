@@ -66,13 +66,14 @@ export const WorkoutDetailsModal: React.FC<WorkoutDetailsModalProps> = ({
             const isWeight = loadType === 'WEIGHT_REPS';
             const isLevel = loadType === 'LEVEL_REPS';
             const isCardio = loadType === 'CARDIO';
+            const finalAffectedPart = exerciseInfo?.affectedPart || ex.affectedPart;
 
             return (
               <div key={exIdx} className="space-y-2">
                 <div className="flex items-center justify-between font-bold text-zinc-900">
                   <div className="flex items-center gap-2">
                     <Dumbbell className="w-4 h-4 text-indigo-600" />
-                    {ex.exerciseName}
+                    {ex.exerciseName} {finalAffectedPart ? `(${finalAffectedPart})` : ''}
                   </div>
                   {ex.sessionNotes && (
                     <span className="text-[10px] font-medium text-slate-500 italic">

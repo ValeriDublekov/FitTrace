@@ -153,6 +153,7 @@ export const SimpleExerciseHistoryList: React.FC<SimpleExerciseHistoryListProps>
                       const category = masterEx?.category || 'Full Body';
                       const thumbnailUrl = masterEx?.thumbnailUrl;
                       const localizedCategory = t(`workout.categories.${category.toLowerCase().replace(' ', '_')}`, { defaultValue: category });
+                      const finalZone = masterEx?.affectedPart || workoutEx.affectedPart;
 
                       return (
                         <div
@@ -179,7 +180,7 @@ export const SimpleExerciseHistoryList: React.FC<SimpleExerciseHistoryListProps>
                           {/* Info Box */}
                           <div className="flex-1 min-w-0">
                             <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600 transition-colors text-sm break-words leading-tight uppercase tracking-tight">
-                              {workoutEx.exerciseName}
+                              {workoutEx.exerciseName} {finalZone ? `(${finalZone})` : ''}
                             </h4>
                             <span className="inline-block mt-1 px-2.5 py-1 text-[9px] font-black text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-lg uppercase tracking-wider">
                               {localizedCategory}

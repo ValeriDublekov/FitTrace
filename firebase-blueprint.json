@@ -24,7 +24,8 @@
         "url": { "type": "string" },
         "userId": { "type": "string", "description": "Owner of the custom exercise if applicable" },
         "isCustom": { "type": "boolean" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "createdAt": { "type": "string", "format": "date-time" },
+        "affectedPart": { "type": "string" }
       },
       "required": ["name", "category", "loadType", "createdAt"]
     },
@@ -63,7 +64,8 @@
           }
         },
         "startedAt": { "type": "string", "format": "date-time" },
-        "durationSeconds": { "type": "number" }
+        "durationSeconds": { "type": "number" },
+        "affectedPart": { "type": "string" }
       },
       "required": ["id", "exerciseId", "exerciseName", "sets"]
     },

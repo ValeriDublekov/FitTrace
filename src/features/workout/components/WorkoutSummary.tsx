@@ -86,7 +86,9 @@ export const WorkoutSummary: React.FC<WorkoutSummaryProps> = ({ workout, onClose
                   {idx + 1}
                 </div>
                 <div>
-                  <p className="font-bold text-slate-900 leading-tight">{ex.exerciseName}</p>
+                  <p className="font-bold text-slate-900 leading-tight">
+                    {ex.exerciseName} {ex.affectedPart ? `(${ex.affectedPart})` : ''}
+                  </p>
                   <p className="text-xs font-medium text-slate-400">{ex.sets.length} {t('workout.summary.sets')}</p>
                 </div>
               </div>
