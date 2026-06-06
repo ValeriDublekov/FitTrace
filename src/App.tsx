@@ -6,6 +6,7 @@
 import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth';
+import { AppDataProvider } from './context/AppDataContext';
 import { useAdmin } from './hooks/useAdmin';
 import { WorkoutSessionProvider } from './features/workout/context/WorkoutSessionContext';
 import { useAppSettings } from './hooks/useAppSettings';
@@ -141,11 +142,13 @@ const AppContent: React.FC = () => {
 export default function App() {
   return (
     <AuthProvider>
-      <Router>
-        <WorkoutSessionProvider>
-          <AppContent />
-        </WorkoutSessionProvider>
-      </Router>
+      <AppDataProvider>
+        <Router>
+          <WorkoutSessionProvider>
+            <AppContent />
+          </WorkoutSessionProvider>
+        </Router>
+      </AppDataProvider>
     </AuthProvider>
   );
 }
