@@ -62,6 +62,9 @@
     "discard": "Отхвърли"
   },
   "workout": {
+    "compact_view": "Компактен изглед",
+    "detailed_view": "Подробен изглед",
+    "max_weight": "Макс. тежест",
     "start_session": "Започни сесия",
     "finish_session": "КРАЙ",
     "add_exercise": "Добави упражнение",

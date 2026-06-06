@@ -62,6 +62,9 @@
     "discard": "Discard"
   },
   "workout": {
+    "compact_view": "Compact view",
+    "detailed_view": "Detailed view",
+    "max_weight": "Max performance",
     "start_session": "Start Session",
     "finish_session": "DONE",
     "add_exercise": "Add Exercise",
