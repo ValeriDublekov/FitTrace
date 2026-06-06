@@ -1,34 +1,91 @@
-# Инструкции за настройка на Firebase (FitTrace)
+# Firebase Integration & Configuration Guide
 
-Този проект използва Firebase за Authentication (Вход), Firestore (База данни) и Storage (Снимки). Следвайте стъпките по-долу, за да конфигурирате проекта си правилно.
+This application integrates Firebase for user authentication, cloud data persistence (Firestore), and asset storage. Follow this guide to set up your own Firebase environment.
 
-## 1. Активиране на услугите в Firebase Console
+---
 
-Отидете в [Firebase Console](https://console.firebase.google.com/project/fittrace-app-366ee/overview) (уверете се, че сте влезли с профила **v.dublekov@gmail.com**).
+## 1. Firebase Authentication Setup
+The application uses **Firebase Authentication** primarily via **Google Sign-In**. 
 
-Проектът ви е: **fittrace-app-366ee**
+### Steps to Configure Auth:
+1. Open the [Firebase Console](https://console.firebase.google.com/).
+2. Create a new Firebase project or select an existing one.
+3. Access the menu under **Build > Authentication** and click **Get Started**.
+4. In the **Sign-in method** tab, select **Google** from the passwordless/provider list.
+5. Toggle the **Enable** switch, configure a support email, and save your changes.
 
-### Директни връзки:
-- **База данни (Firestore):** [Кликнете тук](https://console.firebase.google.com/project/fittrace-app-366ee/firestore/databases/ai-studio-6be0d495-1c19-4e4f-b7e3-6dfef8b54845/data)
-- **Потребители (Authentication):** [Кликнете тук](https://console.firebase.google.com/project/fittrace-app-366ee/authentication/users)
-- **Файлове (Storage):** [Кликнете тук](https://console.firebase.google.com/project/fittrace-app-366ee/storage/fittrace-app-366ee.firebasestorage.app/files)
+---
 
-### А. Authentication
-1. Отидете на **Build > Authentication**.
-2. Кликнете на **Get Started**.
-3. В таб **Sign-in method** изберете **Google** и го активирайте (Enable).
-4. Настройте имейл за поддръжка на проекта и запазете.
+## 2. Firestore Database Provisioning & Schema
+The application requires **Cloud Firestore** in Native mode.
 
-### Б. Firestore Database
-1. Отидете на **Build > Firestore Database**.
-2. Кликнете на **Create database**.
-3. Изберете локация (близо до вас) и стартирайте в **Production mode** (правилата вече са качени от мен).
+### Steps to Configure Firestore:
+1. Access the menu under **Build > Firestore Database** in the console.
+2. Click **Create database**, select your region, and choose starting security rules in **Production mode**.
+3. Deploy the local `firestore.rules` rules file to secure your collections against unauthorized access.
 
-### В. Firebase Storage (за снимки на упражнения)
-1. Отидете на **Build > Storage**.
-2. Кликнете на **Get Started**.
-3. Кликнете на **Next** и след това на **Done**.
-4. **Важно:** Трябва да добавите правила за Storage, за да позволяват качване. Отидете на таб **Rules** в Storage и заменете съдържанието с:
+### Required Collections & Document Schema
+
+#### `/admins/{userId}`
+Represents users with system administrative rights (allowed to manage system-wide exercises and global settings).
+- **Doc ID**: The user's Firebase Authentication UID.
+- **Fields**:
+  - `email`: `string` — The verified administrator email.
+  - `createdAt`: `timestamp` — Date and time when the admin was verified.
+
+#### `/settings/global`
+Single document containing global configurations for the application.
+- **Collection**: `settings`
+- **Document ID**: `global`
+- **Fields**:
+  - `isPublic`: `boolean` — Controls public access permission overrides.
+  - `updatedAt`: `timestamp` — Server timestamp of the last edit.
+  - `updatedBy`: `string` — UID of the admin making the change.
+
+#### `/exercises/{exerciseId}`
+Stores both global (system) exercises created by administrators and custom exercises created by individual users.
+- **Doc ID**: Auto-generated string ID.
+- **Fields**:
+  - `name`: `string` — Name of the exercise.
+  - `category`: `string` — Exercise category (e.g., Chest, Back, Legs).
+  - `loadType`: `string` — Enum value: `'WEIGHT_REPS'`, `'LEVEL_REPS'`, or `'CARDIO'`.
+  - `isCustom`: `boolean` — `true` if created by a user, `false` if a global preset.
+  - `userId`: `string | null` — UID of the creator if `isCustom` is `true`.
+  - `thumbnailUrl`: `string | null` — Relative or absolute URL to the exercise image.
+  - `description`: `string | null` — Text describing performance technique.
+  - `defaultNotes`: `string | null` — Default user guidelines.
+  - `affectedPart`: `string | null` — Targeted muscle group descriptor.
+  - `createdAt`: `timestamp` — Creation timestamp.
+
+#### `/workouts/{workoutId}`
+Houses workout sessions logged by users. Only visible to the creator.
+- **Doc ID**: Auto-generated workout session ID.
+- **Fields**:
+  - `userId`: `string` — UID matching the authenticating user.
+  - `date`: `timestamp` — Workout performance date.
+  - `notes`: `string | null` — Session performance reviews.
+  - `exercises`: `array` of exercise logs (items contain logs of sets, level, reps, and weights).
+
+#### `/users/{userId}/settings/display`
+User preference settings document containing personalized visual, UX, and PWA options.
+- **Doc ID**: `display` (nested under the `settings` subcollection of a specific user)
+- **Fields**:
+  - `fontSize`: `string` — Set to `'normal'`, `'large'`, or `'xlarge'`.
+  - `language`: `string` — Active locale code (e.g. `'bg'`, `'en'`).
+  - `updatedAt`: `timestamp` — Last update transaction time.
+  - `notificationSound`: `string | null` — Key of the selected sound for rest alerts.
+  - `isNotificationsEnabled`: `boolean | null` — If notifications permission state is active.
+
+---
+
+## 3. Firebase Storage Configuration
+The fitness companion application utilizes **Firebase Storage** to host exercise icons, thumbnails, and custom uploads.
+
+### Steps to Configure Storage:
+1. Access the menu under **Build > Storage**.
+2. Click **Get Started**, choose your storage region, and initialize.
+3. Select the **Rules** tab in the Storage view and update the rules to permit public read access of static files while restricting uploads to logged-in system administrators:
+
 ```javascript
 rules_version = '2';
 service firebase.storage {
@@ -43,25 +100,20 @@ service firebase.storage {
 
 ---
 
-## 2. Как да добавите Администратор (Admin Rights)
+## 4. Setting Up Local Credentials
+To hook up your application to the live database, fetch the application credentials from your project settings:
+1. Go to **Project Settings > General** in the Firebase Console.
+2. Under "Your apps", select the **Web App** (or register one if not yet done).
+3. Copy the configuration script details and create/update the `firebase-applet-config.json` file in the root of your workspace:
 
-Системата проверява дали вашият уникален идентификатор (UID) съществува в специална колекция `admins` във Firestore.
-
-### Стъпки за добавяне:
-1. Влезте в приложението веднъж с вашия Google акаунт.
-2. Отидете във Firebase Console > **Firestore Database**.
-3. Кликнете на **Start collection**.
-4. Име на колекцията: `admins`.
-5. **Document ID:** Тук трябва да поставите вашия **User UID**.
-   - Можете да намерите вашия UID в секция **Authentication > Users**.
-6. Добавете следните полета в документа:
-   - `email`: (стринг) вашият имейл.
-   - `createdAt`: (timestamp) текущата дата.
-7. Запазете документа.
-
-След тези стъпки, когато презаредите приложението, в навигационната лента ще се появи меню **Admin**, което ще ви даде достъп до `/admin`.
-
----
-
-## 3. Локална конфигурация
-Ако разработвате локално, уверете се, че файлът `firebase-applet-config.json` в корена на проекта съдържа правилните ключове от "Project Settings > Your Apps" в конзолата на Firebase.
+```json
+{
+  "apiKey": "YOUR_API_KEY",
+  "authDomain": "YOUR_PROJECT_ID.firebaseapp.com",
+  "projectId": "YOUR_PROJECT_ID",
+  "storageBucket": "YOUR_PROJECT_ID.firebasestorage.app",
+  "messagingSenderId": "YOUR_SENDER_ID",
+  "appId": "YOUR_APP_ID",
+  "firestoreDatabaseId": "(default)"
+}
+```

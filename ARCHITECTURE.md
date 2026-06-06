@@ -1,80 +1,195 @@
-# Technical Architecture: Fitness Tracker PWA
+# Technical Architecture: FitTrace Fitness Tracker
 
-## 1. Tech Stack
-- **Frontend:** React + Vite
-- **Styling:** Tailwind CSS
-- **Database / Auth / Storage:** Firebase (Firestore, Firebase Auth, Firebase Storage)
-- **Charts:** Recharts
-- **PWA Capabilities:** `vite-plugin-pwa`
-- **Language:** TypeScript (Strict).
+This document details the software architecture, provider structure, state propagation flows, and data schemas governing the **FitTrace Fitness Tracker** application.
 
-## 2. Coding Standards & Constraints
-- **Separation of Concerns:** UI components must NOT contain raw Firebase calls. Use custom hooks (e.g., `useExercises()`, `useWorkout()`) for data fetching and business logic.
-- **File Size Constraint:** No file should exceed 200 lines. If a component grows, break it down into smaller sub-components (e.g., extract a `SetInputRow` from `ExerciseCard`).
-- **Early Returns:** Avoid deep nesting and nested ternary operators.
-- **State Management:** Keep it local with `useState` / `useReducer`, and use React Context only for global states like `AuthContext` or `WorkoutSessionContext`.
+---
 
-## 3. Directory Structure
+## 1. App Shell Composition & Layout
+
+The application has a mobile-first, responsive single-page responsive design that automatically adapts viewport layouts using Tailwind CSS:
+- **Mobile Layout:** Primary navigation is anchored to the bottom via the `BottomNav` element, which places actions under comfortable touch targets (44px+) of the thumbs. The navbar remains compact.
+- **Desktop Layout:** Features a persistive vertical or horizontal `Navbar` at the top of the viewport. The mobile bottom navigation is hidden.
+- **Active Session State:** When the user has an active, ongoing workout session, the layout adjusts dynamically: the bottom padding is removed (`pb-0` on active live session, or `pb-20 sm:pb-0` when inactive) to keep active workout headers, rest timers, and action footers pinned flush to the viewport borders.
+
+---
+
+## 2. Provider Hierarchy
+
+The application utilizes a strictly ordered parent-to-child component nesting sequence to propagate authenticated sessions, user preference streams, historical data, and current operational states:
+
 ```text
-/src
-  /assets        # Static assets, PWA icons
-  /components    # Generic UI components (Layout, Shared UI)
-  /features      # Domain-specific modules
-    /admin       # Exercise management
-    /workout     # Session flow, logging
-  /hooks         # Shared hooks
-  /services      # Firebase config and API wrappers (firebase.ts)
-  /pages         # Route components
-  /utils         # Global helpers
-  /types         # Shared interfaces
-  /constants     # Global constants
+<AuthProvider>                      [Global Auth State Monitor]
+  └── <AppDataProvider>             [Global Static Catalogs, Settings, & Mutations Provider]
+        └── <WorkoutHistoryProvider> [User Historical Workout Stream & Queries Controller]
+              └── <Router>           [React Router navigation context (HashRouter)]
+                    └── <WorkoutSessionProvider> [Active live/manual session logging context]
+                          └── <AppContent /> [Component Layout with route controllers]
 ```
 
-## 4. Auth & Navigation Decisions
-- **Auth Provider**: A high-level `AuthProvider` wraps the application to manage Firebase Auth state.
-- **Routing**: Uses `HashRouter` for maximum compatibility with static hosting (like GitHub Pages) and proper SPA fallback behavior.
-- **Base Path**: Configured as relative (`./`) in `vite.config.ts` to ensure assets load correctly on both root domains and subpaths.
-- **Route Protection**: The `App` component handles conditional rendering based on authentication state.
-- **Admin Verification**: The `useAdmin` hook performs a Firestore lookup to verify admin status against the `admins` collection.
-- **Layout**: A persistent `Navbar` is displayed for authenticated users on desktop. A `BottomNav` is used on mobile for primary navigation items (Dashboard, History, Exercises, Admin).
+- **`AuthProvider`:** Controls user session, initialization, and exposes identity status.
+- **`AppDataProvider`:** Subscribes to global system parameters (`appSettings`), displays individual user displays (`userSettings`), parses standard exercise catalogs sorted alphabetically, and acts as the gatekeeper for core database writes.
+- **`WorkoutHistoryProvider`:** Aggregates and maintains a cached state of user completed workout sessions to populate stats and logs securely.
+- **`HashRouter`:** Powers client-side routing. Hash navigation (`#/path`) is employed to bypass direct web-server requirements, allowing routes to function correctly under custom assets directories or subpaths without causing router 404 errors.
+- **`WorkoutSessionProvider`:** Encapsulates the active workout state (current logs, set telemetry, active duration timers, and passive rest alerts).
+
+---
+
+## 3. Route Map
+
+Access to routes is governed by the state of user registration, authentication verification, and administrative rights:
+
+| Path | Component | Route Guard / Access Constraints |
+| :--- | :--- | :--- |
+| `/login` | `LoginPage` | Unauthenticated fallback route. Authenticated users are auto-redirected to `/`. |
+| `/` | `Dashboard` | Authenticated users only. Lists recent workouts and session starting gates. |
+| `/new-workout` | `NewWorkout` | Authenticated users only. Enforces the active workout session UI (handles categories, loggers). |
+| `/history` | `HistoryPage` | Authenticated users only. High-fidelity workout log, edit modes, and delete triggers. |
+| `/progress` | `ProgressPage` | Authenticated users only. Exercise selector and progressive Recharts line charts. |
+| `/my-exercises` | `MyExercisesPage` | Authenticated users only. Enables standard custom exercises creation, updating, or deletion. |
+| `/admin` | `AdminPage` | Authorized Administrators only. Enforces local checking via `ProtectedAdminRoute`. |
+
+### route guards
+- **`ProtectedAdminRoute`**: Determines if the user's UID exists in the `admins` collection on Firestore. If not found, routes are safely bounced back to `/`.
+- **Maintenance Bypass (Private Mode)**: If global `appSettings.isPublic` is configured to `false`, non-admin users are locked out by a dedicated app-wide blocking screen and must log out. Admins bypass the lock to facilitate updates.
+
+---
+
+## 4. State Ownership Map
+
+State is classified into client-persistent (local), shared transient, and cloud-synchronized (durable) domains to minimize memory bloat:
+
+```text
+┌───────────────────────┐       ┌───────────────────────┐       ┌───────────────────────┐
+│     Client Local      │       │   Transient Context   │       │    Cloud Persistent   │
+├───────────────────────┤       ├───────────────────────┤       ├───────────────────────┤
+│ - Expanded Card IDs   │       │ - activeExercises     │       │ - Global exercises    │
+│ - Rest Timer Values   │ ────> │ - workoutNotes        │ ────> │ - User custom list    │
+│ - Category filters    │       │ - sessionMode state   │       │ - Completd workouts   │
+│ - UI toggles          │       │ - Timer ticking states│       │ - admins list         │
+└───────────────────────┘       └───────────────────────┘       └───────────────────────┘
+```
+
+- **Local UI State:** Individual card layouts, search keyword buffers, selection filters, and modals are isolated strictly inside functional hooks or component structures to prevent parent redraws.
+- **Active Session State:** Active workouts (`activeExercises`, `workoutNotes`, `sessionMode`, `workoutStartedAt`) are managed in a single central store (`WorkoutSessionContext`) and persist across browser refreshes via custom synchronization layers mapped into client `localStorage` keys.
+- **Durable Database State:** Cached and fetched dynamically inside services. Mutations propagate from clients to Firestore and are read back through reactive snapshot subscriptions mapped inside providers.
+
+---
 
 ## 5. Firestore Database Schema
 
-### Collection: `admins`
-Used to authorize admin users.
-- Document ID: `userId` (from Firebase Auth)
-- Fields: `email` (string), `createdAt` (timestamp)
+The database relies on three major collections utilizing explicit data types and server timestamps:
 
-### Collection: `exercises` (Global)
-- `id`: string (auto-generated)
-- `name`: string
-- `category`: string (e.g., "Chest", "Legs")
-- `loadType`: enum string (`"WEIGHT_REPS"`, `"LEVEL_REPS"`, `"CARDIO"`)
-- `thumbnailUrl`: string (URL from Firebase Storage)
-- `defaultNotes`: string (optional)
-- `createdAt`: timestamp
+### 5.1. Collection: `admins`
+Used to authorize admin roles for modifications to general system assets.
+* *Document ID:* `userId` (Firebase Authentication UID)
+* *Schema:*
+  ```typescript
+  interface Admin {
+    email: string;
+    createdAt: Date;
+  }
+  ```
 
-### Collection: `workouts` (Per User)
-- `id`: string (auto-generated)
-- `userId`: string (Firebase Auth UID)
-- `date`: timestamp
-- `notes`: string (optional)
-- `exercises`: Array of Objects. Structure:
-  - `exerciseId`: string (reference to exercises collection)
-  - `exerciseName`: string (denormalized for faster UI rendering)
-  - `sets`: Array of Objects:
-    - `setIndex`: number
-    - `weight`: number (optional, for WEIGHT_REPS)
-    - `level`: number (optional, for LEVEL_REPS/CARDIO)
-    - `reps`: number (optional)
-    - `duration`: number (optional, in seconds, for CARDIO)
-  - `sessionNotes`: string (optional modification specific to this workout)
+### 5.2. Collection: `settings`
+Used to track global variables for access modes. Includes a singular root document with ID `global`.
+* *Document ID:* `global`
+* *Schema:*
+  ```typescript
+  interface AppSettings {
+    isPublic: boolean;
+    updatedAt: Date;
+    updatedBy: string; // UserId of the modifier
+  }
+  ```
 
-## 5. Security Rules Concept (firestore.rules)
-- **`exercises`**: `read`: if true (or authenticated); `write`: if `request.auth.uid` exists in `admins` collection.
-- **`workouts`**: `read`, `write`: if `request.auth.uid == resource.data.userId` (Users can only read/write their own workout data).
-- **`admins`**: `read`: if `request.auth.uid == document.id`; `write`: false (managed manually via Firebase Console).
+### 5.3. Collection: `users`
+Underneath each user, preferences are partitioned to ensure logical data isolation.
+* *Settings Path:* `users/{userId}/settings/display`
+* *Schema:*
+  ```typescript
+  interface UserSettings {
+    fontSize: 'normal' | 'large' | 'xlarge';
+    language: 'bg' | 'en';
+    notificationSound: string; // bell files mapped under /public/sounds/
+    isNotificationsEnabled: boolean;
+    updatedAt: Date;
+  }
+  ```
+
+### 5.4. Collection: `exercises`
+Stores both global standard catalogues and custom user exercises.
+* *Document ID:* Auto-generated UUID from Firestore
+* *Fields:*
+  ```typescript
+  interface Exercise {
+    id?: string;
+    name: string;
+    category: string;
+    loadType: 'WEIGHT_REPS' | 'LEVEL_REPS' | 'CARDIO';
+    thumbnailUrl?: string; // Image path from Firebase Storage
+    defaultNotes?: string;
+    description?: string;
+    url?: string; // Instruction links if available
+    userId?: string | null; // Scopes custom exercises; null for global
+    isCustom: boolean;
+    createdAt: Date;
+    affectedPart?: string; // Target muscle/focus details
+  }
+  ```
+
+### 5.5. Collection: `workouts`
+Houses completed session logs populated with detailed metrics and notes.
+* *Document ID:* Auto-generated UUID from Firestore
+* *Fields:*
+  ```typescript
+  interface Workout {
+    id?: string;
+    userId: string;
+    date: Date;
+    updatedAt?: Date;
+    notes?: string;
+    startedAt?: Date; // Start of live recording
+    durationSeconds?: number; // Total length of session in seconds
+    exercises: WorkoutExercise[];
+  }
+
+  interface WorkoutExercise {
+    id: string; // Unique transient instance string
+    exerciseId: string;
+    exerciseName: string;
+    sessionNotes?: string;
+    sets: ExerciseSet[];
+    startedAt?: Date;
+    durationSeconds?: number;
+    affectedPart?: string;
+  }
+
+  interface ExerciseSet {
+    setIndex: number;
+    weight?: number; // kilogram values for WEIGHT_REPS
+    level?: number;  // setting speed/level for LEVEL_REPS or CARDIO
+    reps?: number;   // repetition count
+    duration?: number; // duration in seconds (for cardio)
+    isCompleted?: boolean;
+  }
+  ```
+
+---
 
 ## 6. Offline Strategy
-- Enable `enableIndexedDbPersistence` (or `initializeFirestore` with `localCache`) in `services/firebase.ts`.
-- Use `vite-plugin-pwa` to cache `index.html`, JS bundles, and static assets via Service Worker.
+
+The progressive implementation is fully resilient to gym networks with poor connectivity:
+1. **Firestore Client Cache:** Configured explicitly within `src/services/firebase.ts` utilizing `persistentLocalCache` and `persistentMultipleTabManager`. This guarantees that queries against history, custom lists, and updates function instantenously in offline environments. Mutations are queued and synced automatically on reconnection.
+2. **Assets Cache:** The Service Worker is initialized via `vite-plugin-pwa` in `vite.config.ts`, specifying `registerType: 'autoUpdate'`. It bundles and caches static HTML, Javascript scripts, stylesheet outputs, vector SVGs, and Google fonts via Workbox directives.
+3. **Timer Assets:** Audio assets used by rest-timers (`Happy bells.wav`, `Opening Bell.mp3`, `Uplifting bells.wav`) are placed under `/public/sounds/` and compiled during builds to guarantee offline availability.
+
+---
+
+## 7. Build and Hosting Assumptions
+
+The application is bundled under standard ESM and client production settings:
+- **Build Script:** `npm run build` bundles static files into `dist/`.
+- **Base Asset Paths:** Configured in `vite.config.ts` using a conditional environment ternary logic:
+  - **In Development Mode:** Bundles default to `/` base.
+  - **In Production Mode:** Bundles compile under base `/FitTrace/` paths to support serving under directory subpaths (such as GitHub Pages or similar reverse-proxied hosting setups) while maintaining correct relative paths for local resource fetching.
+- **Server Dev Port:** Runs on default container and proxy configurations. File-watching HMR configuration contains instructions to read process environmental variables (`DISABLE_HMR === 'true'`) to disable live HMR sockets on sandbox platforms, avoiding build cycle collision during remote workspace filesystem edit streams.
