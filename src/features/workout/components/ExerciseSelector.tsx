@@ -6,6 +6,7 @@ import { ExerciseCard } from './ExerciseCard';
 import { ExerciseForm } from '../../admin/components/ExerciseForm';
 import { ConfirmModal } from '../../../components/ui/ConfirmModal';
 import { useWorkoutContext } from '../context/WorkoutSessionContext';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface ExerciseSelectorProps {
   category: string | null;
@@ -38,27 +39,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
   const { activeExercises } = useWorkoutContext();
   const completedExercises = activeExercises.filter(ex => ex.sets.some(s => s.isCompleted));
 
-  if (showCreateForm) {
-    return (
-      <ExerciseForm 
-        defaultCategory={category || undefined}
-        onSubmit={async (data) => {
-          const newId = await onAddCustomExercise(data);
-          // Automatically add the new exercise to the session and go to ACTIVE_SESSION (handled by onAddExercise)
-          onAddExercise({
-            ...data,
-            id: newId,
-            createdAt: new Date()
-          });
-          setShowCreateForm(false);
-        }}
-        onCancel={() => {
-          setShowCreateForm(false);
-        }}
-        uploadThumbnail={uploadThumbnail}
-      />
-    );
-  }
+
 
   return (
     <div className="space-y-6 pb-32">
@@ -166,6 +147,32 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
           setShowConfirmFinish(false);
         }}
       />
+
+      <AnimatePresence>
+        {showCreateForm && (
+          <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
+            <div className="w-full max-w-2xl max-h-[95vh] overflow-y-auto">
+              <ExerciseForm 
+                defaultCategory={category || undefined}
+                onSubmit={async (data) => {
+                  const newId = await onAddCustomExercise(data);
+                  // Automatically add the new exercise to the session and go to ACTIVE_SESSION (handled by onAddExercise)
+                  onAddExercise({
+                    ...data,
+                    id: newId,
+                    createdAt: new Date()
+                  });
+                  setShowCreateForm(false);
+                }}
+                onCancel={() => {
+                  setShowCreateForm(false);
+                }}
+                uploadThumbnail={uploadThumbnail}
+              />
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

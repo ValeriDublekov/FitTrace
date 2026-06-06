@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
 import { Dumbbell, Calendar, Check } from 'lucide-react';
 import { Workout, Exercise } from '../../../types';
+import { getCategoryColorScheme, getZoneColorScheme } from '../../../utils/colorUtils';
 
 interface SimpleExerciseHistoryListProps {
   history: Workout[];
@@ -180,11 +181,26 @@ export const SimpleExerciseHistoryList: React.FC<SimpleExerciseHistoryListProps>
                           {/* Info Box */}
                           <div className="flex-1 min-w-0">
                             <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600 transition-colors text-sm break-words leading-tight uppercase tracking-tight">
-                              {workoutEx.exerciseName} {finalZone ? `(${finalZone})` : ''}
+                              {workoutEx.exerciseName}
                             </h4>
-                            <span className="inline-block mt-1 px-2.5 py-1 text-[9px] font-black text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-lg uppercase tracking-wider">
-                              {localizedCategory}
-                            </span>
+                            <div className="flex flex-wrap gap-1.5 mt-1.5">
+                              {(() => {
+                                const catColors = getCategoryColorScheme(category);
+                                return (
+                                  <span className={`inline-block px-2.5 py-1 text-[9px] font-black border rounded-lg uppercase tracking-wider transition-colors ${catColors.text} ${catColors.bg} ${catColors.border}`}>
+                                    {localizedCategory}
+                                  </span>
+                                );
+                              })()}
+                              {finalZone && (() => {
+                                const zoneColors = getZoneColorScheme(finalZone);
+                                return (
+                                  <span className={`inline-block px-2.5 py-1 text-[9px] font-black border rounded-lg uppercase tracking-wider transition-colors ${zoneColors.text} ${zoneColors.bg} ${zoneColors.border}`}>
+                                    {finalZone}
+                                  </span>
+                                );
+                              })()}
+                            </div>
                           </div>
                         </div>
                       );

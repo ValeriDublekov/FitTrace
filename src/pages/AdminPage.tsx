@@ -6,9 +6,10 @@ import { useTranslation } from 'react-i18next';
 import { ExerciseForm } from '../features/admin/components/ExerciseForm';
 import { CustomExerciseMigration } from '../features/admin/components/CustomExerciseMigration';
 import { Exercise } from '../types';
-import { Plus, Edit3, Trash2, Search, Filter, Dumbbell, Globe, ShieldAlert, Lock, Unlock, History, Download, Upload, CheckCircle2, AlertCircle, ArrowUpDown, FileSpreadsheet } from 'lucide-react';
+import { Plus, Edit3, Trash2, Search, Filter, Dumbbell, Globe, ShieldAlert, Lock, Unlock, History, Download, Upload, CheckCircle2, AlertCircle, ArrowUpDown, FileSpreadsheet, Target } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
+import { getCategoryColorScheme, getZoneColorScheme, sortExercises } from '../utils/colorUtils';
 
 const AdminPage: React.FC = () => {
   const { t } = useTranslation();
@@ -44,11 +45,13 @@ const AdminPage: React.FC = () => {
   const globalExercises = exercises.filter(e => !e.isCustom);
   const customExercises = exercises.filter(e => e.isCustom && e.userId === user?.uid);
 
-  const filteredExercises = globalExercises.filter(e => {
-    const matchesSearch = e.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter === 'All' || e.category === categoryFilter;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredExercises = sortExercises<Exercise>(
+    globalExercises.filter(e => {
+      const matchesSearch = e.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = categoryFilter === 'All' || e.category === categoryFilter;
+      return matchesSearch && matchesCategory;
+    })
+  );
 
   const handleDeleteClick = (id: string) => {
     setExerciseToDelete(id);
@@ -410,12 +413,19 @@ const AdminPage: React.FC = () => {
 
               <AnimatePresence>
                 {showForm && (
-                  <ExerciseForm 
-                    exercise={editingExercise}
-                    onSubmit={handleSubmit}
-                    onCancel={() => setShowForm(false)}
-                    uploadThumbnail={uploadThumbnail}
-                  />
+                  <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
+                    <div className="w-full max-w-2xl max-h-[95vh] overflow-y-auto">
+                      <ExerciseForm 
+                        exercise={editingExercise}
+                        onSubmit={handleSubmit}
+                        onCancel={() => {
+                          setShowForm(false);
+                          setEditingExercise(undefined);
+                        }}
+                        uploadThumbnail={uploadThumbnail}
+                      />
+                    </div>
+                  </div>
                 )}
               </AnimatePresence>
 
@@ -481,13 +491,27 @@ const AdminPage: React.FC = () => {
                         
                         <div className="flex-1 min-w-0">
                           <h4 className="font-bold text-gray-900 break-words leading-tight">{exercise.name}</h4>
-                          <div className="flex items-center gap-3 mt-1.5">
-                            <span className="px-2.5 py-0.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold uppercase tracking-wider">
-                              {exercise.category}
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-1.5 align-middle">
+                            {(() => {
+                              const catColors = getCategoryColorScheme(exercise.category);
+                              return (
+                                <span className={`px-2.5 py-0.5 border rounded-lg text-xs font-bold uppercase tracking-wider transition-colors ${catColors.bg} ${catColors.text} ${catColors.border}`}>
+                                  {t(`workout.categories.${exercise.category.toLowerCase().replace(' ', '_')}`, exercise.category)}
+                                </span>
+                              );
+                            })()}
+                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest bg-gray-100 px-2 py-0.5 border border-gray-200 rounded animate-none">
+                              {t(`workout.load_types.${exercise.loadType.toLowerCase()}`, exercise.loadType.replace('_', ' '))}
                             </span>
-                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest bg-gray-100 px-2 py-0.5 rounded">
-                              {exercise.loadType.replace('_', ' ')}
-                            </span>
+                            {exercise.affectedPart && (() => {
+                              const zoneColors = getZoneColorScheme(exercise.affectedPart);
+                              return (
+                                <span className={`text-xs font-bold px-2 py-0.5 border rounded-lg flex items-center gap-1 uppercase tracking-wider transition-colors ${zoneColors.bg} ${zoneColors.text} ${zoneColors.border}`}>
+                                  <Target className="w-3.5 h-3.5 shrink-0 animate-none" />
+                                  {exercise.affectedPart}
+                                </span>
+                              );
+                            })()}
                           </div>
                         </div>
 

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Workout, Exercise, ExerciseSet, normalizeSets } from '../../types';
 import { X, Dumbbell, Pencil, Clock, Award, Layers } from 'lucide-react';
 import { formatDuration } from '../../utils/dateUtils';
+import { getCategoryColorScheme, getZoneColorScheme } from '../../utils/colorUtils';
 
 interface WorkoutDetailsModalProps {
   workout: Workout;
@@ -140,13 +141,31 @@ export const WorkoutDetailsModal: React.FC<WorkoutDetailsModalProps> = ({
 
                 return (
                   <div key={exIdx} className="space-y-2">
-                    <div className="flex items-center justify-between font-bold text-zinc-900">
-                      <div className="flex items-center gap-2">
-                        <Dumbbell className="w-4 h-4 text-indigo-600" />
-                        {ex.exerciseName} {finalAffectedPart ? `(${finalAffectedPart})` : ''}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 font-bold text-zinc-900 border-b border-zinc-100 pb-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Dumbbell className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                        <span className="uppercase text-sm tracking-tight">{ex.exerciseName}</span>
+                        {(() => {
+                          const categoryKey = exerciseInfo?.category || 'full_body';
+                          const muscleGroupLabel = t(`workout.categories.${categoryKey.toLowerCase().replace(' ', '_')}`, { defaultValue: categoryKey });
+                          const catColors = getCategoryColorScheme(categoryKey);
+                          return (
+                            <span className={`text-[9px] font-black border px-1.5 py-0.5 rounded-md uppercase tracking-wider transition-colors ${catColors.text} ${catColors.bg} ${catColors.border}`}>
+                              {muscleGroupLabel}
+                            </span>
+                          );
+                        })()}
+                        {finalAffectedPart && (() => {
+                          const zoneColors = getZoneColorScheme(finalAffectedPart);
+                          return (
+                            <span className={`text-[9px] font-black border px-1.5 py-0.5 rounded-md uppercase tracking-wider transition-colors ${zoneColors.text} ${zoneColors.bg} ${zoneColors.border}`}>
+                              {finalAffectedPart}
+                            </span>
+                          );
+                        })()}
                       </div>
                       {ex.sessionNotes && (
-                        <span className="text-[10px] font-medium text-slate-500 italic">
+                        <span className="text-[10px] font-medium text-slate-500 italic leading-normal">
                           {ex.sessionNotes}
                         </span>
                       )}
@@ -210,14 +229,22 @@ export const WorkoutDetailsModal: React.FC<WorkoutDetailsModalProps> = ({
                       
                       {/* Muscle Group & Zone info */}
                       <div className="flex flex-wrap gap-1.5 items-center">
-                        <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md uppercase tracking-wider">
-                          {muscleGroupLabel}
-                        </span>
-                        {targetArea && (
-                          <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md uppercase tracking-wider">
-                            {targetArea}
-                          </span>
-                        )}
+                        {(() => {
+                          const catColors = getCategoryColorScheme(categoryKey);
+                          return (
+                            <span className={`text-[10px] font-black border px-2 py-0.5 rounded-md uppercase tracking-wider transition-colors ${catColors.text} ${catColors.bg} ${catColors.border}`}>
+                              {muscleGroupLabel}
+                            </span>
+                          );
+                        })()}
+                        {targetArea && (() => {
+                          const zoneColors = getZoneColorScheme(targetArea);
+                          return (
+                            <span className={`text-[10px] font-black border px-2 py-0.5 rounded-md uppercase tracking-wider transition-colors ${zoneColors.text} ${zoneColors.bg} ${zoneColors.border}`}>
+                              {targetArea}
+                            </span>
+                          );
+                        })()}
                       </div>
                     </div>
 

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'motion/react';
 import { Workout, Exercise } from '../../../types';
 import { formatDuration } from '../../../utils/dateUtils';
+import { getCategoryColorScheme } from '../../../utils/colorUtils';
 
 interface GlobalHistoryListProps {
   history: Workout[];
@@ -94,11 +95,14 @@ export const GlobalHistoryList: React.FC<GlobalHistoryListProps> = ({
                   .map(ex => exercises.find(e => e.id === ex.exerciseId)?.category)
                   .filter((cat): cat is string => !!cat)
               ));
-              return cats.map((cat, i) => (
-                <span key={i} className="text-xs font-black text-indigo-600 bg-indigo-50/50 border border-indigo-100 px-3 py-1.5 rounded-xl uppercase tracking-tighter shadow-sm">
-                  {t(`workout.categories.${cat.toLowerCase().replace(' ', '_')}`)}
-                </span>
-              ));
+              return cats.map((cat, i) => {
+                const colors = getCategoryColorScheme(cat);
+                return (
+                  <span key={i} className={`text-xs font-black border px-3 py-1.5 rounded-xl uppercase tracking-tighter shadow-sm transition-colors ${colors.text} ${colors.bg} ${colors.border}`}>
+                    {t(`workout.categories.${cat.toLowerCase().replace(' ', '_')}`)}
+                  </span>
+                );
+              });
             })()}
           </div>
         </div>
