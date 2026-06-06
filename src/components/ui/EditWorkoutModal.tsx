@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Workout, WorkoutExercise, Exercise, ExerciseSet } from '../../types';
+import { Workout, WorkoutExercise, Exercise, ExerciseSet, normalizeSets } from '../../types';
 import { X, Calendar, Plus, Trash2, Save, Dumbbell, ChevronRight, ArrowLeft } from 'lucide-react';
 import { workoutService } from '../../services/workoutService';
 import { useExercises } from '../../hooks/useExercises';
@@ -18,7 +18,12 @@ export const EditWorkoutModal: React.FC<EditWorkoutModalProps> = ({ workout, onC
   const [editedDate, setEditedDate] = useState<string>(
     workout.date.toISOString().split('T')[0]
   );
-  const [editedExercises, setEditedExercises] = useState<WorkoutExercise[]>(structuredClone(workout.exercises));
+  const [editedExercises, setEditedExercises] = useState<WorkoutExercise[]>(() => {
+    return structuredClone(workout.exercises).map(ex => ({
+      ...ex,
+      sets: normalizeSets(ex.sets),
+    }));
+  });
   const [showExerciseSelector, setShowExerciseSelector] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -66,9 +71,9 @@ export const EditWorkoutModal: React.FC<EditWorkoutModalProps> = ({ workout, onC
 
   const handleRemoveSet = (exerciseIndex: number, setIndex: number) => {
     const newExercises = [...editedExercises];
-    newExercises[exerciseIndex].sets = newExercises[exerciseIndex].sets.filter((_, i) => i !== setIndex);
-    // Re-index sets (using 1-based indices)
-    newExercises[exerciseIndex].sets = newExercises[exerciseIndex].sets.map((s, i) => ({ ...s, setIndex: i + 1 }));
+    newExercises[exerciseIndex].sets = normalizeSets(
+      newExercises[exerciseIndex].sets.filter((_, i) => i !== setIndex)
+    );
     setEditedExercises(newExercises);
   };
 
@@ -76,10 +81,15 @@ export const EditWorkoutModal: React.FC<EditWorkoutModalProps> = ({ workout, onC
     if (!workout.id) return;
     setSaving(true);
     try {
+      const normalizedExercises = editedExercises.map(ex => ({
+        ...ex,
+        sets: normalizeSets(ex.sets),
+      }));
+
       const updatedWorkout: Workout = {
         ...workout,
         date: new Date(editedDate),
-        exercises: editedExercises,
+        exercises: normalizedExercises,
       };
 
       await workoutService.updateWorkout(workout.id, {

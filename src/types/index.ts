@@ -68,3 +68,11 @@ export interface UserSettings {
   isNotificationsEnabled: boolean;
   updatedAt: Date;
 }
+
+export function normalizeSets(sets: ExerciseSet[]): ExerciseSet[] {
+  return sets.map((set, index) => ({
+    ...set,
+    setIndex: index + 1,
+  }));
+}
+

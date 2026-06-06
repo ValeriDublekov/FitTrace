@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Workout, Exercise, ExerciseSet } from '../../types';
+import { Workout, Exercise, ExerciseSet, normalizeSets } from '../../types';
 import { X, Dumbbell, Pencil, Clock, Award, Layers } from 'lucide-react';
 import { formatDuration } from '../../utils/dateUtils';
 
@@ -76,7 +76,16 @@ export const WorkoutDetailsModal: React.FC<WorkoutDetailsModalProps> = ({
           <div className="flex items-center gap-2">
             {onEdit && (
               <button 
-                onClick={() => onEdit(workout)}
+                onClick={() => {
+                  const normalizedWorkout = {
+                    ...workout,
+                    exercises: workout.exercises.map(ex => ({
+                      ...ex,
+                      sets: normalizeSets(ex.sets)
+                    }))
+                  };
+                  onEdit(normalizedWorkout);
+                }}
                 className="p-2.5 bg-zinc-50 text-zinc-600 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-all"
                 title={t('common.edit')}
               >
