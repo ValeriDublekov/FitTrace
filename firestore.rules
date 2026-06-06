@@ -37,21 +37,21 @@ service cloud.firestore {
 
     function isValidExercise(exercise) {
       // Mandatory fields for both create and update
-      let mandatoryFields = ['name', 'category', 'loadType'];
+      let mandatoryFields = ['name', 'category', 'loadType', 'isCustom'];
       // Optional fields that might be present
-      let optionalFields = ['thumbnailUrl', 'defaultNotes', 'description', 'updatedAt', 'userId', 'isCustom', 'url', 'id', 'createdAt', 'affectedPart'];
+      let optionalFields = ['thumbnailUrl', 'defaultNotes', 'description', 'updatedAt', 'userId', 'url', 'id', 'createdAt', 'affectedPart'];
       
       return exercise.keys().hasAll(mandatoryFields)
         && exercise.keys().size() <= mandatoryFields.size() + optionalFields.size()
         && exercise.name is string && exercise.name.size() <= 200
         && exercise.category is string && exercise.category.size() <= 100
         && exercise.loadType in ['WEIGHT_REPS', 'LEVEL_REPS', 'CARDIO']
+        && exercise.isCustom is bool
         && (!('thumbnailUrl' in exercise) || exercise.thumbnailUrl == null || exercise.thumbnailUrl is string)
         && (!('defaultNotes' in exercise) || exercise.defaultNotes == null || exercise.defaultNotes is string)
         && (!('description' in exercise) || exercise.description == null || (exercise.description is string && exercise.description.size() <= 10000))
         && (!('url' in exercise) || exercise.url == null || exercise.url is string)
         && (!('userId' in exercise) || exercise.userId == null || exercise.userId is string)
-        && (!('isCustom' in exercise) || exercise.isCustom == null || exercise.isCustom is bool)
         && (!('id' in exercise) || exercise.id == null || exercise.id is string)
         && (!('affectedPart' in exercise) || exercise.affectedPart == null || (exercise.affectedPart is string && exercise.affectedPart.size() <= 200))
         && (!('createdAt' in exercise) || exercise.createdAt is timestamp)
@@ -97,23 +97,24 @@ service cloud.firestore {
 
     match /exercises/{exerciseId} {
       allow read: if isSignedIn() && (
-        !('userId' in resource.data) || resource.data.userId == request.auth.uid
+        resource.data.get('isCustom', false) == false || 
+        resource.data.get('userId', '') == request.auth.uid
       );
       allow create: if isSignedIn() 
         && isValidExercise(request.resource.data)
         && (
-          isAdmin() || 
-          (request.resource.data.userId == request.auth.uid && request.resource.data.isCustom == true)
+          (isAdmin() && request.resource.data.isCustom == false) || 
+          (request.resource.data.isCustom == true && request.resource.data.userId == request.auth.uid)
         );
       allow update: if isSignedIn() 
         && isValidExercise(request.resource.data)
         && (
-          isAdmin() || 
-          (resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid)
+          (isAdmin() && request.resource.data.isCustom == false) || 
+          (resource.data.get('isCustom', false) == true && resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid && request.resource.data.isCustom == true)
         )
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'category', 'loadType', 'thumbnailUrl', 'defaultNotes', 'description', 'url', 'updatedAt', 'userId', 'isCustom', 'affectedPart'])
         && request.resource.data.updatedAt == request.time;
-      allow delete: if isAdmin() || (resource.data.userId == request.auth.uid);
+      allow delete: if isAdmin() || (resource.data.get('userId', '') == request.auth.uid);
     }
 
     match /workouts/{workoutId} {

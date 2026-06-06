@@ -15,7 +15,7 @@ export interface Exercise {
   description?: string;
   url?: string;
   userId?: string;
-  isCustom?: boolean;
+  isCustom: boolean;
   createdAt: Date;
   affectedPart?: string;
 }

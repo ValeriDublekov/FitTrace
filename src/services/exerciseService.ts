@@ -7,6 +7,8 @@ import {
   getDocs, 
   query, 
   orderBy,
+  where,
+  deleteField,
   serverTimestamp,
   Timestamp 
 } from 'firebase/firestore';
@@ -24,21 +26,46 @@ const EXERCISES_COLLECTION = 'exercises';
 export const exerciseService = {
   async getExercises(userId?: string): Promise<Exercise[]> {
     try {
-      const q = query(collection(db, EXERCISES_COLLECTION), orderBy('name', 'asc'));
-      const snapshot = await getDocs(q);
-      const exercises = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
-        } as Exercise;
+      const requests = [];
+
+      // 1. Query global exercises (where isCustom == false)
+      const globalQuery = query(
+        collection(db, EXERCISES_COLLECTION),
+        where('isCustom', '==', false)
+      );
+      requests.push(getDocs(globalQuery));
+
+      // 2. Query user custom exercises (where userId == userId and isCustom == true) if userId is provided
+      if (userId) {
+        const customQuery = query(
+          collection(db, EXERCISES_COLLECTION),
+          where('userId', '==', userId),
+          where('isCustom', '==', true)
+        );
+        requests.push(getDocs(customQuery));
+      }
+
+      const snapshots = await Promise.all(requests);
+      const exercisesMap = new Map<string, Exercise>();
+
+      snapshots.forEach(snapshot => {
+        snapshot.docs.forEach(doc => {
+          const data = doc.data();
+          const exercise = {
+            id: doc.id,
+            ...data,
+            createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
+          } as Exercise;
+          exercisesMap.set(doc.id, exercise);
+        });
       });
 
-      if (userId) {
-        return exercises.filter(ex => !ex.userId || ex.userId === userId);
-      }
-      return exercises;
+      // Sort combined list by name in Bulgarian-friendly/alphabetic ascending order
+      const mergedList = Array.from(exercisesMap.values()).sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
+
+      return mergedList;
     } catch (error) {
       handleFirestoreError(error, OperationType.LIST, EXERCISES_COLLECTION);
       return [];
@@ -47,9 +74,21 @@ export const exerciseService = {
 
   async createExercise(exercise: Omit<Exercise, 'id' | 'createdAt'>): Promise<string> {
     try {
-      // Remove any undefined fields to prevent Firestore errors
+      // Determine normalization values
+      const isCustom = exercise.isCustom ?? !!exercise.userId;
+      const normalizedExercise = {
+        ...exercise,
+        isCustom,
+        userId: isCustom ? exercise.userId : null
+      };
+
+      // Remove any undefined or omitted fields to prevent Firestore complaints
       const sanitizedData = Object.fromEntries(
-        Object.entries(exercise).filter(([_, v]) => v !== undefined)
+        Object.entries(normalizedExercise).filter(([k, v]) => {
+          if (v === undefined) return false;
+          if (!isCustom && k === 'userId') return false; // omit userId for global exercises
+          return true;
+        })
       );
 
       const docRef = await addDoc(collection(db, EXERCISES_COLLECTION), {
@@ -67,9 +106,17 @@ export const exerciseService = {
     try {
       const docRef = doc(db, EXERCISES_COLLECTION, id);
       
+      const isCustom = exercise.isCustom ?? !!exercise.userId;
+
+      const normalizedExercise = {
+        ...exercise,
+        isCustom,
+        userId: isCustom ? exercise.userId : deleteField()
+      };
+
       // Remove any undefined fields to prevent Firestore errors
       const sanitizedData = Object.fromEntries(
-        Object.entries(exercise).filter(([_, v]) => v !== undefined)
+        Object.entries(normalizedExercise).filter(([_, v]) => v !== undefined)
       );
 
       await updateDoc(docRef, {

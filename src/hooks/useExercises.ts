@@ -37,6 +37,8 @@ export const useExercises = (options: { adminMode?: boolean } = {}) => {
 
       if (!options.adminMode && user?.uid) {
         exerciseData.userId = user.uid;
+      } else {
+        exerciseData.isCustom = false;
       }
 
       const id = await exerciseService.createExercise(exerciseData);
@@ -50,7 +52,18 @@ export const useExercises = (options: { adminMode?: boolean } = {}) => {
 
   const updateExercise = async (id: string, exercise: Partial<Omit<Exercise, 'id' | 'createdAt'>>) => {
     try {
-      await exerciseService.updateExercise(id, exercise);
+      const exerciseData: any = {
+        ...exercise,
+        isCustom: !options.adminMode
+      };
+
+      if (!options.adminMode && user?.uid) {
+        exerciseData.userId = user.uid;
+      } else {
+        exerciseData.isCustom = false;
+      }
+
+      await exerciseService.updateExercise(id, exerciseData);
       await fetchExercises();
     } catch (err) {
       setError('Failed to update exercise');

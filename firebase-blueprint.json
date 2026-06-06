@@ -27,7 +27,7 @@
         "createdAt": { "type": "string", "format": "date-time" },
         "affectedPart": { "type": "string" }
       },
-      "required": ["name", "category", "loadType", "createdAt"]
+      "required": ["name", "category", "loadType", "isCustom", "createdAt"]
     },
     "Workout": {
       "title": "Workout",
