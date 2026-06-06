@@ -14,13 +14,14 @@ import { TrendingUp, BarChart2, Activity, Info } from 'lucide-react';
 import { ExerciseProgressSelector } from '../features/progress/components/ExerciseProgressSelector';
 import { ExerciseProgressChart } from '../features/progress/components/ExerciseProgressChart';
 import { ExerciseSessionList } from '../features/progress/components/ExerciseSessionList';
+import { GlobalHistoryList } from '../features/progress/components/GlobalHistoryList';
 
 type AnalysisType = 'EXERCISES' | 'VOLUME' | 'STRENGTH';
 
 const ProgressPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { exercises, loading: exercisesLoading } = useExercises();
-  const { history: globalHistory, loading: globalHistoryLoading } = useWorkoutHistory(1000);
+  const { history: globalHistory, loading: globalHistoryLoading, deleteWorkout: deleteGlobalWorkout } = useWorkoutHistory(1000);
   const [activeTab, setActiveTab] = useState<AnalysisType>('EXERCISES');
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -81,6 +82,8 @@ const ProgressPage: React.FC = () => {
     try {
       if (selectedExerciseId) {
         await deleteExerciseWorkout(workoutToDelete);
+      } else {
+        await deleteGlobalWorkout(workoutToDelete);
       }
       setWorkoutToDelete(null);
     } catch (error) {
@@ -183,22 +186,13 @@ const ProgressPage: React.FC = () => {
             <div className="lg:col-span-2 space-y-6">
               <AnimatePresence mode="wait">
                 {!selectedExerciseId ? (
-                  <motion.div
-                    key="empty"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="h-full flex flex-col items-center justify-center p-12 bg-white border-2 border-zinc-100 border-dashed rounded-[40px] text-center"
-                  >
-                    <div className="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center mb-6 text-indigo-500">
-                      <Activity size={40} />
-                    </div>
-                    <h3 className="text-xl font-black text-zinc-900 mb-2">
-                      {t('workout.progress.search')}
-                    </h3>
-                    <p className="text-zinc-500 max-w-xs">
-                      {t('workout.no_history')}
-                    </p>
-                  </motion.div>
+                  <GlobalHistoryList
+                    history={globalHistory}
+                    loading={globalHistoryLoading}
+                    exercises={exercises}
+                    onSelectWorkout={setSelectedWorkout}
+                    onDeleteWorkout={setWorkoutToDelete}
+                  />
                 ) : exerciseHistoryLoading ? (
                   <div className="h-64 flex items-center justify-center bg-white border border-zinc-200 rounded-[40px]">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>

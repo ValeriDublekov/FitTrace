@@ -1,40 +1,15 @@
-import { useState, useEffect } from 'react';
-import { workoutService } from '../services/workoutService';
-import { Workout } from '../types';
-import { useAuth } from './useAuth';
+import { useMemo } from 'react';
+import { useWorkoutHistoryStore } from './useWorkoutHistory';
 
 export const useExerciseHistory = (exerciseId: string | undefined) => {
-  const { user } = useAuth();
-  const [history, setHistory] = useState<Workout[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { workouts, loading, deleteWorkout } = useWorkoutHistoryStore();
 
-  useEffect(() => {
-    if (!exerciseId || !user) return;
+  const history = useMemo(() => {
+    if (!exerciseId) return [];
+    return workouts.filter(workout =>
+      workout.exercises.some(ex => ex.exerciseId === exerciseId)
+    );
+  }, [workouts, exerciseId]);
 
-    const fetchHistory = async () => {
-      setLoading(true);
-      try {
-        const data = await workoutService.getExerciseHistory(exerciseId, user.uid);
-        setHistory(data);
-      } catch (error) {
-        console.error('Error fetching exercise history:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchHistory();
-  }, [exerciseId, user]);
-
-  const deleteWorkout = async (workoutId: string) => {
-    try {
-      await workoutService.deleteWorkout(workoutId);
-      setHistory(prev => prev.filter(w => w.id !== workoutId));
-    } catch (error) {
-      console.error('Error deleting workout:', error);
-      throw error;
-    }
-  };
-
-  return { history, loading, deleteWorkout };
+  return { history, loading: loading, deleteWorkout };
 };

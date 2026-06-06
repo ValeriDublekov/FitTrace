@@ -7,6 +7,7 @@ import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { AppDataProvider } from './context/AppDataContext';
+import { WorkoutHistoryProvider } from './hooks/useWorkoutHistory';
 import { useAdmin } from './hooks/useAdmin';
 import { WorkoutSessionProvider } from './features/workout/context/WorkoutSessionContext';
 import { useAppSettings } from './hooks/useAppSettings';
@@ -143,11 +144,13 @@ export default function App() {
   return (
     <AuthProvider>
       <AppDataProvider>
-        <Router>
-          <WorkoutSessionProvider>
-            <AppContent />
-          </WorkoutSessionProvider>
-        </Router>
+        <WorkoutHistoryProvider>
+          <Router>
+            <WorkoutSessionProvider>
+              <AppContent />
+            </WorkoutSessionProvider>
+          </Router>
+        </WorkoutHistoryProvider>
       </AppDataProvider>
     </AuthProvider>
   );

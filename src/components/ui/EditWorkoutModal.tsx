@@ -18,7 +18,7 @@ export const EditWorkoutModal: React.FC<EditWorkoutModalProps> = ({ workout, onC
   const [editedDate, setEditedDate] = useState<string>(
     workout.date.toISOString().split('T')[0]
   );
-  const [editedExercises, setEditedExercises] = useState<WorkoutExercise[]>(JSON.parse(JSON.stringify(workout.exercises)));
+  const [editedExercises, setEditedExercises] = useState<WorkoutExercise[]>(structuredClone(workout.exercises));
   const [showExerciseSelector, setShowExerciseSelector] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -33,7 +33,7 @@ export const EditWorkoutModal: React.FC<EditWorkoutModalProps> = ({ workout, onC
       exerciseName: exercise.name,
       affectedPart: exercise.affectedPart,
       sets: [
-        { setIndex: 0, isCompleted: true }
+        { setIndex: 1, isCompleted: true }
       ]
     };
     setEditedExercises(prev => [...prev, newWorkoutExercise]);
@@ -55,7 +55,7 @@ export const EditWorkoutModal: React.FC<EditWorkoutModalProps> = ({ workout, onC
     const lastSet = sets[sets.length - 1];
     
     newExercises[exerciseIndex].sets.push({
-      setIndex: sets.length,
+      setIndex: sets.length + 1,
       weight: lastSet?.weight,
       reps: lastSet?.reps,
       level: lastSet?.level,
@@ -67,8 +67,8 @@ export const EditWorkoutModal: React.FC<EditWorkoutModalProps> = ({ workout, onC
   const handleRemoveSet = (exerciseIndex: number, setIndex: number) => {
     const newExercises = [...editedExercises];
     newExercises[exerciseIndex].sets = newExercises[exerciseIndex].sets.filter((_, i) => i !== setIndex);
-    // Re-index sets
-    newExercises[exerciseIndex].sets = newExercises[exerciseIndex].sets.map((s, i) => ({ ...s, setIndex: i }));
+    // Re-index sets (using 1-based indices)
+    newExercises[exerciseIndex].sets = newExercises[exerciseIndex].sets.map((s, i) => ({ ...s, setIndex: i + 1 }));
     setEditedExercises(newExercises);
   };
 
