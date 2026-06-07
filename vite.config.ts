@@ -8,14 +8,18 @@ export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
   const isProduction = mode === 'production';
   
+  // Автоматично засичане на GitHub Actions за правилен подпът '/FitTrace/' при GitHub Pages
+  const isGithubActions = env.GITHUB_ACTIONS === 'true' || process.env.GITHUB_ACTIONS === 'true';
+  const basePath = isGithubActions || env.VITE_BASE_PATH === '/FitTrace/' ? '/FitTrace/' : '/';
+  
   return {
-    base: isProduction ? '/FitTrace/' : '/',
+    base: basePath,
     plugins: [
       react(), 
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+        includeAssets: ['icon.svg'],
         manifest: {
           name: 'FitTrace Fitness Tracker',
           short_name: 'FitTrace',
@@ -24,7 +28,33 @@ export default defineConfig(({mode}) => {
           background_color: '#ffffff',
           display: 'standalone',
           orientation: 'portrait',
+          start_url: basePath,
+          scope: basePath,
           icons: [
+            {
+              src: 'icon.svg',
+              sizes: '192x192',
+              type: 'image/svg+xml',
+              purpose: 'any'
+            },
+            {
+              src: 'icon.svg',
+              sizes: '512x512',
+              type: 'image/svg+xml',
+              purpose: 'any'
+            },
+            {
+              src: 'icon.svg',
+              sizes: '192x192',
+              type: 'image/svg+xml',
+              purpose: 'maskable'
+            },
+            {
+              src: 'icon.svg',
+              sizes: '512x512',
+              type: 'image/svg+xml',
+              purpose: 'maskable'
+            },
             {
               src: 'icon.svg',
               sizes: 'any',
