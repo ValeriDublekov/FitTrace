@@ -30,6 +30,12 @@ Gym enthusiasts require a fast, frictionless, mobile-optimized tool to record wo
 - When examining an active card, the logger displays the historical lifting logs of the last session.
 - Users can toggle a tab to view full historical lists for that specific exercise directly within the workout interface, keeping past accomplishments instantly accessible before loading heavy plates.
 
+### 2.4. Workout Templates / Routines
+To facilitate streamlined session planning, users can manage reusable workout skeletons called templates/routines:
+1. **Scope:** Planning includes pre-selecting categories and exercise types. Weights, reps, and set counts are omitted during templated planning, as these are automatically populated during session activation based on historical logs or standard defaults.
+2. **Creation from History:** Users can choose any past completed workout from their History log and save it as a routine. This automatically imports all exercises of that past session into the template, offering rapid naming and exercise filtering.
+3. **Template Management:** Routines are visible in a dedicated "Workout Templates" section on the Dashboard. Users can click any template to preview its exercises, start a LIVE session with those exercises loaded, record a MANUAL backlog, edit the template name/exercises, or delete the template.
+
 ---
 
 ## 3. Session Modes

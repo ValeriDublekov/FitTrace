@@ -174,6 +174,20 @@ Houses completed session logs populated with detailed metrics and notes.
   }
   ```
 
+### 5.6. Collection: `workout_templates`
+Used to manage planned workout templates (routines) that can be started live or manually.
+* *Document ID:* Auto-generated UUID from Firestore
+* *Fields:*
+  ```typescript
+  interface WorkoutTemplate {
+    id?: string;
+    userId: string;
+    name: string;
+    exerciseIds: string[];
+    createdAt: Date;
+  }
+  ```
+
 ---
 
 ## 6. Offline Strategy

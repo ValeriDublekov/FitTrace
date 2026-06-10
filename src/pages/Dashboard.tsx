@@ -6,6 +6,7 @@ import { PlusCircle, History, TrendingUp, Activity, Calendar, Clock, AlertTriang
 import { motion } from 'motion/react';
 import { useWorkoutContext } from '../features/workout/context/WorkoutSessionContext';
 import { ActionPromptModal } from '../components/ui/ActionPromptModal';
+import { DashboardTemplates } from '../features/workout/components/DashboardTemplates';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -167,6 +168,10 @@ const Dashboard: React.FC = () => {
             <p className="text-zinc-500 text-sm mt-1">{t('dashboard.analytics_desc')}</p>
           </div>
         </motion.button>
+      </div>
+
+      <div className="mt-12 pt-8 border-t border-zinc-200">
+        <DashboardTemplates />
       </div>
 
       <ActionPromptModal

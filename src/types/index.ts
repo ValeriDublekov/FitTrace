@@ -77,3 +77,12 @@ export function normalizeSets(sets: ExerciseSet[]): ExerciseSet[] {
   }));
 }
 
+export interface WorkoutTemplate {
+  id?: string;
+  userId: string;
+  name: string;
+  exerciseIds: string[];
+  createdAt: Date;
+}
+
+

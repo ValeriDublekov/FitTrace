@@ -221,6 +221,45 @@ export const useWorkoutSession = () => {
     localStorage.removeItem(STORAGE_KEYS.SESSION_MODE);
   }, []);
 
+  const startWorkoutFromTemplate = useCallback(async (exercises: Exercise[], mode: 'LIVE' | 'MANUAL') => {
+    if (!user) return;
+    clearSession();
+    
+    const now = new Date();
+    setWorkoutStartedAt(now);
+    setWorkoutDate(now);
+    setSessionMode(mode);
+
+    const initialExercises: WorkoutExercise[] = [];
+    
+    for (const ex of exercises) {
+      const lastHistoricalSession = await workoutService.getLastExerciseSession(ex.id!, user.uid);
+      const baseSets = lastHistoricalSession?.sets || [];
+      const instanceId = `ex_idx_${Date.now()}_${Math.random().toString(36).substring(2, 9)}_${ex.id}`;
+      
+      initialExercises.push({
+        id: instanceId,
+        exerciseId: ex.id!,
+        exerciseName: ex.name,
+        affectedPart: ex.affectedPart,
+        startedAt: now,
+        sets: Array.from({ length: 1 }, (_, i) => {
+          const prevSet = baseSets[baseSets.length - 1]; 
+          return {
+            setIndex: i + 1,
+            reps: prevSet?.reps ?? 10,
+            weight: prevSet?.weight ?? 0,
+            level: prevSet?.level ?? 0,
+            duration: prevSet?.duration ?? 0,
+            isCompleted: mode === 'MANUAL'
+          };
+        })
+      });
+    }
+
+    setActiveExercises(initialExercises);
+  }, [user, clearSession]);
+
   const finishWorkout = useCallback(async () => {
     if (!user || activeExercises.length === 0) return;
     setIsSaving(true);
@@ -346,6 +385,7 @@ export const useWorkoutSession = () => {
     isActiveLive,
     isActiveManual,
     clearSession,
+    startWorkoutFromTemplate,
     combineExercises,
     uncombineSuperset
   };

@@ -246,6 +246,25 @@
       "no_custom": "No custom exercises found.",
       "select_system": "Select system exercise..."
     },
+    "templates": {
+      "title": "Workout Templates",
+      "subtitle": "Quickly plan and launch routines",
+      "empty_state": "You don't have any workout templates saved yet.",
+      "empty_state_desc": "You can save any past workout as a template directly from History, or create a brand new template using the button below.",
+      "create_btn": "Create New Template",
+      "dialog_create_title": "Create Workout Template",
+      "dialog_edit_title": "Edit Workout Template",
+      "name_label": "Template Name (e.g. Chest & Shoulders)",
+      "exercises_label": "Select Exercises:",
+      "start_live": "Start Live Session",
+      "start_manual": "Start as Past Workout",
+      "save_success": "Template saved successfully!",
+      "delete_confirm_title": "Delete Template",
+      "delete_confirm_msg": "Are you sure you want to delete this template? This cannot be undone.",
+      "save_from_history": "Save as Workout Template",
+      "save_from_history_desc": "Create a template from this workout to easily start it in the future.",
+      "name_placeholder": "Workout routine name"
+    },
     "admin": {
       "title": "Admin Dashboard",
       "subtitle": "Manage application settings and global exercises",

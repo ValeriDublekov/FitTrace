@@ -66,6 +66,15 @@ service cloud.firestore {
         && workout.exercises.size() <= 30; // Limit number of exercises in a workout
     }
 
+    function isValidWorkoutTemplate(template) {
+      return template.keys().hasAll(['userId', 'name', 'exerciseIds', 'createdAt'])
+        && template.userId == request.auth.uid
+        && template.name is string && template.name.size() <= 200
+        && template.exerciseIds is list
+        && template.exerciseIds.size() <= 30
+        && template.createdAt is timestamp;
+    }
+
     function isValidSettings(settings) {
       return settings.keys().hasAll(['isPublic', 'updatedAt', 'updatedBy'])
         && settings.keys().size() == 3
@@ -121,6 +130,13 @@ service cloud.firestore {
       allow read, list: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn() && isValidWorkout(request.resource.data);
       allow update: if isOwner(resource.data.userId) && isValidWorkout(request.resource.data);
+      allow delete: if isOwner(resource.data.userId);
+    }
+
+    match /workout_templates/{templateId} {
+      allow read, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidWorkoutTemplate(request.resource.data);
+      allow update: if isOwner(resource.data.userId) && isValidWorkoutTemplate(request.resource.data);
       allow delete: if isOwner(resource.data.userId);
     }
 

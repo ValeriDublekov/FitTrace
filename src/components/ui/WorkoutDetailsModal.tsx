@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Workout, Exercise, ExerciseSet, normalizeSets } from '../../types';
-import { X, Dumbbell, Pencil, Clock, Award, Layers } from 'lucide-react';
+import { X, Dumbbell, Pencil, Clock, Award, Layers, Sparkles } from 'lucide-react';
 import { formatDuration } from '../../utils/dateUtils';
 import { getCategoryColorScheme, getZoneColorScheme } from '../../utils/colorUtils';
+import { SaveTemplateModal } from './SaveTemplateModal';
+import { useWorkoutTemplates } from '../../hooks/useWorkoutTemplates';
 
 interface WorkoutDetailsModalProps {
   workout: Workout;
@@ -22,6 +24,8 @@ export const WorkoutDetailsModal: React.FC<WorkoutDetailsModalProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const [isDetailed, setIsDetailed] = useState(false);
+  const { addTemplate } = useWorkoutTemplates();
+  const [isRegisterTemplateOpen, setIsRegisterTemplateOpen] = useState(false);
 
   const getExerciseInfo = (exerciseId: string) => {
     return exercises.find(e => e.id === exerciseId);
@@ -264,7 +268,30 @@ export const WorkoutDetailsModal: React.FC<WorkoutDetailsModalProps> = ({
             </div>
           )}
         </div>
+
+        <div className="p-4 bg-zinc-50 border-t border-zinc-150 flex gap-3">
+          <button
+            onClick={() => setIsRegisterTemplateOpen(true)}
+            className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl text-sm transition-all text-center flex items-center justify-center gap-2 shadow-sm"
+          >
+            <Sparkles size={16} fill="currentColor" />
+            {t('workout.templates.save_from_history')}
+          </button>
+        </div>
       </div>
+
+      {isRegisterTemplateOpen && (
+        <SaveTemplateModal
+          isOpen={true}
+          onClose={() => setIsRegisterTemplateOpen(false)}
+          initialName={t('workout.titles.new_workout') + ' ' + workout.date.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' })}
+          initialExerciseIds={workout.exercises.map(ex => ex.exerciseId)}
+          onSave={async (name, exerciseIds) => {
+            await addTemplate(name, exerciseIds);
+            setIsRegisterTemplateOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 };

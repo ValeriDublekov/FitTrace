@@ -2,5 +2,7 @@
   "name": "FitTrace Fitness Tracker",
   "description": "A high-performance fitness tracker for gym enthusiasts with offline support and custom workout management.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

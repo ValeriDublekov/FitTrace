@@ -102,6 +102,21 @@
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["fontSize", "updatedAt"]
+    },
+    "WorkoutTemplate": {
+      "title": "WorkoutTemplate",
+      "description": "A planned workout routine template",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "exerciseIds": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "name", "exerciseIds", "createdAt"]
     }
   },
   "firestore": {
@@ -120,6 +135,10 @@
     "/workouts/{workoutId}": {
       "schema": "Workout",
       "description": "User workout history"
+    },
+    "/workout_templates/{templateId}": {
+      "schema": "WorkoutTemplate",
+      "description": "User saved/planned workout templates"
     },
     "/users/{userId}/settings/display": {
       "schema": "UserSettings",
