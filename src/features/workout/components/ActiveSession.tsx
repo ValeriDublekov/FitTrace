@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Link2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ExerciseLogger } from './ExerciseLogger';
+import { SupersetLogger } from './SupersetLogger';
+import { CollapsedSupersetItem } from './CollapsedSupersetItem';
 import { RestTimer } from './RestTimer';
 import { useWorkoutContext } from '../context/WorkoutSessionContext';
 import { useExercises } from '../../../hooks/useExercises';
 import { ConfirmModal } from '../../../components/ui/ConfirmModal';
 import { ActionPromptModal } from '../../../components/ui/ActionPromptModal';
+import { CombineExercisesModal } from '../../../components/ui/CombineExercisesModal';
 
 // Sub-components
 import { ActiveSessionHeader } from './ActiveSessionHeader';
@@ -36,11 +39,13 @@ export const ActiveSession: React.FC<ActiveSessionProps> = ({
     clearRestTimer,
     removeExercise,
     markExerciseAsCompleted,
-    removeIncompleteSets
+    removeIncompleteSets,
+    combineExercises
   } = useWorkoutContext();
   const { exercises } = useExercises();
   const [showConfirmFinish, setShowConfirmFinish] = useState(false);
   const [exerciseToDelete, setExerciseToDelete] = useState<string | null>(null);
+  const [showCombineModal, setShowCombineModal] = useState(false);
 
   const handleFinishWorkout = (action: 'finish' | 'delete' | 'cancel') => {
     if (action === 'delete') {
@@ -56,6 +61,56 @@ export const ActiveSession: React.FC<ActiveSessionProps> = ({
     }
   };
 
+  // Group active list of exercises by supersetGroupId
+  const groupedUnits: {
+    type: 'single' | 'superset';
+    id: string; // exercise instance ID or supersetGroupId
+    exercises: {
+      workoutEx: typeof activeExercises[0];
+      exercise: typeof exercises[0];
+    }[];
+  }[] = [];
+
+  const processedGroupIds = new Set<string>();
+
+  activeExercises.forEach((workoutEx) => {
+    const exercise = exercises.find(e => e.id === workoutEx.exerciseId);
+    if (!exercise) return;
+
+    if (workoutEx.supersetGroupId) {
+      if (processedGroupIds.has(workoutEx.supersetGroupId)) return;
+
+      const groupExercises = activeExercises
+        .filter(ex => ex.supersetGroupId === workoutEx.supersetGroupId)
+        .map(ex => ({
+          workoutEx: ex,
+          exercise: exercises.find(e => e.id === ex.exerciseId)!
+        }))
+        .filter(item => item.exercise !== undefined);
+
+      if (groupExercises.length > 1) {
+        groupedUnits.push({
+          type: 'superset',
+          id: workoutEx.supersetGroupId,
+          exercises: groupExercises
+        });
+        processedGroupIds.add(workoutEx.supersetGroupId);
+      } else {
+        groupedUnits.push({
+          type: 'single',
+          id: workoutEx.id,
+          exercises: [{ workoutEx, exercise }]
+        });
+      }
+    } else {
+      groupedUnits.push({
+        type: 'single',
+        id: workoutEx.id,
+        exercises: [{ workoutEx, exercise }]
+      });
+    }
+  });
+
   return (
     <div className="space-y-6 pb-32">
       <ActiveSessionHeader 
@@ -63,33 +118,67 @@ export const ActiveSession: React.FC<ActiveSessionProps> = ({
         onAddClick={onAddClick} 
       />
 
-      <div className="space-y-3">
-        {activeExercises.length > 0 ? (
-          activeExercises.map((workoutEx) => {
-            const exercise = exercises.find(e => e.id === workoutEx.exerciseId);
-            if (!exercise) return null;
-            const isExpanded = expandedExerciseId === workoutEx.id;
+      {activeExercises.length >= 2 && (
+        <div className="flex justify-end px-1">
+          <button
+            onClick={() => setShowCombineModal(true)}
+            className="flex items-center gap-1.5 px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-extrabold rounded-xl text-xs uppercase tracking-wider transition-all select-none active:scale-[0.98] border border-indigo-100 shadow-sm"
+          >
+            <Link2 size={14} strokeWidth={2.5} />
+            {t('workout.combine_exercises', 'Комбинирай в Суперсерия')}
+          </button>
+        </div>
+      )}
 
-            return isExpanded ? (
-              <div key={workoutEx.id} className="relative">
-                <ExerciseLogger
-                  exercise={exercise}
-                  workoutExercise={workoutEx}
-                  onFinish={() => {
-                    setExpandedExerciseId(null);
-                    if (onExerciseFinish) onExerciseFinish();
-                  }}
+      <div className="space-y-4">
+        {groupedUnits.length > 0 ? (
+          groupedUnits.map((unit) => {
+            if (unit.type === 'superset') {
+              const isExpanded = expandedExerciseId === unit.id;
+              return isExpanded ? (
+                <div key={unit.id} className="relative">
+                  <SupersetLogger
+                    groupId={unit.id}
+                    exercises={unit.exercises}
+                    onFinish={() => {
+                      setExpandedExerciseId(null);
+                      if (onExerciseFinish) onExerciseFinish();
+                    }}
+                  />
+                </div>
+              ) : (
+                <CollapsedSupersetItem
+                  key={unit.id}
+                  groupId={unit.id}
+                  exercises={unit.exercises}
+                  onExpand={setExpandedExerciseId}
+                  onDeleteRequest={setExerciseToDelete}
                 />
-              </div>
-            ) : (
-              <CollapsedExerciseItem
-                key={workoutEx.id}
-                workoutEx={workoutEx}
-                exercise={exercise}
-                onExpand={setExpandedExerciseId}
-                onDeleteRequest={setExerciseToDelete}
-              />
-            );
+              );
+            } else {
+              const single = unit.exercises[0];
+              const isExpanded = expandedExerciseId === single.workoutEx.id;
+              return isExpanded ? (
+                <div key={single.workoutEx.id} className="relative">
+                  <ExerciseLogger
+                    exercise={single.exercise}
+                    workoutExercise={single.workoutEx}
+                    onFinish={() => {
+                      setExpandedExerciseId(null);
+                      if (onExerciseFinish) onExerciseFinish();
+                    }}
+                  />
+                </div>
+              ) : (
+                <CollapsedExerciseItem
+                  key={single.workoutEx.id}
+                  workoutEx={single.workoutEx}
+                  exercise={single.exercise}
+                  onExpand={setExpandedExerciseId}
+                  onDeleteRequest={setExerciseToDelete}
+                />
+              );
+            }
           })
         ) : (
           <div className="text-center py-16 px-6 bg-white rounded-3xl border border-dashed border-slate-200 flex flex-col items-center gap-4">
@@ -150,6 +239,13 @@ export const ActiveSession: React.FC<ActiveSessionProps> = ({
           setExerciseToDelete(null);
         }}
         onCancel={() => setExerciseToDelete(null)}
+      />
+
+      <CombineExercisesModal
+        isOpen={showCombineModal}
+        activeExercises={activeExercises}
+        onCombine={combineExercises}
+        onCancel={() => setShowCombineModal(false)}
       />
     </div>
   );

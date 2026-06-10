@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
-import { Dumbbell, Calendar, Check } from 'lucide-react';
+import { Dumbbell, Calendar, Check, Download } from 'lucide-react';
 import { Workout, Exercise } from '../../../types';
 import { getCategoryColorScheme, getZoneColorScheme } from '../../../utils/colorUtils';
 
@@ -70,6 +70,62 @@ export const SimpleExerciseHistoryList: React.FC<SimpleExerciseHistoryListProps>
       .filter(workout => workout.exercises.length > 0);
   }, [history, exercises, selectedCategories]);
 
+  const handleExportCSV = () => {
+    const headers = ['дата', 'мускулна група', 'зона', 'име на упражнението', 'максимална тежест'];
+    const csvRows: string[] = [];
+    csvRows.push(headers.join(';'));
+
+    filteredHistory.forEach(workout => {
+      const d = new Date(workout.date);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+
+      workout.exercises.forEach(workoutEx => {
+        const masterEx = exercises.find(
+          e => e.id === workoutEx.exerciseId || e.name.toLowerCase() === workoutEx.exerciseName.toLowerCase()
+        );
+        const category = masterEx?.category || 'Full Body';
+        const localizedCategory = t(`workout.categories.${category.toLowerCase().replace(' ', '_')}`, { defaultValue: category });
+        const finalZone = masterEx?.affectedPart || workoutEx.affectedPart || '';
+
+        const maxWeight = workoutEx.sets.reduce((max, s) => {
+          const val = s.weight || s.level || 0;
+          return val > max ? val : max;
+        }, 0);
+
+        const escapeCSV = (val: string | number) => {
+          const str = String(val);
+          if (str.includes(';') || str.includes('"') || str.includes('\n')) {
+            return `"${str.replace(/"/g, '""')}"`;
+          }
+          return str;
+        };
+
+        const row = [
+          escapeCSV(dateStr),
+          escapeCSV(localizedCategory),
+          escapeCSV(finalZone),
+          escapeCSV(workoutEx.exerciseName),
+          escapeCSV(maxWeight)
+        ];
+
+        csvRows.push(row.join(';'));
+      });
+    });
+
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `exercises_history_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-6">
       {/* Multiselect Filter Panel */}
@@ -111,7 +167,23 @@ export const SimpleExerciseHistoryList: React.FC<SimpleExerciseHistoryListProps>
       </div>
 
       {/* Exercises Chronological List */}
-      <div className="space-y-6">
+      <div className="space-y-4">
+        {filteredHistory.length > 0 && (
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-zinc-50 border border-zinc-200/60 rounded-2xl px-5 py-4 shadow-sm">
+            <span className="text-xs font-black text-zinc-500 uppercase tracking-widest">
+              {t('workout.progress.exercises_logged', { count: filteredHistory.reduce((acc, curr) => acc + curr.exercises.length, 0) })}
+            </span>
+            <button
+              onClick={handleExportCSV}
+              id="export-exercises-csv-btn"
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm cursor-pointer w-full sm:w-auto justify-center"
+            >
+              <Download size={14} />
+              {t('workout.progress.export_exercises')}
+            </button>
+          </div>
+        )}
+
         {filteredHistory.length === 0 ? (
           <div className="py-12 text-center bg-white border border-zinc-200 rounded-2xl">
             <Dumbbell className="w-10 h-10 text-zinc-300 mx-auto mb-3" />

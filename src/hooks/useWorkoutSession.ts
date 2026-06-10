@@ -274,6 +274,51 @@ export const useWorkoutSession = () => {
     }));
   }, []);
 
+  const combineExercises = useCallback((ids: string[]) => {
+    setActiveExercises((prev) => {
+      const groupId = `ss_${Date.now()}`;
+      
+      // Determine max sets
+      const targetExercises = prev.filter(ex => ids.includes(ex.id));
+      const maxSetsCount = Math.max(...targetExercises.map(ex => ex.sets.length), 1);
+
+      return prev.map(ex => {
+        if (ids.includes(ex.id)) {
+          let updatedSets = [...ex.sets];
+          while (updatedSets.length < maxSetsCount) {
+            const lastSet = updatedSets[updatedSets.length - 1];
+            updatedSets.push({
+              setIndex: updatedSets.length + 1,
+              reps: lastSet?.reps ?? 10,
+              weight: lastSet?.weight ?? 0,
+              level: lastSet?.level ?? 0,
+              duration: lastSet?.duration ?? 0,
+              isCompleted: sessionMode === 'MANUAL'
+            });
+          }
+          return { 
+            ...ex, 
+            supersetGroupId: groupId, 
+            sets: updatedSets 
+          };
+        }
+        return ex;
+      });
+    });
+  }, [sessionMode]);
+
+  const uncombineSuperset = useCallback((groupId: string) => {
+    setActiveExercises((prev) => {
+      return prev.map(ex => {
+        if (ex.supersetGroupId === groupId) {
+          const { supersetGroupId, ...rest } = ex;
+          return rest as WorkoutExercise;
+        }
+        return ex;
+      });
+    });
+  }, []);
+
   return {
     activeExercises,
     workoutNotes,
@@ -300,6 +345,8 @@ export const useWorkoutSession = () => {
     hasActiveSession,
     isActiveLive,
     isActiveManual,
-    clearSession
+    clearSession,
+    combineExercises,
+    uncombineSuperset
   };
 };

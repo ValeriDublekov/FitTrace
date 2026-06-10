@@ -11,10 +11,26 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { getCategoryColorScheme, getZoneColorScheme, sortExercises } from '../utils/colorUtils';
 
+interface ColumnOption {
+  id: 'category' | 'id' | 'name' | 'description' | 'affectedPart';
+  labelBg: string;
+  labelEn: string;
+  csvHeader: string;
+}
+
+const AVAILABLE_COLUMNS: ColumnOption[] = [
+  { id: 'category', labelBg: 'Мускулна група (Категория)', labelEn: 'Muscle Group (Category)', csvHeader: 'мускулна група' },
+  { id: 'id', labelBg: 'Идентификатор (ID)', labelEn: 'Identifier (ID)', csvHeader: 'id' },
+  { id: 'name', labelBg: 'Име', labelEn: 'Name', csvHeader: 'name' },
+  { id: 'description', labelBg: 'Описание', labelEn: 'Description', csvHeader: 'описание' },
+  { id: 'affectedPart', labelBg: 'Засегната част', labelEn: 'Affected Part', csvHeader: 'засегната част' }
+];
+
 const AdminPage: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const { exercises, loading: exercisesLoading, error, addExercise, updateExercise, deleteExercise, uploadThumbnail, mergeCustomExercise } = useExercises({ adminMode: true });
+  const { exercises: userExercises } = useExercises({ adminMode: false });
   const { settings, loading: settingsLoading, updateSettings } = useAppSettings();
   
   const [activeTab, setActiveTab] = useState<'settings' | 'exercises' | 'migration' | 'import_export'>('settings');
@@ -25,6 +41,8 @@ const AdminPage: React.FC = () => {
   
   // CSV Import/Export States
   const [includeCustomExercises, setIncludeCustomExercises] = useState(false);
+  const [exportColumns, setExportColumns] = useState<string[]>(['category', 'id', 'name', 'description', 'affectedPart']);
+  const [importColumns, setImportColumns] = useState<string[]>(['category', 'id', 'name', 'description', 'affectedPart']);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
   const [importStatus, setImportStatus] = useState<{
@@ -43,7 +61,7 @@ const AdminPage: React.FC = () => {
 
   // We only care about global ones here (not custom)
   const globalExercises = exercises.filter(e => !e.isCustom);
-  const customExercises = exercises.filter(e => e.isCustom && e.userId === user?.uid);
+  const customExercises = userExercises.filter(e => e.isCustom && e.userId === user?.uid);
 
   const filteredExercises = sortExercises<Exercise>(
     globalExercises.filter(e => {
@@ -87,12 +105,19 @@ const AdminPage: React.FC = () => {
   const handleExport = () => {
     // Determine which exercises to export
     const listToExport = includeCustomExercises 
-      ? exercises 
-      : exercises.filter(e => !e.isCustom);
+      ? [...globalExercises, ...customExercises]
+      : globalExercises;
       
-    // CSV columns: мускулна група;id;name;описание;засегната част
+    if (exportColumns.length === 0) return;
+      
     let csvContent = '\uFEFF'; // UTF-8 BOM so Excel/Cyrillic renders perfectly
-    csvContent += 'мускулна група;id;name;описание;засегната част\n';
+    
+    // Get active headers based on user selection
+    const activeHeaders = AVAILABLE_COLUMNS
+      .filter(col => exportColumns.includes(col.id))
+      .map(col => col.csvHeader);
+      
+    csvContent += activeHeaders.join(';') + '\n';
     
     const escapeCSVField = (field: string | undefined | null): string => {
       if (field === undefined || field === null) return '';
@@ -105,13 +130,18 @@ const AdminPage: React.FC = () => {
     };
 
     listToExport.forEach(e => {
-      const row = [
-        escapeCSVField(e.category),
-        escapeCSVField(e.id),
-        escapeCSVField(e.name),
-        escapeCSVField(e.description || ''),
-        escapeCSVField(e.affectedPart || '')
-      ];
+      const row: string[] = [];
+      AVAILABLE_COLUMNS.forEach(col => {
+        if (exportColumns.includes(col.id)) {
+          let val = '';
+          if (col.id === 'category') val = e.category || '';
+          else if (col.id === 'id') val = e.id || '';
+          else if (col.id === 'name') val = e.name || '';
+          else if (col.id === 'description') val = e.description || '';
+          else if (col.id === 'affectedPart') val = e.affectedPart || '';
+          row.push(escapeCSVField(val));
+        }
+      });
       csvContent += row.join(';') + '\n';
     });
     
@@ -203,57 +233,131 @@ const AdminPage: React.FC = () => {
         let errorCount = 0;
         const detailsLog: string[] = [];
 
+        // Identify the indices of columns based on headers if we have them
+        const headers = rows[0]?.map(h => h.trim().toLowerCase()) || [];
+        
+        let idIndex = -1;
+        let categoryIndex = -1;
+        let nameIndex = -1;
+        let descIndex = -1;
+        let affectedIndex = -1;
+
+        if (startIndex === 1) {
+          idIndex = headers.indexOf('id');
+          categoryIndex = headers.indexOf('мускулна група');
+          if (categoryIndex === -1) categoryIndex = headers.indexOf('category');
+          if (categoryIndex === -1) categoryIndex = headers.indexOf('категория');
+          
+          nameIndex = headers.indexOf('name');
+          if (nameIndex === -1) nameIndex = headers.indexOf('име');
+          
+          descIndex = headers.indexOf('описание');
+          if (descIndex === -1) descIndex = headers.indexOf('description');
+          
+          affectedIndex = headers.indexOf('засегната част');
+          if (affectedIndex === -1) affectedIndex = headers.indexOf('affected part');
+          if (affectedIndex === -1) affectedIndex = headers.indexOf('affectedpart');
+        }
+
+        // Fallback for older export formats or missing headers
+        if (idIndex === -1) {
+          if (startIndex === 1) {
+            const firstHeader = rows[0]?.[0]?.trim().toLowerCase();
+            const isFiveCol = firstHeader === 'мускулна група' || firstHeader === 'category' || rows[0].length >= 5;
+            if (isFiveCol) {
+              idIndex = 1;
+              categoryIndex = 0;
+              nameIndex = 2;
+              descIndex = 3;
+              affectedIndex = rows[0].length >= 5 ? 4 : -1;
+            } else {
+              idIndex = 0;
+              nameIndex = 1;
+              descIndex = 2;
+            }
+          } else {
+            // Raw headerless format
+            idIndex = 0;
+            nameIndex = 1;
+            descIndex = 2;
+          }
+        }
+
+        // Verify ID column is present and user requested importing id
+        if (idIndex === -1 || !importColumns.includes('id')) {
+          setImportStatus({
+            success: 0,
+            errors: 1,
+            total: 1,
+            details: [`Грешка: ИД (id) колоната е задължителна за импорта.`]
+          });
+          setImporting(false);
+          return;
+        }
+
         for (let i = startIndex; i < rows.length; i++) {
           const row = rows[i];
           if (!row || row.length < 2) continue;
 
-          let id = '';
-          let name = '';
-          let description = '';
-          let affectedPart = '';
+          let id = idIndex !== -1 && idIndex < row.length ? row[idIndex]?.trim() : '';
 
-          const isNewFormat = rows[0]?.[0]?.trim().toLowerCase() === 'мускулна група' || row.length >= 5;
-          
-          if (isNewFormat) {
-            id = row[1]?.trim() || '';
-            name = row[2]?.trim() || '';
-            description = row[3]?.trim() || '';
-            affectedPart = row[4]?.trim() || '';
-          } else {
-            // Fallback for older export formats
-            const isExportHeader = firstCol === 'category';
-            if (isExportHeader) {
-              id = row[1]?.trim() || '';
-              name = row[2]?.trim() || '';
-              description = row[3]?.trim() || '';
-            } else {
-              id = row[0]?.trim() || '';
-              name = row[1]?.trim() || '';
-              description = row[2]?.trim() || '';
-            }
-          }
-
-          if (!id || !name) {
+          if (!id) {
             errorCount++;
-            detailsLog.push(`Ред ${i + 1}: Липсва ИД или Име.`);
+            detailsLog.push(`Ред ${i + 1}: Липсва ИД.`);
             continue;
           }
 
-          const existingEx = exercises.find(ex => ex.id === id);
+          const existingEx = [...globalExercises, ...customExercises].find(ex => ex.id === id);
           if (!existingEx) {
             errorCount++;
             detailsLog.push(`Ред ${i + 1}: Упражнение с ИД "${id}" не е намерено.`);
             continue;
           }
 
+          // Build dynamic update payload based ONLY on matching importColumns
+          const updateData: Partial<Exercise> = {};
+          let hasUpdatedFields = false;
+
+          if (importColumns.includes('name') && nameIndex !== -1 && nameIndex < row.length) {
+            const val = row[nameIndex]?.trim();
+            if (val) {
+              updateData.name = val;
+              hasUpdatedFields = true;
+            }
+          }
+
+          if (importColumns.includes('description') && descIndex !== -1 && descIndex < row.length) {
+            updateData.description = row[descIndex]?.trim() || '';
+            hasUpdatedFields = true;
+          }
+
+          if (importColumns.includes('category') && categoryIndex !== -1 && categoryIndex < row.length) {
+            const val = row[categoryIndex]?.trim();
+            if (val) {
+              updateData.category = val;
+              hasUpdatedFields = true;
+            }
+          }
+
+          if (importColumns.includes('affectedPart') && affectedIndex !== -1 && affectedIndex < row.length) {
+            updateData.affectedPart = row[affectedIndex]?.trim() || '';
+            hasUpdatedFields = true;
+          }
+
+          if (!hasUpdatedFields) {
+            errorCount++;
+            detailsLog.push(`Ред ${i + 1} (ИД: ${id}): Няма колони за актуализиране (всички съвпадащие колони за импорт липсват в CSV или са празни).`);
+            continue;
+          }
+
           try {
-            await updateExercise(id, { name, description, affectedPart });
+            await updateExercise(id, updateData);
             successCount++;
-            detailsLog.push(`Ред ${i + 1}: Успешно обновено "${name}" (ИД: ${id}).`);
+            detailsLog.push(`Ред ${i + 1}: Успешно обновено "${updateData.name || existingEx.name}" (ИД: ${id}).`);
           } catch (err: any) {
             errorCount++;
             const errMsg = err?.message || err?.toString() || '';
-            detailsLog.push(`Ред ${i + 1}: Грешка при запис във Firestore за "${name}". ${errMsg}`);
+            detailsLog.push(`Ред ${i + 1}: Грешка при запис във Firestore за "${updateData.name || existingEx.name}". ${errMsg}`);
           }
         }
 
@@ -593,7 +697,7 @@ const AdminPage: React.FC = () => {
                       </p>
                     </div>
 
-                    <label className="flex items-start gap-3 p-4 bg-gray-50 border border-gray-100 rounded-2xl cursor-pointer hover:bg-gray-100/50 transition-all select-none">
+                    <label className="flex items-start gap-3 p-4 bg-gray-50 border border-gray-100 rounded-2xl cursor-pointer hover:bg-gray-100/50 transition-all select-none col-span-2">
                       <input 
                         type="checkbox" 
                         checked={includeCustomExercises} 
@@ -604,11 +708,43 @@ const AdminPage: React.FC = () => {
                         {t('workout.admin.import_export.include_custom')}
                       </span>
                     </label>
+
+                    {/* Export Columns Selection */}
+                    <div className="space-y-2">
+                      <span className="text-xs font-black text-gray-400 uppercase tracking-widest block">
+                        {i18n.language === 'bg' ? 'Колони за експортиране' : 'Columns to Export'}
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                        {AVAILABLE_COLUMNS.map(col => (
+                          <label key={col.id} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none">
+                            <input 
+                              type="checkbox"
+                              checked={exportColumns.includes(col.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setExportColumns([...exportColumns, col.id]);
+                                } else {
+                                  setExportColumns(exportColumns.filter(id => id !== col.id));
+                                }
+                              }}
+                              className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                            />
+                            <span>{i18n.language === 'bg' ? col.labelBg : col.labelEn}</span>
+                          </label>
+                        ))}
+                      </div>
+                      {exportColumns.length === 0 && (
+                        <span className="text-xs text-rose-500 block">
+                          {i18n.language === 'bg' ? 'Моля, изберете поне една колона за експортиране.' : 'Please select at least one column to export.'}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <button
                     onClick={handleExport}
-                    className="w-full py-4 bg-zinc-900 text-white rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-zinc-800 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    disabled={exportColumns.length === 0}
+                    className={`w-full py-4 bg-zinc-900 text-white rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-zinc-800 transition-all flex items-center justify-center gap-2 cursor-pointer ${exportColumns.length === 0 ? 'opacity-50 cursor-not-allowed font-medium' : ''}`}
                   >
                     <Download className="w-4 h-4" />
                     {t('workout.admin.import_export.export_btn')}
@@ -626,6 +762,43 @@ const AdminPage: React.FC = () => {
                       <p className="text-gray-500 text-sm mt-1 leading-relaxed">
                         {t('workout.admin.import_export.import_desc')}
                       </p>
+                    </div>
+
+                    {/* Import Columns Selection */}
+                    <div className="space-y-2">
+                      <span className="text-xs font-black text-gray-400 uppercase tracking-widest block">
+                        {i18n.language === 'bg' ? 'Колони за импортиране (ИД е задължително)' : 'Columns to Import (ID is mandatory)'}
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                        {AVAILABLE_COLUMNS.map(col => {
+                          const isId = col.id === 'id';
+                          return (
+                            <label 
+                              key={col.id} 
+                              className={`flex items-center gap-2 text-sm select-none ${isId ? 'text-gray-400 cursor-not-allowed font-medium' : 'text-gray-700 cursor-pointer'}`}
+                            >
+                              <input 
+                                type="checkbox"
+                                checked={isId || importColumns.includes(col.id)}
+                                disabled={isId}
+                                onChange={(e) => {
+                                  if (isId) return;
+                                  if (e.target.checked) {
+                                    setImportColumns([...importColumns, col.id]);
+                                  } else {
+                                    setImportColumns(importColumns.filter(id => id !== col.id));
+                                  }
+                                }}
+                                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
+                              />
+                              <span>
+                                {i18n.language === 'bg' ? col.labelBg : col.labelEn}
+                                {isId && ' *'}
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
                     </div>
 
                     {/* Drag and Drop File Input Area */}
@@ -667,8 +840,8 @@ const AdminPage: React.FC = () => {
 
                   <button
                     onClick={handleImport}
-                    disabled={importing || !importFile}
-                    className={`w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 ${importing || !importFile ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    disabled={importing || !importFile || importColumns.length === 0}
+                    className={`w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 ${importing || !importFile || importColumns.length === 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                   >
                     {importing ? (
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

@@ -38,6 +38,7 @@ export interface WorkoutExercise {
   startedAt?: Date;
   durationSeconds?: number;
   affectedPart?: string;
+  supersetGroupId?: string;
 }
 
 export interface Workout {
