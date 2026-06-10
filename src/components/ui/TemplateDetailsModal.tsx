@@ -1,8 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { WorkoutTemplate, Exercise } from '../../types';
-import { X, Dumbbell, Play, Edit3, Trash2, Calendar } from 'lucide-react';
-import { getCategoryColorScheme } from '../../utils/colorUtils';
+import { X, Dumbbell, Play, Edit3, Trash2, Calendar, Target } from 'lucide-react';
+import { getCategoryColorScheme, getZoneColorScheme } from '../../utils/colorUtils';
 
 interface TemplateDetailsModalProps {
   isOpen: boolean;
@@ -70,9 +70,20 @@ export const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({
                     <span className="font-bold text-zinc-900 text-sm block">
                       {ex.name}
                     </span>
-                    <span className={`text-[10px] font-black border px-1.5 py-0.5 rounded-md uppercase tracking-wider inline-block mt-0.5 ${catColors.text} ${catColors.bg} ${catColors.border}`}>
-                      {t(`workout.categories.${ex.category.toLowerCase().replace(' ', '_')}`, { defaultValue: ex.category })}
-                    </span>
+                    <div className="flex flex-wrap gap-1.5 mt-1 items-center">
+                      <span className={`text-[10px] font-black border px-1.5 py-0.5 rounded-md uppercase tracking-wider inline-block ${catColors.text} ${catColors.bg} ${catColors.border}`}>
+                        {t(`workout.categories.${ex.category.toLowerCase().replace(' ', '_')}`, { defaultValue: ex.category })}
+                      </span>
+                      {ex.affectedPart && (() => {
+                        const zoneColors = getZoneColorScheme(ex.affectedPart);
+                        return (
+                          <span className={`text-[10px] font-black border px-1.5 py-0.5 rounded-md uppercase tracking-wider inline-flex items-center gap-0.5 ${zoneColors.text} ${zoneColors.bg} ${zoneColors.border}`}>
+                            <Target className="w-3 h-3 shrink-0" />
+                            {ex.affectedPart}
+                          </span>
+                        );
+                      })()}
+                    </div>
                   </div>
                 </div>
               </div>

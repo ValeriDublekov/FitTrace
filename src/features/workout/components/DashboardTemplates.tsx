@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Dumbbell, PlusCircle, Sparkles } from 'lucide-react';
+import { Dumbbell, PlusCircle, Sparkles, Target } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useWorkoutTemplates } from '../../../hooks/useWorkoutTemplates';
 import { useExercises } from '../../../hooks/useExercises';
@@ -10,6 +10,7 @@ import { SaveTemplateModal } from '../../../components/ui/SaveTemplateModal';
 import { TemplateDetailsModal } from '../../../components/ui/TemplateDetailsModal';
 import { ConfirmModal } from '../../../components/ui/ConfirmModal';
 import { WorkoutTemplate } from '../../../types';
+import { getCategoryColorScheme } from '../../../utils/colorUtils';
 
 export const DashboardTemplates: React.FC = () => {
   const { t } = useTranslation();
@@ -99,6 +100,15 @@ export const DashboardTemplates: React.FC = () => {
               .map(id => exercises.find(ex => ex.id === id)?.name)
               .filter((name): name is string => !!name);
 
+            // Resolve unique muscle groups (categories)
+            const uniqueCategories = Array.from(
+              new Set<string>(
+                tmpl.exerciseIds
+                  .map(id => exercises.find(ex => ex.id === id)?.category)
+                  .filter((cat): cat is string => !!cat)
+              )
+            );
+
             return (
               <motion.button
                 key={tmpl.id}
@@ -110,18 +120,37 @@ export const DashboardTemplates: React.FC = () => {
                 }}
                 className="p-5 bg-white border border-zinc-200 rounded-3xl hover:border-indigo-500 hover:shadow-md transition-all text-left flex flex-col justify-between gap-4 h-full group"
               >
-                <div className="space-y-1 w-full">
-                  <h3 className="font-bold text-zinc-900 leading-snug group-hover:text-indigo-600 transition-colors uppercase text-sm">
-                    {tmpl.name}
-                  </h3>
-                  <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
-                    {tmpl.exerciseIds.length} {tmpl.exerciseIds.length === 1 ? 'exercise' : 'exercises'}
-                  </p>
-                  
-                  {resolvedNames.length > 0 && (
-                    <p className="text-xs text-zinc-500 mt-2 font-medium line-clamp-2 leading-relaxed">
-                      {resolvedNames.join(', ')}
+                <div className="space-y-1 w-full flex flex-col h-full justify-between">
+                  <div>
+                    <h3 className="font-bold text-zinc-900 leading-snug group-hover:text-indigo-600 transition-colors uppercase text-sm">
+                      {tmpl.name}
+                    </h3>
+                    <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
+                      {tmpl.exerciseIds.length} {tmpl.exerciseIds.length === 1 ? 'exercise' : 'exercises'}
                     </p>
+                    
+                    {resolvedNames.length > 0 && (
+                      <p className="text-xs text-zinc-500 mt-2 font-medium line-clamp-2 leading-relaxed">
+                        {resolvedNames.join(', ')}
+                      </p>
+                    )}
+                  </div>
+                  
+                  {uniqueCategories.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-3.5">
+                      {uniqueCategories.map((category, cIdx) => {
+                        const catColors = getCategoryColorScheme(category);
+                        return (
+                          <span
+                            key={cIdx}
+                            className={`text-[9px] font-black px-1.5 py-0.5 border rounded-lg flex items-center gap-0.5 uppercase tracking-wider leading-none ${catColors.text} ${catColors.bg} ${catColors.border}`}
+                          >
+                            <Dumbbell className="w-2.5 h-2.5 shrink-0" />
+                            {t(`workout.categories.${category.toLowerCase().replace(' ', '_')}`, { defaultValue: category })}
+                          </span>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
               </motion.button>
