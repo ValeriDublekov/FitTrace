@@ -157,5 +157,29 @@ export const workoutService = {
       handleFirestoreError(error, OperationType.UPDATE, WORKOUTS_COLLECTION);
       throw error;
     }
+  },
+
+  async mergeWorkouts(earlierWorkout: Workout, laterWorkout: Workout): Promise<void> {
+    try {
+      if (!earlierWorkout.id || !laterWorkout.id) {
+        throw new Error('Both workouts must have valid IDs to merge.');
+      }
+
+      const mergedExercises = [...earlierWorkout.exercises, ...laterWorkout.exercises];
+      const notesParts = [earlierWorkout.notes, laterWorkout.notes].filter(Boolean) as string[];
+      const mergedNotes = notesParts.join('\n\n');
+      const mergedDurationSeconds = (earlierWorkout.durationSeconds || 0) + (laterWorkout.durationSeconds || 0);
+
+      await this.updateWorkout(earlierWorkout.id, {
+        exercises: mergedExercises,
+        notes: mergedNotes,
+        durationSeconds: mergedDurationSeconds
+      });
+
+      await this.deleteWorkout(laterWorkout.id);
+    } catch (error) {
+      console.error('Error merging workouts:', error);
+      throw error;
+    }
   }
 };

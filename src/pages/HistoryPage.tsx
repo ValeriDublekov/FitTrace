@@ -16,11 +16,13 @@ const HistoryPage: React.FC = () => {
   const { 
     history: globalHistory, 
     loading: globalHistoryLoading, 
-    deleteWorkout: deleteGlobalWorkout 
+    deleteWorkout: deleteGlobalWorkout,
+    mergeWorkouts
   } = useWorkoutHistory();
 
   const [viewMode, setViewMode] = useState<'workouts' | 'exercises'>('workouts');
   const [workoutToDelete, setWorkoutToDelete] = useState<string | null>(null);
+  const [workoutsToMerge, setWorkoutsToMerge] = useState<{ later: Workout; earlier: Workout } | null>(null);
   const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
   const [workoutToEdit, setWorkoutToEdit] = useState<Workout | null>(null);
 
@@ -31,6 +33,16 @@ const HistoryPage: React.FC = () => {
       setWorkoutToDelete(null);
     } catch (error) {
       console.error('Failed to delete workout:', error);
+    }
+  };
+
+  const handleMergeWorkouts = async () => {
+    if (!workoutsToMerge) return;
+    try {
+      await mergeWorkouts(workoutsToMerge.earlier, workoutsToMerge.later);
+      setWorkoutsToMerge(null);
+    } catch (error) {
+      console.error('Failed to merge workouts:', error);
     }
   };
 
@@ -83,6 +95,7 @@ const HistoryPage: React.FC = () => {
             exercises={exercises}
             onSelectWorkout={setSelectedWorkout}
             onDeleteWorkout={setWorkoutToDelete}
+            onMergeWorkouts={(later, earlier) => setWorkoutsToMerge({ later, earlier })}
           />
         </div>
       ) : (
@@ -102,6 +115,17 @@ const HistoryPage: React.FC = () => {
         onConfirm={handleDeleteWorkout}
         onCancel={() => setWorkoutToDelete(null)}
         variant="danger"
+      />
+
+      <ConfirmModal
+        isOpen={workoutsToMerge !== null}
+        title={t('workout.progress.confirmations.merge_workouts.title')}
+        message={t('workout.progress.confirmations.merge_workouts.message')}
+        confirmLabel={t('workout.progress.merge_btn')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={handleMergeWorkouts}
+        onCancel={() => setWorkoutsToMerge(null)}
+        variant="info"
       />
 
       {selectedWorkout && (

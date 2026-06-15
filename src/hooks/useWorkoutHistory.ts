@@ -9,6 +9,7 @@ interface WorkoutHistoryContextType {
   workouts: Workout[];
   loading: boolean;
   deleteWorkout: (workoutId: string) => Promise<void>;
+  mergeWorkouts: (earlierWorkout: Workout, laterWorkout: Workout) => Promise<void>;
 }
 
 const WorkoutHistoryContext = createContext<WorkoutHistoryContextType | undefined>(undefined);
@@ -58,10 +59,20 @@ export const WorkoutHistoryProvider: React.FC<{ children: React.ReactNode }> = (
     }
   };
 
+  const mergeWorkouts = async (earlierWorkout: Workout, laterWorkout: Workout) => {
+    try {
+      await workoutService.mergeWorkouts(earlierWorkout, laterWorkout);
+    } catch (error) {
+      console.error('Error merging workouts in hook:', error);
+      throw error;
+    }
+  };
+
   const contextValue = useMemo(() => ({
     workouts,
     loading,
     deleteWorkout,
+    mergeWorkouts,
   }), [workouts, loading]);
 
   return (
@@ -83,11 +94,11 @@ export const useWorkoutHistory = (maxResults = 50) => {
     throw new Error('useWorkoutHistory must be used within a WorkoutHistoryProvider');
   }
 
-  const { workouts, loading, deleteWorkout } = context;
+  const { workouts, loading, deleteWorkout, mergeWorkouts } = context;
 
   const history = useMemo(() => {
     return workouts.slice(0, maxResults);
   }, [workouts, maxResults]);
 
-  return { history, loading, deleteWorkout };
+  return { history, loading, deleteWorkout, mergeWorkouts };
 };

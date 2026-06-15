@@ -174,10 +174,15 @@
       "filter_muscle_groups": "Filter by Muscle Groups:",
       "no_matching_exercises": "No exercises found matching the selected muscle groups.",
       "export_exercises": "Export Exercises",
+      "merge_btn": "Merge Workouts",
       "confirmations": {
         "delete_workout": {
           "title": "Delete Workout",
           "message": "Are you sure you want to delete this workout? This action cannot be undone."
+        },
+        "merge_workouts": {
+          "title": "Merge Workouts",
+          "message": "Are you sure you want to merge this workout with the previous one on the same day? All exercises will be combined into a single workout preserving their sequence."
         }
       }
     },
