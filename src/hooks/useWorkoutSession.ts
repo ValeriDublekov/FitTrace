@@ -258,7 +258,10 @@ export const useWorkoutSession = () => {
     }
 
     setActiveExercises(initialExercises);
-  }, [user, clearSession]);
+    if (initialExercises.length > 0) {
+      setExpandedExerciseId(initialExercises[0].id);
+    }
+  }, [user, clearSession, setExpandedExerciseId]);
 
   const finishWorkout = useCallback(async () => {
     if (!user || activeExercises.length === 0) return;

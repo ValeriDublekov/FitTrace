@@ -19,13 +19,11 @@ import { ActiveSessionFooter } from './ActiveSessionFooter';
 interface ActiveSessionProps {
   onAddClick: () => void;
   onFinish: () => void;
-  onExerciseFinish?: () => void;
 }
 
 export const ActiveSession: React.FC<ActiveSessionProps> = ({
   onAddClick,
-  onFinish,
-  onExerciseFinish
+  onFinish
 }) => {
   const { t } = useTranslation();
   const { 
@@ -111,6 +109,31 @@ export const ActiveSession: React.FC<ActiveSessionProps> = ({
     }
   });
 
+  const handleExerciseFinish = (currentUnitId: string) => {
+    // Find the next incomplete unit and auto-expand it for better UX
+    const currentIndex = groupedUnits.findIndex(u => u.id === currentUnitId);
+    if (currentIndex !== -1 && currentIndex < groupedUnits.length - 1) {
+      for (let i = currentIndex + 1; i < groupedUnits.length; i++) {
+        const nextUnit = groupedUnits[i];
+        let isCompleted = true;
+        for (const ex of nextUnit.exercises) {
+          if (ex.workoutEx.sets.some(s => !s.isCompleted)) {
+            isCompleted = false;
+            break;
+          }
+        }
+        
+        if (!isCompleted) {
+          setExpandedExerciseId(nextUnit.id);
+          return;
+        }
+      }
+    }
+    
+    // If no next incomplete unit, just collapse
+    setExpandedExerciseId(null);
+  };
+
   return (
     <div className="space-y-6 pb-32">
       <ActiveSessionHeader 
@@ -140,10 +163,7 @@ export const ActiveSession: React.FC<ActiveSessionProps> = ({
                   <SupersetLogger
                     groupId={unit.id}
                     exercises={unit.exercises}
-                    onFinish={() => {
-                      setExpandedExerciseId(null);
-                      if (onExerciseFinish) onExerciseFinish();
-                    }}
+                    onFinish={() => handleExerciseFinish(unit.id)}
                   />
                 </div>
               ) : (
@@ -163,10 +183,7 @@ export const ActiveSession: React.FC<ActiveSessionProps> = ({
                   <ExerciseLogger
                     exercise={single.exercise}
                     workoutExercise={single.workoutEx}
-                    onFinish={() => {
-                      setExpandedExerciseId(null);
-                      if (onExerciseFinish) onExerciseFinish();
-                    }}
+                    onFinish={() => handleExerciseFinish(single.workoutEx.id)}
                   />
                 </div>
               ) : (

@@ -33,6 +33,10 @@ const NewWorkoutContent: React.FC = () => {
     uploadThumbnail
   } = useWorkoutFlow();
 
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' as any });
+  }, [viewState]);
+
   const getHeaderTitle = () => {
     if (viewState === 'SETUP') return t('workout.titles.new_workout');
     if (viewState === 'ACTIVE_SESSION') return t('workout.titles.active_session');
@@ -81,7 +85,6 @@ const NewWorkoutContent: React.FC = () => {
         <ActiveSession 
           onAddClick={() => setViewState(selectedCategory ? 'SELECT_EXERCISE' : 'SELECT_CATEGORY')}
           onFinish={handleFinish}
-          onExerciseFinish={() => setViewState('SELECT_EXERCISE')}
         />
       )}
 
