@@ -316,38 +316,114 @@ export const useWorkoutSession = () => {
     }));
   }, []);
 
-  const combineExercises = useCallback((ids: string[]) => {
-    setActiveExercises((prev) => {
-      const groupId = `ss_${Date.now()}`;
-      
-      // Determine max sets
-      const targetExercises = prev.filter(ex => ids.includes(ex.id));
-      const maxSetsCount = Math.max(...targetExercises.map(ex => ex.sets.length), 1);
-
-      return prev.map(ex => {
-        if (ids.includes(ex.id)) {
-          let updatedSets = [...ex.sets];
-          while (updatedSets.length < maxSetsCount) {
-            const lastSet = updatedSets[updatedSets.length - 1];
-            updatedSets.push({
-              setIndex: updatedSets.length + 1,
-              reps: lastSet?.reps ?? 10,
-              weight: lastSet?.weight ?? 0,
-              level: lastSet?.level ?? 0,
-              duration: lastSet?.duration ?? 0,
-              isCompleted: sessionMode === 'MANUAL'
-            });
-          }
-          return { 
-            ...ex, 
-            supersetGroupId: groupId, 
-            sets: updatedSets 
-          };
+  const combineExercises = useCallback(async (selectedItems: { id?: string; exerciseId: string; rawExercise?: Exercise }[]) => {
+    if (!user) return;
+    
+    const groupId = `ss_${Date.now()}`;
+    const resolvedExercises: WorkoutExercise[] = [];
+    
+    for (const item of selectedItems) {
+      if (item.id) {
+        const existing = activeExercises.find(ex => ex.id === item.id);
+        if (existing) {
+          resolvedExercises.push({
+            ...existing,
+            supersetGroupId: groupId
+          });
         }
-        return ex;
-      });
+      } else if (item.rawExercise) {
+        const exercise = item.rawExercise;
+        
+        const currentSessionInstance = [...activeExercises]
+          .reverse()
+          .find(ex => ex.exerciseId === exercise.id);
+
+        let baseSets: ExerciseSet[] = [];
+
+        if (currentSessionInstance) {
+          baseSets = currentSessionInstance.sets;
+        } else {
+          const lastHistoricalSession = await workoutService.getLastExerciseSession(exercise.id!, user.uid);
+          baseSets = lastHistoricalSession?.sets || [];
+        }
+
+        const instanceId = `ex_idx_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+        resolvedExercises.push({
+          id: instanceId,
+          exerciseId: exercise.id!,
+          exerciseName: exercise.name,
+          affectedPart: exercise.affectedPart,
+          startedAt: new Date(),
+          supersetGroupId: groupId,
+          sets: Array.from({ length: 1 }, (_, i) => {
+            const prevSet = baseSets[baseSets.length - 1]; 
+            return {
+              setIndex: i + 1,
+              reps: prevSet?.reps ?? 10,
+              weight: prevSet?.weight ?? 0,
+              level: prevSet?.level ?? 0,
+              duration: prevSet?.duration ?? 0,
+              isCompleted: sessionMode === 'MANUAL'
+            };
+          })
+        });
+      }
+    }
+    
+    if (resolvedExercises.length < 2) return;
+    
+    // Determine max sets
+    const maxSetsCount = Math.max(...resolvedExercises.map(ex => ex.sets.length), 1);
+    
+    const normalizedExercises = resolvedExercises.map(ex => {
+      let updatedSets = [...ex.sets];
+      while (updatedSets.length < maxSetsCount) {
+        const lastSet = updatedSets[updatedSets.length - 1];
+        updatedSets.push({
+          setIndex: updatedSets.length + 1,
+          reps: lastSet?.reps ?? 10,
+          weight: lastSet?.weight ?? 0,
+          level: lastSet?.level ?? 0,
+          duration: lastSet?.duration ?? 0,
+          isCompleted: sessionMode === 'MANUAL'
+        });
+      }
+      return { 
+        ...ex, 
+        sets: updatedSets 
+      };
     });
-  }, [sessionMode]);
+    
+    setActiveExercises((prev) => {
+      const existingIdsToRemove = selectedItems.filter(item => item.id).map(item => item.id);
+      
+      let insertIndex = prev.findIndex(ex => existingIdsToRemove.includes(ex.id));
+      if (insertIndex === -1) {
+        insertIndex = prev.length;
+      }
+      
+      const before = prev.filter(ex => !existingIdsToRemove.includes(ex.id));
+      
+      const nextExercises = [
+        ...before.slice(0, insertIndex),
+        ...normalizedExercises,
+        ...before.slice(insertIndex)
+      ];
+      
+      return nextExercises;
+    });
+    
+    setExpandedExerciseId(groupId);
+    
+    if (activeExercises.length === 0) {
+      const now = new Date();
+      setWorkoutStartedAt(now);
+      if (sessionMode === 'LIVE') {
+        setWorkoutDate(now);
+      }
+    }
+  }, [user, activeExercises, sessionMode, setExpandedExerciseId]);
 
   const uncombineSuperset = useCallback((groupId: string) => {
     setActiveExercises((prev) => {

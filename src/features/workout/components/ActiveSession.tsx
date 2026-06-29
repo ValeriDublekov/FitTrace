@@ -141,17 +141,15 @@ export const ActiveSession: React.FC<ActiveSessionProps> = ({
         onAddClick={onAddClick} 
       />
 
-      {activeExercises.length >= 2 && (
-        <div className="flex justify-end px-1">
-          <button
-            onClick={() => setShowCombineModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-extrabold rounded-xl text-xs uppercase tracking-wider transition-all select-none active:scale-[0.98] border border-indigo-100 shadow-sm"
-          >
-            <Link2 size={14} strokeWidth={2.5} />
-            {t('workout.combine_exercises', 'Комбинирай в Суперсерия')}
-          </button>
-        </div>
-      )}
+      <div className="flex justify-end px-1">
+        <button
+          onClick={() => setShowCombineModal(true)}
+          className="flex items-center gap-1.5 px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-extrabold rounded-xl text-xs uppercase tracking-wider transition-all select-none active:scale-[0.98] border border-indigo-100 shadow-sm"
+        >
+          <Link2 size={14} strokeWidth={2.5} />
+          {t('workout.combine_exercises', 'Комбинирай в Суперсерия')}
+        </button>
+      </div>
 
       <div className="space-y-4">
         {groupedUnits.length > 0 ? (
