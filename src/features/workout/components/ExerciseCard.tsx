@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Exercise } from '../../../types';
-import { Plus, Edit3, Trash2, ExternalLink } from 'lucide-react';
+import { Plus, Edit3, Trash2, ExternalLink, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 
 interface ExerciseCardProps {
   exercise: Exercise;
@@ -12,6 +13,7 @@ interface ExerciseCardProps {
 }
 
 export const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, onAdd, onEdit, onDelete }) => {
+  const { t } = useTranslation();
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   return (
@@ -55,8 +57,19 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, onAdd, onE
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.9, y: 20 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl cursor-default space-y-4"
+                className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl cursor-default space-y-4 relative"
               >
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsDetailOpen(false);
+                  }}
+                  className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center bg-white/90 backdrop-blur-xs text-slate-700 hover:text-slate-900 rounded-full shadow-md border border-slate-200/50 hover:bg-white transition-all z-10 active:scale-90 cursor-pointer"
+                  aria-label={t('common.cancel')}
+                >
+                  <X size={18} strokeWidth={2.5} />
+                </button>
+
                 {exercise.thumbnailUrl && (
                   <img 
                     src={exercise.thumbnailUrl} 
@@ -66,7 +79,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, onAdd, onE
                   />
                 )}
                 <div className="space-y-1">
-                  <h3 className="text-2xl font-black text-slate-900 tracking-tight">
+                  <h3 className="text-2xl font-black text-slate-900 tracking-tight pr-6">
                     {exercise.name} {exercise.affectedPart ? `(${exercise.affectedPart})` : ''}
                   </h3>
                   <p className="text-sm text-slate-500 font-bold uppercase tracking-[0.1em]">{exercise.category}</p>
@@ -81,17 +94,28 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, onAdd, onE
                   </div>
                 )}
                 
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onAdd(exercise);
-                    setIsDetailOpen(false);
-                  }}
-                  className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
-                >
-                  <Plus size={18} />
-                  Стартирай упражнението
-                </button>
+                <div className="flex flex-col gap-2 pt-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onAdd(exercise);
+                      setIsDetailOpen(false);
+                    }}
+                    className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-sm"
+                  >
+                    <Plus size={18} />
+                    Стартирай упражнението
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsDetailOpen(false);
+                    }}
+                    className="w-full py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-1 active:scale-98"
+                  >
+                    {t('common.cancel')}
+                  </button>
+                </div>
               </motion.div>
             </motion.div>
           )}

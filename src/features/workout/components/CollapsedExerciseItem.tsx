@@ -48,7 +48,7 @@ export const CollapsedExerciseItem: React.FC<CollapsedExerciseItemProps> = ({
             </div>
           </div>
         </div>
-        <div className="text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="text-indigo-600 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
           <Plus size={16} />
         </div>
       </button>
@@ -57,7 +57,7 @@ export const CollapsedExerciseItem: React.FC<CollapsedExerciseItemProps> = ({
           e.stopPropagation();
           onDeleteRequest(workoutEx.id);
         }}
-        className="absolute -top-2 -right-2 w-8 h-8 bg-red-50 text-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all border border-red-100 shadow-sm hover:bg-red-500 hover:text-white"
+        className="absolute -top-2 -right-2 w-8 h-8 bg-red-50 text-red-500 rounded-full flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all border border-red-100 shadow-sm hover:bg-red-500 hover:text-white"
       >
         <X size={14} strokeWidth={3} />
       </button>

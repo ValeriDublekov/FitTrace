@@ -107,7 +107,7 @@ export const GlobalHistoryList: React.FC<GlobalHistoryListProps> = ({
                     e.stopPropagation();
                     onDeleteWorkout(workout.id);
                   }}
-                  className="p-2 text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                  className="p-3 md:p-2 text-zinc-500 md:text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100"
                   title="Изтрий тренировка"
                 >
                   <Trash2 className="w-5 h-5" />

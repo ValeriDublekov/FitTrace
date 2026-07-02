@@ -59,13 +59,13 @@ export const CollapsedSupersetItem: React.FC<CollapsedSupersetItemProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={handleSplit}
-            className="p-1 px-2.5 text-[9px] font-black uppercase tracking-wider text-indigo-600 hover:text-white hover:bg-indigo-600 rounded-lg border border-indigo-200 bg-white transition-all opacity-0 group-hover:opacity-100"
+            className="p-1 px-2.5 text-[9px] font-black uppercase tracking-wider text-indigo-600 hover:text-white hover:bg-indigo-600 rounded-lg border border-indigo-200 bg-white transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100"
             title={t('workout.split_superset', 'Раздели')}
           >
             <Split size={12} className="inline mr-1" />
             {t('workout.split', 'Раздели')}
           </button>
-          <div className="text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="text-indigo-600 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
             <Plus size={16} />
           </div>
         </div>
@@ -80,7 +80,7 @@ export const CollapsedSupersetItem: React.FC<CollapsedSupersetItemProps> = ({
             onDeleteRequest(item.workoutEx.id);
           });
         }}
-        className="absolute -top-2 -right-2 w-8 h-8 bg-red-50 text-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all border border-red-100 shadow-sm hover:bg-red-500 hover:text-white"
+        className="absolute -top-2 -right-2 w-8 h-8 bg-red-50 text-red-500 rounded-full flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all border border-red-100 shadow-sm hover:bg-red-500 hover:text-white"
         title={t('workout.delete_superset', 'Изтрий комбото')}
       >
         <X size={14} strokeWidth={3} />
