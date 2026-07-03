@@ -55,20 +55,87 @@ service cloud.firestore {
         && (resource == null || !('createdAt' in resource.data) || !('createdAt' in exercise) || exercise.createdAt == resource.data.createdAt);
     }
 
+    function isValidExerciseSet(set) {
+      return set is map
+        && set.keys().hasAll(['setIndex'])
+        && (
+          ( ('setIndex' in set ? 1 : 0) +
+            ('weight' in set ? 1 : 0) +
+            ('level' in set ? 1 : 0) +
+            ('reps' in set ? 1 : 0) +
+            ('duration' in set ? 1 : 0) +
+            ('isCompleted' in set ? 1 : 0) ) == set.keys().size()
+        )
+        && set.setIndex is int
+        && (!('weight' in set) || set.weight == null || set.weight is number)
+        && (!('level' in set) || set.level == null || set.level is int)
+        && (!('reps' in set) || set.reps == null || set.reps is int)
+        && (!('duration' in set) || set.duration == null || set.duration is int)
+        && (!('isCompleted' in set) || set.isCompleted == null || set.isCompleted is bool);
+    }
+
+    function isValidWorkoutExercise(exercise) {
+      return exercise is map
+        && exercise.keys().hasAll(['id', 'exerciseId', 'exerciseName', 'sets'])
+        && (
+          ( ('id' in exercise ? 1 : 0) +
+            ('exerciseId' in exercise ? 1 : 0) +
+            ('exerciseName' in exercise ? 1 : 0) +
+            ('sessionNotes' in exercise ? 1 : 0) +
+            ('sets' in exercise ? 1 : 0) +
+            ('startedAt' in exercise ? 1 : 0) +
+            ('durationSeconds' in exercise ? 1 : 0) +
+            ('affectedPart' in exercise ? 1 : 0) +
+            ('supersetGroupId' in exercise ? 1 : 0) ) == exercise.keys().size()
+        )
+        && exercise.id is string
+        && exercise.exerciseId is string
+        && exercise.exerciseName is string && exercise.exerciseName.size() <= 200
+        && (!('sessionNotes' in exercise) || exercise.sessionNotes == null || exercise.sessionNotes is string)
+        && (!('startedAt' in exercise) || exercise.startedAt is timestamp)
+        && (!('durationSeconds' in exercise) || exercise.durationSeconds == null || exercise.durationSeconds is int)
+        && (!('affectedPart' in exercise) || exercise.affectedPart == null || exercise.affectedPart is string)
+        && (!('supersetGroupId' in exercise) || exercise.supersetGroupId == null || exercise.supersetGroupId is string)
+        && exercise.sets is list
+        && exercise.sets.size() <= 50
+        && (exercise.sets.size() == 0 || isValidExerciseSet(exercise.sets[0]));
+    }
+
     function isValidWorkout(workout) {
       return workout.keys().hasAll(['userId', 'date', 'exercises'])
+        && (
+          ( ('userId' in workout ? 1 : 0) +
+            ('date' in workout ? 1 : 0) +
+            ('exercises' in workout ? 1 : 0) +
+            ('notes' in workout ? 1 : 0) +
+            ('startedAt' in workout ? 1 : 0) +
+            ('durationSeconds' in workout ? 1 : 0) +
+            ('updatedAt' in workout ? 1 : 0) ) == workout.keys().size()
+        )
         && workout.userId == request.auth.uid
         && workout.date is timestamp
+        && (!('notes' in workout) || workout.notes == null || (workout.notes is string && workout.notes.size() <= 10000))
+        && (!('startedAt' in workout) || workout.startedAt is timestamp)
+        && (!('durationSeconds' in workout) || workout.durationSeconds == null || workout.durationSeconds is int)
+        && (!('updatedAt' in workout) || workout.updatedAt is timestamp)
         && workout.exercises is list
-        && workout.exercises.size() <= 30; // Limit number of exercises in a workout
+        && workout.exercises.size() <= 30
+        && (workout.exercises.size() == 0 || isValidWorkoutExercise(workout.exercises[0]));
     }
 
     function isValidWorkoutTemplate(template) {
       return template.keys().hasAll(['userId', 'name', 'exerciseIds', 'createdAt'])
+        && (
+          ( ('userId' in template ? 1 : 0) +
+            ('name' in template ? 1 : 0) +
+            ('exerciseIds' in template ? 1 : 0) +
+            ('createdAt' in template ? 1 : 0) ) == template.keys().size()
+        )
         && template.userId == request.auth.uid
         && template.name is string && template.name.size() <= 200
         && template.exerciseIds is list
-        && template.exerciseIds.size() <= 30
+        && template.exerciseIds.size() <= 50
+        && (template.exerciseIds.size() == 0 || template.exerciseIds[0] is string)
         && template.createdAt is timestamp;
     }
 
