@@ -14,9 +14,7 @@
 
 - **isSignedIn()**: Asserts that `request.auth` is not null.
 - **isOwner(userId)**: Asserts that the authenticated user's UID precisely matches the resource-scoped `userId`.
-- **isAdmin()**: Returns `true` if any of the following are met:
-  1. The user's UID exists as a document in the `/admins` collection.
-  2. The user's authenticated Google Account email is `v.dublekov@gmail.com` (verified) as an intentional fallback mechanism.
+- **isAdmin()**: Returns `true` if the user's UID exists as a document in the `/admins` collection (which serves as the single source of truth for administrative rights).
 - **isValidId(id)**: Enforces string format boundaries on ID values (max 128 characters, matching alphanumerics, hyphens, and underscores).
 
 ---

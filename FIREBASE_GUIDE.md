@@ -27,7 +27,7 @@ The application requires **Cloud Firestore** in Native mode.
 ### Required Collections & Document Schema
 
 #### `/admins/{userId}`
-Represents users with system administrative rights (allowed to manage system-wide exercises and global settings).
+Represents users with system administrative rights (allowed to manage system-wide exercises and global settings). This collection is the single source of truth for administrative privileges across both the frontend React application and Firestore security rules.
 - **Doc ID**: The user's Firebase Authentication UID.
 - **Fields**:
   - `email`: `string` — The verified administrator email.
