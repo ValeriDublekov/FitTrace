@@ -13,31 +13,18 @@ import {
   updateDoc
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from './firebase';
-import { Workout, WorkoutExercise } from '../types';
+import { Workout, WorkoutExercise, WorkoutSavePayload, WorkoutUpdatePayload, cleanUndefined } from '../types';
 
 const WORKOUTS_COLLECTION = 'workouts';
-
-const cleanUndefined = (obj: any): any => {
-  if (Array.isArray(obj)) {
-    return obj.map(v => cleanUndefined(v));
-  } else if (obj !== null && typeof obj === 'object' && !(obj instanceof Date) && !(obj instanceof Timestamp)) {
-    return Object.entries(obj).reduce((acc: any, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = cleanUndefined(value);
-      }
-      return acc;
-    }, {});
-  }
-  return obj;
-};
 
 export const workoutService = {
   async saveWorkout(workout: Omit<Workout, 'id'>): Promise<string> {
     try {
-      const cleanedWorkout = cleanUndefined({
+      const rawPayload: WorkoutSavePayload = {
         ...workout,
         date: workout.date instanceof Date ? Timestamp.fromDate(workout.date) : serverTimestamp(),
-      });
+      };
+      const cleanedWorkout = cleanUndefined(rawPayload);
       const docRef = await addDoc(collection(db, WORKOUTS_COLLECTION), cleanedWorkout);
       return docRef.id;
     } catch (error) {
@@ -49,16 +36,15 @@ export const workoutService = {
   async updateWorkout(workoutId: string, updates: Partial<Workout>): Promise<void> {
     try {
       const workoutRef = doc(db, WORKOUTS_COLLECTION, workoutId);
-      const firestoreUpdates: any = { ...updates };
+      const { id, date, updatedAt, ...restUpdates } = updates;
       
-      if (updates.date instanceof Date) {
-        firestoreUpdates.date = Timestamp.fromDate(updates.date);
+      const firestoreUpdates: WorkoutUpdatePayload = { ...restUpdates };
+      
+      if (date instanceof Date) {
+        firestoreUpdates.date = Timestamp.fromDate(date);
       }
       
       firestoreUpdates.updatedAt = serverTimestamp();
-      
-      // Remove id from updates if it exists to avoid Firestore errors
-      delete firestoreUpdates.id;
       
       const cleanedUpdates = cleanUndefined(firestoreUpdates);
       

@@ -1,3 +1,5 @@
+import { Timestamp, FieldValue } from 'firebase/firestore';
+
 export type LoadType = 'WEIGHT_REPS' | 'LEVEL_REPS' | 'CARDIO';
 
 export interface Admin {
@@ -112,6 +114,36 @@ export function normalizeExerciseUpdatePayload(
     isCustom,
     userId: isCustom && userId ? userId : undefined,
   };
+}
+
+export type WorkoutUpdatePayload = Partial<Omit<Workout, 'id' | 'date' | 'updatedAt'>> & {
+  date?: Timestamp | FieldValue;
+  updatedAt?: FieldValue;
+};
+
+export type WorkoutSavePayload = Omit<Workout, 'id' | 'date'> & {
+  date: Timestamp | FieldValue;
+};
+
+export function cleanUndefined<T>(obj: T): T {
+  if (Array.isArray(obj)) {
+    return obj.map((v: unknown) => cleanUndefined(v)) as unknown as T;
+  } else if (
+    obj !== null &&
+    typeof obj === 'object' &&
+    !(obj instanceof Date) &&
+    !(obj instanceof Timestamp) &&
+    !(obj instanceof FieldValue)
+  ) {
+    const cleaned: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined) {
+        cleaned[key] = cleanUndefined(value);
+      }
+    }
+    return cleaned as unknown as T;
+  }
+  return obj;
 }
 
 
