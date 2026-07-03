@@ -18,7 +18,7 @@ import {
   getDownloadURL 
 } from 'firebase/storage';
 import { db, storage, handleFirestoreError, OperationType } from './firebase';
-import { Exercise } from '../types';
+import { Exercise, ExerciseCreateInput, ExerciseUpdateInput } from '../types';
 import { workoutService } from './workoutService';
 
 const EXERCISES_COLLECTION = 'exercises';
@@ -72,7 +72,7 @@ export const exerciseService = {
     }
   },
 
-  async createExercise(exercise: Omit<Exercise, 'id' | 'createdAt'>): Promise<string> {
+  async createExercise(exercise: ExerciseCreateInput): Promise<string> {
     try {
       // Determine normalization values
       const isCustom = exercise.isCustom ?? !!exercise.userId;
@@ -102,7 +102,7 @@ export const exerciseService = {
     }
   },
 
-  async updateExercise(id: string, exercise: Partial<Omit<Exercise, 'id' | 'createdAt'>>): Promise<void> {
+  async updateExercise(id: string, exercise: ExerciseUpdateInput): Promise<void> {
     try {
       const docRef = doc(db, EXERCISES_COLLECTION, id);
       

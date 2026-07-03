@@ -85,4 +85,33 @@ export interface WorkoutTemplate {
   createdAt: Date;
 }
 
+export type ExerciseCreateInput = Omit<Exercise, 'id' | 'createdAt'>;
+export type ExerciseUpdateInput = Partial<ExerciseCreateInput>;
+
+export function normalizeExerciseCreatePayload(
+  exercise: ExerciseCreateInput,
+  adminMode: boolean,
+  userId: string | undefined
+): ExerciseCreateInput {
+  const isCustom = !adminMode;
+  return {
+    ...exercise,
+    isCustom,
+    userId: isCustom && userId ? userId : undefined,
+  };
+}
+
+export function normalizeExerciseUpdatePayload(
+  exercise: ExerciseUpdateInput,
+  adminMode: boolean,
+  userId: string | undefined
+): ExerciseUpdateInput {
+  const isCustom = !adminMode;
+  return {
+    ...exercise,
+    isCustom,
+    userId: isCustom && userId ? userId : undefined,
+  };
+}
+
 

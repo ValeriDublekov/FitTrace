@@ -3,7 +3,7 @@ import { User } from 'firebase/auth';
 import { doc, getDoc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../services/firebase';
 import { useAuth } from '../hooks/useAuth';
-import { AppSettings, UserSettings, Exercise, FontSize, Language, NotificationSound } from '../types';
+import { AppSettings, UserSettings, Exercise, FontSize, Language, NotificationSound, normalizeExerciseCreatePayload, normalizeExerciseUpdatePayload } from '../types';
 import { exerciseService } from '../services/exerciseService';
 
 export interface AppDataState {
@@ -332,16 +332,7 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const addExercise = useCallback(async (exercise: Omit<Exercise, 'id' | 'createdAt'>, adminMode: boolean = false) => {
     try {
-      const exerciseData: any = {
-        ...exercise,
-        isCustom: !adminMode
-      };
-
-      if (!adminMode && user?.uid) {
-        exerciseData.userId = user.uid;
-      } else {
-        exerciseData.isCustom = false;
-      }
+      const exerciseData = normalizeExerciseCreatePayload(exercise, adminMode, user?.uid);
 
       const id = await exerciseService.createExercise(exerciseData);
       await refreshExercises();
@@ -354,16 +345,7 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const updateExercise = useCallback(async (id: string, exercise: Partial<Omit<Exercise, 'id' | 'createdAt'>>, adminMode: boolean = false) => {
     try {
-      const exerciseData: any = {
-        ...exercise,
-        isCustom: !adminMode
-      };
-
-      if (!adminMode && user?.uid) {
-        exerciseData.userId = user.uid;
-      } else {
-        exerciseData.isCustom = false;
-      }
+      const exerciseData = normalizeExerciseUpdatePayload(exercise, adminMode, user?.uid);
 
       await exerciseService.updateExercise(id, exerciseData);
       await refreshExercises();
