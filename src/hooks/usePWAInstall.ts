@@ -1,11 +1,20 @@
 import { useState, useEffect } from 'react';
 
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
+}
+
 /**
  * Custom hook to handle PWA installation logic.
  * Captures the 'beforeinstallprompt' event and provides a function to trigger the prompt.
  */
 export function usePWAInstall() {
-  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
 
@@ -16,15 +25,16 @@ export function usePWAInstall() {
       return;
     }
 
-    const handler = (e: any) => {
+    const handler = (e: Event) => {
+      const promptEvent = e as BeforeInstallPromptEvent;
       // Prevent the default browser prompt
-      e.preventDefault();
+      promptEvent.preventDefault();
       // Store the event so it can be triggered later
-      setInstallPrompt(e);
+      setInstallPrompt(promptEvent);
       setIsInstallable(true);
     };
 
-    window.addEventListener('beforeinstallprompt', handler);
+    window.addEventListener('beforeinstallprompt', handler as EventListener);
 
     // Track installation success
     const installedHandler = () => {
@@ -36,7 +46,7 @@ export function usePWAInstall() {
     window.addEventListener('appinstalled', installedHandler);
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('beforeinstallprompt', handler as EventListener);
       window.removeEventListener('appinstalled', installedHandler);
     };
   }, []);
@@ -45,17 +55,14 @@ export function usePWAInstall() {
     if (!installPrompt) return;
 
     // Show the install prompt
-    installPrompt.prompt();
+    await installPrompt.prompt();
 
     // Wait for the user to respond to the prompt
     const { outcome } = await installPrompt.userChoice;
     
     if (outcome === 'accepted') {
-      console.log('User accepted the PWA install prompt');
       setIsInstallable(false);
       setInstallPrompt(null);
-    } else {
-      console.log('User dismissed the PWA install prompt');
     }
   };
 
