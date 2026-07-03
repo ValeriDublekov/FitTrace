@@ -84,12 +84,24 @@ service cloud.firestore {
     }
 
     function isValidUserSettings(settings) {
-      return settings.keys().hasAny(['fontSize', 'language']) && settings.keys().hasAll(['updatedAt'])
+      return settings.keys().hasAll(['updatedAt'])
         && settings.updatedAt is timestamp
         // Validate fontSize if exists
         && (!('fontSize' in settings) || settings.fontSize in ['normal', 'large', 'xlarge'])
         // Validate language if exists
-        && (!('language' in settings) || settings.language is string);
+        && (!('language' in settings) || settings.language in ['bg', 'en'])
+        // Validate notificationSound if exists
+        && (!('notificationSound' in settings) || (settings.notificationSound is string && settings.notificationSound.size() <= 200))
+        // Validate isNotificationsEnabled if exists
+        && (!('isNotificationsEnabled' in settings) || settings.isNotificationsEnabled is bool)
+        // Ensure only allowed fields are present (no other keys)
+        && (
+          ( ('fontSize' in settings ? 1 : 0) +
+            ('language' in settings ? 1 : 0) +
+            ('notificationSound' in settings ? 1 : 0) +
+            ('isNotificationsEnabled' in settings ? 1 : 0) +
+            ('updatedAt' in settings ? 1 : 0) ) == settings.keys().size()
+        );
     }
 
     // --- Matches ---

@@ -99,9 +99,12 @@
       "type": "object",
       "properties": {
         "fontSize": { "type": "string", "enum": ["normal", "large", "xlarge"] },
+        "language": { "type": "string", "enum": ["bg", "en"] },
+        "notificationSound": { "type": "string" },
+        "isNotificationsEnabled": { "type": "boolean" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["fontSize", "updatedAt"]
+      "required": ["updatedAt"]
     },
     "WorkoutTemplate": {
       "title": "WorkoutTemplate",
