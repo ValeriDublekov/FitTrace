@@ -3,46 +3,28 @@ import { useSearchParams } from 'react-router-dom';
 import { Workout, PersistedWorkout, WorkoutExercise, ExerciseSet, Exercise, PersistedExercise } from '../types';
 import { useAuth } from './useAuth';
 import { workoutService } from '../services/workoutService';
-import { STORAGE_KEYS } from '../constants';
 import { useWorkoutRestTimer } from '../features/workout/hooks/useWorkoutRestTimer';
+import {
+  getPersistedExercises,
+  getPersistedNotes,
+  getPersistedDate,
+  getPersistedStartedAt,
+  getPersistedSessionMode,
+  clearPersistedSession,
+  useWorkoutSessionPersistence
+} from '../features/workout/hooks/useWorkoutSessionPersistence';
 
 export const useWorkoutSession = () => {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   
-  const [activeExercises, setActiveExercises] = useState<WorkoutExercise[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.ACTIVE_EXERCISES);
-    return saved ? JSON.parse(saved) : [];
-  });
-  
-  const [workoutNotes, setWorkoutNotes] = useState(() => {
-    return localStorage.getItem(STORAGE_KEYS.WORKOUT_NOTES) || '';
-  });
-  
-  const [workoutDate, setWorkoutDate] = useState<Date>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.WORKOUT_DATE);
-    return saved ? new Date(saved) : new Date();
-  });
-
-  const [workoutStartedAt, setWorkoutStartedAt] = useState<Date | null>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.WORKOUT_STARTED_AT);
-    return saved ? new Date(saved) : null;
-  });
+  const [activeExercises, setActiveExercises] = useState<WorkoutExercise[]>(() => getPersistedExercises());
+  const [workoutNotes, setWorkoutNotes] = useState(() => getPersistedNotes());
+  const [workoutDate, setWorkoutDate] = useState<Date>(() => getPersistedDate());
+  const [workoutStartedAt, setWorkoutStartedAt] = useState<Date | null>(() => getPersistedStartedAt());
   
   const urlMode = searchParams.get('mode') === 'manual' ? 'MANUAL' : 'LIVE';
-  const [sessionMode, setSessionMode] = useState<'LIVE' | 'MANUAL'>(() => {
-    // If we have active exercises, stick to the saved mode
-    const savedExercises = localStorage.getItem(STORAGE_KEYS.ACTIVE_EXERCISES);
-    const hasSavedExercises = savedExercises && JSON.parse(savedExercises).length > 0;
-    
-    if (hasSavedExercises) {
-      const saved = localStorage.getItem(STORAGE_KEYS.SESSION_MODE);
-      return (saved as 'LIVE' | 'MANUAL') || urlMode;
-    }
-    
-    // Otherwise, prioritize URL mode for a fresh start
-    return urlMode;
-  });
+  const [sessionMode, setSessionMode] = useState<'LIVE' | 'MANUAL'>(() => getPersistedSessionMode(urlMode));
 
   useEffect(() => {
     // If the mode in URL changes and we don't have active exercises, update session mode
@@ -63,30 +45,14 @@ export const useWorkoutSession = () => {
   const isActiveLive = hasActiveSession && sessionMode === 'LIVE';
   const isActiveManual = hasActiveSession && sessionMode === 'MANUAL';
 
-  // Persistence to localStorage
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.ACTIVE_EXERCISES, JSON.stringify(activeExercises));
-  }, [activeExercises]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.WORKOUT_NOTES, workoutNotes);
-  }, [workoutNotes]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.WORKOUT_DATE, workoutDate.toISOString());
-  }, [workoutDate]);
-
-  useEffect(() => {
-    if (workoutStartedAt) {
-      localStorage.setItem(STORAGE_KEYS.WORKOUT_STARTED_AT, workoutStartedAt.toISOString());
-    } else {
-      localStorage.removeItem(STORAGE_KEYS.WORKOUT_STARTED_AT);
-    }
-  }, [workoutStartedAt]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.SESSION_MODE, sessionMode);
-  }, [sessionMode]);
+  // Persistence to localStorage handled by the extracted hook
+  useWorkoutSessionPersistence(
+    activeExercises,
+    workoutNotes,
+    workoutDate,
+    workoutStartedAt,
+    sessionMode
+  );
 
   const addExercise = useCallback(async (exercise: PersistedExercise) => {
     if (!user) return;
@@ -214,11 +180,7 @@ export const useWorkoutSession = () => {
     setWorkoutStartedAt(null);
     setSessionMode('LIVE');
     setExpandedExerciseId(null);
-    localStorage.removeItem(STORAGE_KEYS.ACTIVE_EXERCISES);
-    localStorage.removeItem(STORAGE_KEYS.WORKOUT_NOTES);
-    localStorage.removeItem(STORAGE_KEYS.WORKOUT_DATE);
-    localStorage.removeItem(STORAGE_KEYS.WORKOUT_STARTED_AT);
-    localStorage.removeItem(STORAGE_KEYS.SESSION_MODE);
+    clearPersistedSession();
   }, []);
 
   const startWorkoutFromTemplate = useCallback(async (exercises: PersistedExercise[], mode: 'LIVE' | 'MANUAL') => {
