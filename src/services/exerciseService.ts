@@ -18,13 +18,13 @@ import {
   getDownloadURL 
 } from 'firebase/storage';
 import { db, storage, handleFirestoreError, OperationType } from './firebase';
-import { Exercise, ExerciseCreateInput, ExerciseUpdateInput } from '../types';
+import { Exercise, PersistedExercise, ExerciseCreateInput, ExerciseUpdateInput } from '../types';
 import { workoutService } from './workoutService';
 
 const EXERCISES_COLLECTION = 'exercises';
 
 export const exerciseService = {
-  async getExercises(userId?: string): Promise<Exercise[]> {
+  async getExercises(userId?: string): Promise<PersistedExercise[]> {
     try {
       const requests = [];
 
@@ -46,16 +46,16 @@ export const exerciseService = {
       }
 
       const snapshots = await Promise.all(requests);
-      const exercisesMap = new Map<string, Exercise>();
+      const exercisesMap = new Map<string, PersistedExercise>();
 
       snapshots.forEach(snapshot => {
         snapshot.docs.forEach(doc => {
           const data = doc.data();
-          const exercise = {
+          const exercise: PersistedExercise = {
             id: doc.id,
-            ...data,
+            ...(data as Omit<Exercise, 'id' | 'createdAt'>),
             createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
-          } as Exercise;
+          } as PersistedExercise;
           exercisesMap.set(doc.id, exercise);
         });
       });

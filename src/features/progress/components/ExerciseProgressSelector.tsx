@@ -137,23 +137,26 @@ export const ExerciseProgressSelector: React.FC<ExerciseProgressSelectorProps> =
               {t('workout.progress.sort_by')}
             </label>
             <div className="grid grid-cols-3 gap-1">
-              {[
-                { id: 'participation', label: t('workout.progress.sort_options.participation') },
-                { id: 'name', label: t('workout.progress.sort_options.name') },
-                { id: 'recent', label: t('workout.progress.sort_options.recent') }
-              ].map(opt => (
-                <button
-                  key={opt.id}
-                  onClick={() => setSortBy(opt.id as any)}
-                  className={`py-1.5 px-1 rounded-lg text-[10px] font-black uppercase transition-all border ${
-                    sortBy === opt.id 
-                      ? 'bg-zinc-900 border-zinc-900 text-white shadow-sm' 
-                      : 'bg-white border-zinc-200 text-zinc-500 hover:border-zinc-300'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
+              {(() => {
+                const sortOptions: { id: 'participation' | 'name' | 'recent', label: string }[] = [
+                  { id: 'participation', label: t('workout.progress.sort_options.participation') },
+                  { id: 'name', label: t('workout.progress.sort_options.name') },
+                  { id: 'recent', label: t('workout.progress.sort_options.recent') }
+                ];
+                return sortOptions.map(opt => (
+                  <button
+                    key={opt.id}
+                    onClick={() => setSortBy(opt.id)}
+                    className={`py-1.5 px-1 rounded-lg text-[10px] font-black uppercase transition-all border ${
+                      sortBy === opt.id 
+                        ? 'bg-zinc-900 border-zinc-900 text-white shadow-sm' 
+                        : 'bg-white border-zinc-200 text-zinc-500 hover:border-zinc-300'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ));
+              })()}
             </div>
           </div>
         </div>

@@ -34,7 +34,7 @@ const NewWorkoutContent: React.FC = () => {
   } = useWorkoutFlow();
 
   React.useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' as any });
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, [viewState]);
 
   const getHeaderTitle = () => {

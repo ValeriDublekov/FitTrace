@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Workout, WorkoutExercise, ExerciseSet, Exercise } from '../types';
+import { Workout, PersistedWorkout, WorkoutExercise, ExerciseSet, Exercise, PersistedExercise } from '../types';
 import { useAuth } from './useAuth';
 import { workoutService } from '../services/workoutService';
 import { STORAGE_KEYS } from '../constants';
@@ -88,7 +88,7 @@ export const useWorkoutSession = () => {
     localStorage.setItem(STORAGE_KEYS.SESSION_MODE, sessionMode);
   }, [sessionMode]);
 
-  const addExercise = useCallback(async (exercise: Exercise) => {
+  const addExercise = useCallback(async (exercise: PersistedExercise) => {
     if (!user) return;
 
     const currentSessionInstance = [...activeExercises]
@@ -100,7 +100,7 @@ export const useWorkoutSession = () => {
     if (currentSessionInstance) {
       baseSets = currentSessionInstance.sets;
     } else {
-      const lastHistoricalSession = await workoutService.getLastExerciseSession(exercise.id!, user.uid);
+      const lastHistoricalSession = await workoutService.getLastExerciseSession(exercise.id, user.uid);
       baseSets = lastHistoricalSession?.sets || [];
     }
 
@@ -116,7 +116,7 @@ export const useWorkoutSession = () => {
 
     const newExercise: WorkoutExercise = {
       id: instanceId,
-      exerciseId: exercise.id!,
+      exerciseId: exercise.id,
       exerciseName: exercise.name,
       affectedPart: exercise.affectedPart,
       startedAt: new Date(),
@@ -221,7 +221,7 @@ export const useWorkoutSession = () => {
     localStorage.removeItem(STORAGE_KEYS.SESSION_MODE);
   }, []);
 
-  const startWorkoutFromTemplate = useCallback(async (exercises: Exercise[], mode: 'LIVE' | 'MANUAL') => {
+  const startWorkoutFromTemplate = useCallback(async (exercises: PersistedExercise[], mode: 'LIVE' | 'MANUAL') => {
     if (!user) return;
     clearSession();
     
@@ -233,13 +233,13 @@ export const useWorkoutSession = () => {
     const initialExercises: WorkoutExercise[] = [];
     
     for (const ex of exercises) {
-      const lastHistoricalSession = await workoutService.getLastExerciseSession(ex.id!, user.uid);
+      const lastHistoricalSession = await workoutService.getLastExerciseSession(ex.id, user.uid);
       const baseSets = lastHistoricalSession?.sets || [];
       const instanceId = `ex_idx_${Date.now()}_${Math.random().toString(36).substring(2, 9)}_${ex.id}`;
       
       initialExercises.push({
         id: instanceId,
-        exerciseId: ex.id!,
+        exerciseId: ex.id,
         exerciseName: ex.name,
         affectedPart: ex.affectedPart,
         startedAt: now,
@@ -316,7 +316,7 @@ export const useWorkoutSession = () => {
     }));
   }, []);
 
-  const combineExercises = useCallback(async (selectedItems: { id?: string; exerciseId: string; rawExercise?: Exercise }[]) => {
+  const combineExercises = useCallback(async (selectedItems: { id?: string; exerciseId: string; rawExercise?: PersistedExercise }[]) => {
     if (!user) return;
     
     const groupId = `ss_${Date.now()}`;
@@ -343,7 +343,7 @@ export const useWorkoutSession = () => {
         if (currentSessionInstance) {
           baseSets = currentSessionInstance.sets;
         } else {
-          const lastHistoricalSession = await workoutService.getLastExerciseSession(exercise.id!, user.uid);
+          const lastHistoricalSession = await workoutService.getLastExerciseSession(exercise.id, user.uid);
           baseSets = lastHistoricalSession?.sets || [];
         }
 
@@ -351,7 +351,7 @@ export const useWorkoutSession = () => {
 
         resolvedExercises.push({
           id: instanceId,
-          exerciseId: exercise.id!,
+          exerciseId: exercise.id,
           exerciseName: exercise.name,
           affectedPart: exercise.affectedPart,
           startedAt: new Date(),

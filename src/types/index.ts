@@ -2,6 +2,8 @@ import { Timestamp, FieldValue } from 'firebase/firestore';
 
 export type LoadType = 'WEIGHT_REPS' | 'LEVEL_REPS' | 'CARDIO';
 
+export type WithId<T> = T & { id: string };
+
 export interface Admin {
   email: string;
   createdAt: Date;
@@ -21,6 +23,8 @@ export interface Exercise {
   createdAt: Date;
   affectedPart?: string;
 }
+
+export type PersistedExercise = WithId<Exercise>;
 
 export interface ExerciseSet {
   setIndex: number;
@@ -54,6 +58,8 @@ export interface Workout {
   durationSeconds?: number;
 }
 
+export type PersistedWorkout = WithId<Workout>;
+
 export interface AppSettings {
   isPublic: boolean;
   updatedAt: Date;
@@ -86,6 +92,8 @@ export interface WorkoutTemplate {
   exerciseIds: string[];
   createdAt: Date;
 }
+
+export type PersistedWorkoutTemplate = WithId<WorkoutTemplate>;
 
 export type ExerciseCreateInput = Omit<Exercise, 'id' | 'createdAt'>;
 export type ExerciseUpdateInput = Partial<ExerciseCreateInput>;

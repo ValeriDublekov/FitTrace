@@ -10,6 +10,7 @@ import { Plus, Edit3, Trash2, Search, Filter, Dumbbell, Globe, ShieldAlert, Lock
 import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { getCategoryColorScheme, getZoneColorScheme, sortExercises } from '../utils/colorUtils';
+import { getErrorMessage } from '../utils/errorUtils';
 
 interface ColumnOption {
   id: 'category' | 'id' | 'name' | 'description' | 'affectedPart';
@@ -354,9 +355,9 @@ const AdminPage: React.FC = () => {
             await updateExercise(id, updateData);
             successCount++;
             detailsLog.push(`Ред ${i + 1}: Успешно обновено "${updateData.name || existingEx.name}" (ИД: ${id}).`);
-          } catch (err: any) {
+          } catch (err: unknown) {
             errorCount++;
-            const errMsg = err?.message || err?.toString() || '';
+            const errMsg = getErrorMessage(err);
             detailsLog.push(`Ред ${i + 1}: Грешка при запис във Firestore за "${updateData.name || existingEx.name}". ${errMsg}`);
           }
         }

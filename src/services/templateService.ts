@@ -12,7 +12,7 @@ import {
   updateDoc
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from './firebase';
-import { WorkoutTemplate } from '../types';
+import { WorkoutTemplate, PersistedWorkoutTemplate } from '../types';
 
 const TEMPLATES_COLLECTION = 'workout_templates';
 
@@ -50,7 +50,7 @@ export const templateService = {
     }
   },
 
-  async getUserTemplates(userId: string): Promise<WorkoutTemplate[]> {
+  async getUserTemplates(userId: string): Promise<PersistedWorkoutTemplate[]> {
     try {
       const q = query(
          collection(db, TEMPLATES_COLLECTION),
@@ -66,7 +66,7 @@ export const templateService = {
           name: data.name,
           exerciseIds: data.exerciseIds || [],
           createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
-        } as WorkoutTemplate;
+        } as PersistedWorkoutTemplate;
       });
     } catch (error) {
       handleFirestoreError(error, OperationType.LIST, TEMPLATES_COLLECTION);

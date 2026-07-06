@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { templateService } from '../services/templateService';
-import { WorkoutTemplate } from '../types';
+import { WorkoutTemplate, PersistedWorkoutTemplate } from '../types';
 
 export const useWorkoutTemplates = () => {
   const { user } = useAuth();
-  const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
+  const [templates, setTemplates] = useState<PersistedWorkoutTemplate[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchTemplates = useCallback(async () => {

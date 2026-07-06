@@ -13,7 +13,7 @@ import {
   updateDoc
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from './firebase';
-import { Workout, WorkoutExercise, WorkoutSavePayload, WorkoutUpdatePayload, cleanUndefined } from '../types';
+import { Workout, PersistedWorkout, WorkoutExercise, WorkoutSavePayload, WorkoutUpdatePayload, cleanUndefined } from '../types';
 
 const WORKOUTS_COLLECTION = 'workouts';
 
@@ -64,7 +64,7 @@ export const workoutService = {
     }
   },
 
-  async getExerciseHistory(exerciseId: string, userId: string, maxResults = 50): Promise<Workout[]> {
+  async getExerciseHistory(exerciseId: string, userId: string, maxResults = 50): Promise<PersistedWorkout[]> {
     try {
       const q = query(
         collection(db, WORKOUTS_COLLECTION),
@@ -79,9 +79,9 @@ export const workoutService = {
         const data = doc.data();
         return {
           id: doc.id,
-          ...data,
+          ...(data as Omit<Workout, 'id' | 'date'>),
           date: (data.date as Timestamp)?.toDate() || new Date(),
-        } as Workout;
+        } as PersistedWorkout;
       });
 
       // Filter to only include workouts that have this exercise
@@ -145,7 +145,7 @@ export const workoutService = {
     }
   },
 
-  async mergeWorkouts(earlierWorkout: Workout, laterWorkout: Workout): Promise<void> {
+  async mergeWorkouts(earlierWorkout: PersistedWorkout, laterWorkout: PersistedWorkout): Promise<void> {
     try {
       if (!earlierWorkout.id || !laterWorkout.id) {
         throw new Error('Both workouts must have valid IDs to merge.');

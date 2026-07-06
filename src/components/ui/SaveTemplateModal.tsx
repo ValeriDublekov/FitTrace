@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Search, Check, Dumbbell } from 'lucide-react';
 import { useExercises } from '../../hooks/useExercises';
+import { getErrorMessage } from '../../utils/errorUtils';
 
 interface SaveTemplateModalProps {
   isOpen: boolean;
@@ -56,8 +57,8 @@ export const SaveTemplateModal: React.FC<SaveTemplateModalProps> = ({
     try {
       await onSave(name.trim(), selectedIds);
       onClose();
-    } catch (err: any) {
-      setError(err?.message || 'Error saving template');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
     } finally {
       setSaving(false);
     }
@@ -128,11 +129,11 @@ export const SaveTemplateModal: React.FC<SaveTemplateModalProps> = ({
             ) : (
               <div className="space-y-2 mt-3 overflow-y-auto max-h-[30vh] pr-1">
                 {filteredExercises.map(ex => {
-                  const isChecked = selectedIds.includes(ex.id!);
+                  const isChecked = selectedIds.includes(ex.id);
                   return (
                     <button
                       key={ex.id}
-                      onClick={() => handleToggleExercise(ex.id!)}
+                      onClick={() => handleToggleExercise(ex.id)}
                       className={`w-full p-3.5 rounded-xl border flex items-center justify-between text-left transition-all ${
                         isChecked 
                           ? 'border-indigo-600 bg-indigo-50/40' 

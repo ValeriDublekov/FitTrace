@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link2, X, Check, ArrowUp, ArrowDown, Trash2, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { WorkoutExercise, Exercise } from '../../types';
+import { WorkoutExercise, PersistedExercise } from '../../types';
 import { useExercises } from '../../hooks/useExercises';
 
 interface CombineExercisesModalProps {
   isOpen: boolean;
   activeExercises: WorkoutExercise[];
-  onCombine: (selectedItems: { id?: string; exerciseId: string; rawExercise?: Exercise }[]) => Promise<void>;
+  onCombine: (selectedItems: { id?: string; exerciseId: string; rawExercise?: PersistedExercise }[]) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -18,7 +18,7 @@ interface SelectedItem {
   exerciseName: string;
   affectedPart?: string;
   category?: string;
-  rawExercise?: Exercise;
+  rawExercise?: PersistedExercise;
 }
 
 const CATEGORIES = [
@@ -59,7 +59,7 @@ export const CombineExercisesModal: React.FC<CombineExercisesModalProps> = ({
     }
   };
 
-  const toggleSelectGlobal = (ex: Exercise) => {
+  const toggleSelectGlobal = (ex: PersistedExercise) => {
     const isSelected = selectedItems.some((item) => !item.id && item.exerciseId === ex.id);
     if (isSelected) {
       setSelectedItems((prev) => prev.filter((item) => item.id || item.exerciseId !== ex.id));
@@ -67,7 +67,7 @@ export const CombineExercisesModal: React.FC<CombineExercisesModalProps> = ({
       setSelectedItems((prev) => [
         ...prev,
         {
-          exerciseId: ex.id!,
+          exerciseId: ex.id,
           exerciseName: ex.name,
           affectedPart: ex.affectedPart || ex.category,
           category: ex.category,

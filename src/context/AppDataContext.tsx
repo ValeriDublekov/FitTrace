@@ -3,7 +3,7 @@ import { User } from 'firebase/auth';
 import { doc, getDoc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../services/firebase';
 import { useAuth } from '../hooks/useAuth';
-import { AppSettings, UserSettings, Exercise, FontSize, Language, NotificationSound, normalizeExerciseCreatePayload, normalizeExerciseUpdatePayload } from '../types';
+import { AppSettings, UserSettings, Exercise, PersistedExercise, FontSize, Language, NotificationSound, normalizeExerciseCreatePayload, normalizeExerciseUpdatePayload } from '../types';
 import { exerciseService } from '../services/exerciseService';
 
 export interface AppDataState {
@@ -11,8 +11,8 @@ export interface AppDataState {
   isAdmin: boolean;
   appSettings: AppSettings | null;
   userSettings: UserSettings;
-  visibleExercises: Exercise[];
-  globalExercises: Exercise[];
+  visibleExercises: PersistedExercise[];
+  globalExercises: PersistedExercise[];
   loading: {
     auth: boolean;
     admin: boolean;

@@ -1,22 +1,22 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { workoutService } from '../services/workoutService';
-import { Workout } from '../types';
+import { Workout, PersistedWorkout } from '../types';
 import { useAuth } from './useAuth';
 import { collection, query, where, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
 import { db } from '../services/firebase';
 
 interface WorkoutHistoryContextType {
-  workouts: Workout[];
+  workouts: PersistedWorkout[];
   loading: boolean;
   deleteWorkout: (workoutId: string) => Promise<void>;
-  mergeWorkouts: (earlierWorkout: Workout, laterWorkout: Workout) => Promise<void>;
+  mergeWorkouts: (earlierWorkout: PersistedWorkout, laterWorkout: PersistedWorkout) => Promise<void>;
 }
 
 const WorkoutHistoryContext = createContext<WorkoutHistoryContextType | undefined>(undefined);
 
 export const WorkoutHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [workouts, setWorkouts] = useState<PersistedWorkout[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,11 +35,14 @@ export const WorkoutHistoryProvider: React.FC<{ children: React.ReactNode }> = (
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const dbWorkouts = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        date: (doc.data().date as Timestamp)?.toDate() || new Date(),
-      } as Workout));
+      const dbWorkouts = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...(data as Omit<Workout, 'id' | 'date'>),
+          date: (data.date as Timestamp)?.toDate() || new Date(),
+        } as PersistedWorkout;
+      });
       setWorkouts(dbWorkouts);
       setLoading(false);
     }, (error) => {
@@ -59,7 +62,7 @@ export const WorkoutHistoryProvider: React.FC<{ children: React.ReactNode }> = (
     }
   };
 
-  const mergeWorkouts = async (earlierWorkout: Workout, laterWorkout: Workout) => {
+  const mergeWorkouts = async (earlierWorkout: PersistedWorkout, laterWorkout: PersistedWorkout) => {
     try {
       await workoutService.mergeWorkouts(earlierWorkout, laterWorkout);
     } catch (error) {

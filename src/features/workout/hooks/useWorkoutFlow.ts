@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useExercises } from '../../../hooks/useExercises';
 import { useWorkoutHistory } from '../../../hooks/useWorkoutHistory';
 import { useWorkoutContext } from '../context/WorkoutSessionContext';
-import { Exercise } from '../../../types';
+import { Exercise, Workout } from '../../../types';
 
 export type ViewState = 'SETUP' | 'ACTIVE_SESSION' | 'SELECT_CATEGORY' | 'SELECT_EXERCISE' | 'SUMMARY';
 
@@ -34,7 +34,7 @@ export const useWorkoutFlow = () => {
   });
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [finishedWorkout, setFinishedWorkout] = useState<any>(null);
+  const [finishedWorkout, setFinishedWorkout] = useState<Workout | null>(null);
 
   const filteredExercises = useMemo(() => {
     return exercises

@@ -9,7 +9,7 @@ import { useWorkoutContext } from '../context/WorkoutSessionContext';
 import { SaveTemplateModal } from '../../../components/ui/SaveTemplateModal';
 import { TemplateDetailsModal } from '../../../components/ui/TemplateDetailsModal';
 import { ConfirmModal } from '../../../components/ui/ConfirmModal';
-import { WorkoutTemplate } from '../../../types';
+import { WorkoutTemplate, PersistedWorkoutTemplate } from '../../../types';
 import { getCategoryColorScheme } from '../../../utils/colorUtils';
 
 export const DashboardTemplates: React.FC = () => {
@@ -20,7 +20,7 @@ export const DashboardTemplates: React.FC = () => {
   const { startWorkoutFromTemplate } = useWorkoutContext();
 
   const [activeModal, setActiveModal] = useState<'NONE' | 'CREATE' | 'EDIT' | 'DETAILS'>('NONE');
-  const [selectedTemplate, setSelectedTemplate] = useState<WorkoutTemplate | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<PersistedWorkoutTemplate | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const handleCreateTemplate = async (name: string, exerciseIds: string[]) => {
@@ -189,7 +189,7 @@ export const DashboardTemplates: React.FC = () => {
           onStart={handleStartWorkout}
           onEdit={() => setActiveModal('EDIT')}
           onDelete={() => {
-            setConfirmDeleteId(selectedTemplate.id!);
+            setConfirmDeleteId(selectedTemplate.id);
           }}
         />
       )}

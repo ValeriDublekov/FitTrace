@@ -1,5 +1,11 @@
 import { NotificationSound } from '../types';
 
+declare global {
+  interface Window {
+    webkitAudioContext: typeof AudioContext;
+  }
+}
+
 /**
  * Play a notification sound based on type.
  * If type is a filename, it tries to play /sounds/filename.mp3
@@ -17,7 +23,7 @@ export const playNotificationSound = async (type: string = 'default') => {
     }
 
     // Fallback synthesized sound (refined "modern" style)
-    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') {
       await audioCtx.resume();
     }

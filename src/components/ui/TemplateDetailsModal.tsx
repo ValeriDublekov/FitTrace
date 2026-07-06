@@ -1,14 +1,14 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { WorkoutTemplate, Exercise } from '../../types';
+import { PersistedWorkoutTemplate, PersistedExercise } from '../../types';
 import { X, Dumbbell, Play, Edit3, Trash2, Calendar, Target } from 'lucide-react';
 import { getCategoryColorScheme, getZoneColorScheme } from '../../utils/colorUtils';
 
 interface TemplateDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  template: WorkoutTemplate;
-  exercises: Exercise[];
+  template: PersistedWorkoutTemplate;
+  exercises: PersistedExercise[];
   onStart: (mode: 'LIVE' | 'MANUAL') => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -30,7 +30,7 @@ export const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({
   // Resolve template exercises
   const templateExercises = template.exerciseIds
     .map(id => exercises.find(ex => ex.id === id))
-    .filter((ex): ex is Exercise => !!ex);
+    .filter((ex): ex is PersistedExercise => !!ex);
 
   return (
     <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200" id="template-details-modal">

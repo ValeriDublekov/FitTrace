@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Workout, Exercise, ExerciseSet, normalizeSets } from '../../types';
+import { Workout, PersistedWorkout, Exercise, PersistedExercise, ExerciseSet, normalizeSets } from '../../types';
 import { X, Dumbbell, Pencil, Clock, Award, Layers, Sparkles } from 'lucide-react';
 import { formatDuration } from '../../utils/dateUtils';
 import { getCategoryColorScheme, getZoneColorScheme } from '../../utils/colorUtils';
@@ -8,11 +8,11 @@ import { SaveTemplateModal } from './SaveTemplateModal';
 import { useWorkoutTemplates } from '../../hooks/useWorkoutTemplates';
 
 interface WorkoutDetailsModalProps {
-  workout: Workout;
+  workout: PersistedWorkout;
   onClose: () => void;
-  onEdit?: (workout: Workout) => void;
+  onEdit?: (workout: PersistedWorkout) => void;
   onDelete?: (id: string) => void;
-  exercises?: Exercise[];
+  exercises?: PersistedExercise[];
 }
 
 export const WorkoutDetailsModal: React.FC<WorkoutDetailsModalProps> = ({ 

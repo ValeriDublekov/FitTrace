@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Workout, WorkoutExercise, Exercise, ExerciseSet, normalizeSets } from '../../types';
+import { Workout, PersistedWorkout, WorkoutExercise, Exercise, PersistedExercise, ExerciseSet, normalizeSets } from '../../types';
 import { X, Calendar, Plus, Trash2, Save, Dumbbell, ChevronRight, ArrowLeft } from 'lucide-react';
 import { workoutService } from '../../services/workoutService';
 import { useExercises } from '../../hooks/useExercises';
 import { v4 as uuidv4 } from 'uuid';
 
 interface EditWorkoutModalProps {
-  workout: Workout;
+  workout: PersistedWorkout;
   onClose: () => void;
-  onSave: (updatedWorkout: Workout) => void;
+  onSave: (updatedWorkout: PersistedWorkout) => void;
 }
 
 export const EditWorkoutModal: React.FC<EditWorkoutModalProps> = ({ workout, onClose, onSave }) => {
@@ -31,10 +31,10 @@ export const EditWorkoutModal: React.FC<EditWorkoutModalProps> = ({ workout, onC
     setEditedExercises(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleAddExercise = (exercise: Exercise) => {
+  const handleAddExercise = (exercise: PersistedExercise) => {
     const newWorkoutExercise: WorkoutExercise = {
       id: uuidv4(),
-      exerciseId: exercise.id!,
+      exerciseId: exercise.id,
       exerciseName: exercise.name,
       affectedPart: exercise.affectedPart,
       sets: [
@@ -86,7 +86,7 @@ export const EditWorkoutModal: React.FC<EditWorkoutModalProps> = ({ workout, onC
         sets: normalizeSets(ex.sets),
       }));
 
-      const updatedWorkout: Workout = {
+      const updatedWorkout: PersistedWorkout = {
         ...workout,
         date: new Date(editedDate),
         exercises: normalizedExercises,

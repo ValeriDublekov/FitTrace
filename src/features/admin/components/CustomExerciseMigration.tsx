@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Exercise } from '../../../types';
+import { PersistedExercise } from '../../../types';
 import { Copy, Check, AlertCircle, ArrowRightLeft, Filter } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface CustomExerciseMigrationProps {
-  customExercises: Exercise[];
-  systemExercises: Exercise[];
+  customExercises: PersistedExercise[];
+  systemExercises: PersistedExercise[];
   onMerge: (customId: string, systemId: string, systemName: string) => Promise<void>;
 }
 
@@ -146,8 +146,8 @@ export const CustomExerciseMigration: React.FC<CustomExerciseMigrationProps> = (
                 <td className="p-4 min-w-[200px]">
                   <select
                     className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                    value={selections[ex.id!] || ''}
-                    onChange={(e) => handleSelect(ex.id!, e.target.value)}
+                    value={selections[ex.id] || ''}
+                    onChange={(e) => handleSelect(ex.id, e.target.value)}
                   >
                     <option value="">{t('workout.admin_migration.select_system')}</option>
                     {systemExercises.map((sys) => (
@@ -160,15 +160,15 @@ export const CustomExerciseMigration: React.FC<CustomExerciseMigrationProps> = (
                 <td className="p-4">
                   <div className="flex flex-col gap-1">
                     <button
-                      disabled={!selections[ex.id!] || processing[ex.id!]}
-                      onClick={() => handleMerge(ex.id!)}
+                      disabled={!selections[ex.id] || processing[ex.id]}
+                      onClick={() => handleMerge(ex.id)}
                       className={`flex items-center justify-center gap-2 px-4 py-1.5 rounded-lg font-medium text-sm transition-all shadow-sm
-                        ${!selections[ex.id!] 
+                        ${!selections[ex.id] 
                           ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
                           : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
                         }`}
                     >
-                      {processing[ex.id!] ? (
+                      {processing[ex.id] ? (
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       ) : (
                         <>
