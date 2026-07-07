@@ -1,10 +1,10 @@
-import { useAppData } from '../context/AppDataContext';
+import { useAppSettingsContext } from '../context/AppDataContext';
 
 export const useAppSettings = () => {
-  const { state, updateAppSettings } = useAppData();
+  const { settings, loading, updateSettings } = useAppSettingsContext();
   return {
-    settings: state.appSettings,
-    loading: state.loading.appSettings,
-    updateSettings: updateAppSettings,
+    settings,
+    loading,
+    updateSettings,
   };
 };

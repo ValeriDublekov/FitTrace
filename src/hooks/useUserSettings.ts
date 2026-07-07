@@ -1,17 +1,18 @@
-import { useAppData } from '../context/AppDataContext';
+import { useUserSettingsContext } from '../context/AppDataContext';
 
 export const useUserSettings = () => {
   const {
-    state,
+    settings,
+    loading,
     updateFontSize,
     updateLanguage,
     updateNotificationSound,
     updateIsNotificationsEnabled,
-  } = useAppData();
+  } = useUserSettingsContext();
 
   return {
-    settings: state.userSettings,
-    loading: state.loading.userSettings,
+    settings,
+    loading,
     updateFontSize,
     updateLanguage,
     updateNotificationSound,

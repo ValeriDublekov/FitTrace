@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { User } from 'firebase/auth';
 import { doc, getDoc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../services/firebase';
@@ -31,7 +31,7 @@ const DEFAULT_USER_SETTINGS: UserSettings = {
   updatedAt: new Date(),
 };
 
-interface AppDataContextType {
+export interface AppDataContextType {
   state: AppDataState;
   updateAppSettings: (newSettings: Partial<AppSettings>) => Promise<void>;
   updateFontSize: (fontSize: FontSize) => Promise<void>;
@@ -46,6 +46,43 @@ interface AppDataContextType {
   refreshExercises: () => Promise<void>;
 }
 
+export interface AdminContextType {
+  isAdmin: boolean;
+  loading: boolean;
+}
+
+export interface AppSettingsContextType {
+  settings: AppSettings | null;
+  loading: boolean;
+  updateSettings: (newSettings: Partial<AppSettings>) => Promise<void>;
+}
+
+export interface UserSettingsContextType {
+  settings: UserSettings;
+  loading: boolean;
+  updateFontSize: (fontSize: FontSize) => Promise<void>;
+  updateLanguage: (language: Language) => Promise<void>;
+  updateNotificationSound: (notificationSound: NotificationSound) => Promise<void>;
+  updateIsNotificationsEnabled: (isNotificationsEnabled: boolean) => Promise<void>;
+}
+
+export interface ExercisesContextType {
+  visibleExercises: PersistedExercise[];
+  globalExercises: PersistedExercise[];
+  loading: boolean;
+  error: string | null;
+  addExercise: (exercise: Omit<Exercise, 'id' | 'createdAt'>, adminMode?: boolean) => Promise<string>;
+  updateExercise: (id: string, exercise: Partial<Omit<Exercise, 'id' | 'createdAt'>>, adminMode?: boolean) => Promise<void>;
+  deleteExercise: (id: string) => Promise<void>;
+  uploadThumbnail: (file: File) => Promise<string>;
+  mergeCustomExercise: (customExerciseId: string, systemExerciseId: string, systemExerciseName: string) => Promise<void>;
+  refreshExercises: () => Promise<void>;
+}
+
+export const AdminContext = createContext<AdminContextType | undefined>(undefined);
+export const AppSettingsContext = createContext<AppSettingsContextType | undefined>(undefined);
+export const UserSettingsContext = createContext<UserSettingsContextType | undefined>(undefined);
+export const ExercisesContext = createContext<ExercisesContextType | undefined>(undefined);
 const AppDataContext = createContext<AppDataContextType | undefined>(undefined);
 
 export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -262,7 +299,7 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [refreshExercises]);
 
   // Mutations
-  const updateAppSettings = async (newSettings: Partial<AppSettings>) => {
+  const updateAppSettings = useCallback(async (newSettings: Partial<AppSettings>) => {
     if (!user) return;
     const docRef = doc(db, 'settings', 'global');
     try {
@@ -276,9 +313,9 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
       console.error('Error updating settings:', error);
       handleFirestoreError(error, OperationType.WRITE, 'settings/global');
     }
-  };
+  }, [user, state.appSettings]);
 
-  const updateFontSize = async (fontSize: FontSize) => {
+  const updateFontSize = useCallback(async (fontSize: FontSize) => {
     if (!user) return;
     const docRef = doc(db, 'users', user.uid, 'settings', 'display');
     try {
@@ -289,9 +326,9 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/settings/display`);
     }
-  };
+  }, [user]);
 
-  const updateLanguage = async (language: Language) => {
+  const updateLanguage = useCallback(async (language: Language) => {
     if (!user) return;
     const docRef = doc(db, 'users', user.uid, 'settings', 'display');
     try {
@@ -302,9 +339,9 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/settings/display`);
     }
-  };
+  }, [user]);
 
-  const updateNotificationSound = async (notificationSound: NotificationSound) => {
+  const updateNotificationSound = useCallback(async (notificationSound: NotificationSound) => {
     if (!user) return;
     const docRef = doc(db, 'users', user.uid, 'settings', 'display');
     try {
@@ -315,9 +352,9 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/settings/display`);
     }
-  };
+  }, [user]);
 
-  const updateIsNotificationsEnabled = async (isNotificationsEnabled: boolean) => {
+  const updateIsNotificationsEnabled = useCallback(async (isNotificationsEnabled: boolean) => {
     if (!user) return;
     const docRef = doc(db, 'users', user.uid, 'settings', 'display');
     try {
@@ -328,7 +365,7 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/settings/display`);
     }
-  };
+  }, [user]);
 
   const addExercise = useCallback(async (exercise: Omit<Exercise, 'id' | 'createdAt'>, adminMode: boolean = false) => {
     try {
@@ -385,26 +422,131 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, [user, refreshExercises]);
 
+  // Memoized Sub-contexts values to limit consumer re-renders
+  const adminValue = useMemo(() => ({
+    isAdmin: state.isAdmin,
+    loading: state.loading.admin,
+  }), [state.isAdmin, state.loading.admin]);
+
+  const appSettingsValue = useMemo(() => ({
+    settings: state.appSettings,
+    loading: state.loading.appSettings,
+    updateSettings: updateAppSettings,
+  }), [state.appSettings, state.loading.appSettings, updateAppSettings]);
+
+  const userSettingsValue = useMemo(() => ({
+    settings: state.userSettings,
+    loading: state.loading.userSettings,
+    updateFontSize,
+    updateLanguage,
+    updateNotificationSound,
+    updateIsNotificationsEnabled,
+  }), [
+    state.userSettings,
+    state.loading.userSettings,
+    updateFontSize,
+    updateLanguage,
+    updateNotificationSound,
+    updateIsNotificationsEnabled,
+  ]);
+
+  const exercisesValue = useMemo(() => ({
+    visibleExercises: state.visibleExercises,
+    globalExercises: state.globalExercises,
+    loading: state.loading.exercises,
+    error: state.exercisesError,
+    addExercise,
+    updateExercise,
+    deleteExercise,
+    uploadThumbnail,
+    mergeCustomExercise,
+    refreshExercises,
+  }), [
+    state.visibleExercises,
+    state.globalExercises,
+    state.loading.exercises,
+    state.exercisesError,
+    addExercise,
+    updateExercise,
+    deleteExercise,
+    uploadThumbnail,
+    mergeCustomExercise,
+    refreshExercises,
+  ]);
+
+  const combinedValue = useMemo(() => ({
+    state,
+    updateAppSettings,
+    updateFontSize,
+    updateLanguage,
+    updateNotificationSound,
+    updateIsNotificationsEnabled,
+    addExercise,
+    updateExercise,
+    deleteExercise,
+    uploadThumbnail,
+    mergeCustomExercise,
+    refreshExercises,
+  }), [
+    state,
+    updateAppSettings,
+    updateFontSize,
+    updateLanguage,
+    updateNotificationSound,
+    updateIsNotificationsEnabled,
+    addExercise,
+    updateExercise,
+    deleteExercise,
+    uploadThumbnail,
+    mergeCustomExercise,
+    refreshExercises,
+  ]);
+
   return (
-    <AppDataContext.Provider
-      value={{
-        state,
-        updateAppSettings,
-        updateFontSize,
-        updateLanguage,
-        updateNotificationSound,
-        updateIsNotificationsEnabled,
-        addExercise,
-        updateExercise,
-        deleteExercise,
-        uploadThumbnail,
-        mergeCustomExercise,
-        refreshExercises,
-      }}
-    >
-      {children}
+    <AppDataContext.Provider value={combinedValue}>
+      <AdminContext.Provider value={adminValue}>
+        <AppSettingsContext.Provider value={appSettingsValue}>
+          <UserSettingsContext.Provider value={userSettingsValue}>
+            <ExercisesContext.Provider value={exercisesValue}>
+              {children}
+            </ExercisesContext.Provider>
+          </UserSettingsContext.Provider>
+        </AppSettingsContext.Provider>
+      </AdminContext.Provider>
     </AppDataContext.Provider>
   );
+};
+
+export const useAdminContext = () => {
+  const context = useContext(AdminContext);
+  if (context === undefined) {
+    throw new Error('useAdminContext must be used within an AppDataProvider');
+  }
+  return context;
+};
+
+export const useAppSettingsContext = () => {
+  const context = useContext(AppSettingsContext);
+  if (context === undefined) {
+    throw new Error('useAppSettingsContext must be used within an AppDataProvider');
+  }
+  return context;
+};
+
+export const useUserSettingsContext = () => {
+  const context = useContext(UserSettingsContext);
+  if (context === undefined) {
+    throw new Error('useUserSettingsContext must be used within an AppDataProvider');
+  }
+  return context;
+};
+
+export const useExercisesContext = () => {
+  const context = useContext(ExercisesContext);
+  if (context === undefined) {
+    throw new Error('useExercisesContext must be used within an AppDataProvider');
+  }
+  return context;
 };
 
 export const useAppData = () => {

@@ -1,16 +1,19 @@
-import { useAppData } from '../context/AppDataContext';
+import { useExercisesContext } from '../context/AppDataContext';
 import { Exercise } from '../types';
 
 export const useExercises = (options: { adminMode?: boolean } = {}) => {
   const {
-    state,
+    visibleExercises,
+    globalExercises,
+    loading,
+    error,
     addExercise,
     updateExercise,
     deleteExercise,
     uploadThumbnail,
     mergeCustomExercise,
     refreshExercises,
-  } = useAppData();
+  } = useExercisesContext();
 
   const wrapAddExercise = (exercise: Omit<Exercise, 'id' | 'createdAt'>) => 
     addExercise(exercise, options.adminMode);
@@ -19,9 +22,9 @@ export const useExercises = (options: { adminMode?: boolean } = {}) => {
     updateExercise(id, exercise, options.adminMode);
 
   return {
-    exercises: options.adminMode ? state.globalExercises : state.visibleExercises,
-    loading: state.loading.exercises,
-    error: state.exercisesError,
+    exercises: options.adminMode ? globalExercises : visibleExercises,
+    loading,
+    error,
     addExercise: wrapAddExercise,
     updateExercise: wrapUpdateExercise,
     deleteExercise,

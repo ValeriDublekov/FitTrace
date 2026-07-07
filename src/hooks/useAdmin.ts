@@ -1,9 +1,9 @@
-import { useAppData } from '../context/AppDataContext';
+import { useAdminContext } from '../context/AppDataContext';
 
 export const useAdmin = () => {
-  const { state } = useAppData();
+  const { isAdmin, loading } = useAdminContext();
   return { 
-    isAdmin: state.isAdmin, 
-    loading: state.loading.admin 
+    isAdmin, 
+    loading 
   };
 };
