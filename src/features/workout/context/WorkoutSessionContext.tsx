@@ -8,6 +8,7 @@ export type WorkoutSessionState = {
   activeExercises: WorkoutSessionContextType['activeExercises'];
   workoutNotes: WorkoutSessionContextType['workoutNotes'];
   workoutDate: WorkoutSessionContextType['workoutDate'];
+  workoutStartedAt: WorkoutSessionContextType['workoutStartedAt'];
   sessionMode: WorkoutSessionContextType['sessionMode'];
   expandedExerciseId: WorkoutSessionContextType['expandedExerciseId'];
   restTimer: WorkoutSessionContextType['restTimer'];
@@ -54,6 +55,7 @@ export const WorkoutSessionProvider: React.FC<{ children: ReactNode }> = ({ chil
     activeExercises: session.activeExercises,
     workoutNotes: session.workoutNotes,
     workoutDate: session.workoutDate,
+    workoutStartedAt: session.workoutStartedAt,
     sessionMode: session.sessionMode,
     expandedExerciseId: session.expandedExerciseId,
     restTimer: session.restTimer,
@@ -62,6 +64,7 @@ export const WorkoutSessionProvider: React.FC<{ children: ReactNode }> = ({ chil
     session.activeExercises,
     session.workoutNotes,
     session.workoutDate,
+    session.workoutStartedAt,
     session.sessionMode,
     session.expandedExerciseId,
     session.restTimer,

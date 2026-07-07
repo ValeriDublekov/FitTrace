@@ -171,7 +171,7 @@ export const SimpleExerciseHistoryList: React.FC<SimpleExerciseHistoryListProps>
         {filteredHistory.length > 0 && (
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-zinc-50 border border-zinc-200/60 rounded-2xl px-5 py-4 shadow-sm">
             <span className="text-xs font-black text-zinc-500 uppercase tracking-widest">
-              {t('workout.progress.exercises_logged', { count: filteredHistory.reduce((acc, curr) => acc + curr.exercises.length, 0) })}
+              {t('workout.progress.exercises_logged', { count: filteredHistory.reduce<number>((acc, curr) => acc + curr.exercises.length, 0) })}
             </span>
             <button
               onClick={handleExportCSV}

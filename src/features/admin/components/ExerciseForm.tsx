@@ -49,7 +49,8 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
         description,
         url,
         thumbnailUrl,
-        affectedPart
+        affectedPart,
+        isCustom: exercise?.isCustom || false
       });
     } catch (error) {
       console.error('Submit error:', error);

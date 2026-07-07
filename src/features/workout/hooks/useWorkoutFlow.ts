@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useExercises } from '../../../hooks/useExercises';
 import { useWorkoutHistory } from '../../../hooks/useWorkoutHistory';
 import { useWorkoutContext } from '../context/WorkoutSessionContext';
-import { Exercise, Workout } from '../../../types';
+import { Exercise, Workout, PersistedExercise } from '../../../types';
 
 export type ViewState = 'SETUP' | 'ACTIVE_SESSION' | 'SELECT_CATEGORY' | 'SELECT_EXERCISE' | 'SUMMARY';
 
@@ -51,7 +51,8 @@ export const useWorkoutFlow = () => {
   }, [exercises, selectedCategory, searchQuery, exerciseFrequency]);
 
   const handleAddExercise = async (exercise: Exercise) => {
-    await addExercise(exercise);
+    if (!exercise.id) return;
+    await addExercise(exercise as PersistedExercise);
     setViewState('ACTIVE_SESSION');
     setSearchQuery('');
   };

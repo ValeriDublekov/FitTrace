@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useExercises } from '../hooks/useExercises';
 import { useExerciseHistory } from '../hooks/useExerciseHistory';
 import { useWorkoutHistory } from '../hooks/useWorkoutHistory';
-import { Workout } from '../types';
+import { Workout, PersistedWorkout } from '../types';
 import { AnimatePresence, motion } from 'motion/react';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { WorkoutDetailsModal } from '../components/ui/WorkoutDetailsModal';
@@ -29,8 +29,8 @@ const ProgressPage: React.FC = () => {
   const [sortBy, setSortBy] = useState<'participation' | 'name' | 'recent'>('participation');
   const [showMobileSelector, setShowMobileSelector] = useState(false);
   const [workoutToDelete, setWorkoutToDelete] = useState<string | null>(null);
-  const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
-  const [workoutToEdit, setWorkoutToEdit] = useState<Workout | null>(null);
+  const [selectedWorkout, setSelectedWorkout] = useState<PersistedWorkout | null>(null);
+  const [workoutToEdit, setWorkoutToEdit] = useState<PersistedWorkout | null>(null);
 
   const exerciseStats = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -190,7 +190,7 @@ const ProgressPage: React.FC = () => {
                     history={globalHistory}
                     loading={globalHistoryLoading}
                     exercises={exercises}
-                    onSelectWorkout={setSelectedWorkout}
+                    onSelectWorkout={(w) => setSelectedWorkout(w as PersistedWorkout)}
                     onDeleteWorkout={setWorkoutToDelete}
                   />
                 ) : exerciseHistoryLoading ? (
@@ -211,12 +211,14 @@ const ProgressPage: React.FC = () => {
                       />
                     )}
                     
-                    <ExerciseSessionList
-                      history={exerciseHistory}
-                      selectedExercise={selectedExercise}
-                      onDeleteWorkout={setWorkoutToDelete}
-                      onSelectWorkout={setSelectedWorkout}
-                    />
+                    {selectedExercise && (
+                      <ExerciseSessionList
+                        history={exerciseHistory}
+                        selectedExercise={selectedExercise}
+                        onDeleteWorkout={setWorkoutToDelete}
+                        onSelectWorkout={(w) => setSelectedWorkout(w as PersistedWorkout)}
+                      />
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>

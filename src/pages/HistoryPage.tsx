@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWorkoutHistory } from '../hooks/useWorkoutHistory';
 import { useExercises } from '../hooks/useExercises';
-import { Workout } from '../types';
+import { Workout, PersistedWorkout } from '../types';
 import { GlobalHistoryList } from '../features/progress/components/GlobalHistoryList';
 import { SimpleExerciseHistoryList } from '../features/progress/components/SimpleExerciseHistoryList';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
@@ -22,9 +22,9 @@ const HistoryPage: React.FC = () => {
 
   const [viewMode, setViewMode] = useState<'workouts' | 'exercises'>('workouts');
   const [workoutToDelete, setWorkoutToDelete] = useState<string | null>(null);
-  const [workoutsToMerge, setWorkoutsToMerge] = useState<{ later: Workout; earlier: Workout } | null>(null);
-  const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
-  const [workoutToEdit, setWorkoutToEdit] = useState<Workout | null>(null);
+  const [workoutsToMerge, setWorkoutsToMerge] = useState<{ later: PersistedWorkout; earlier: PersistedWorkout } | null>(null);
+  const [selectedWorkout, setSelectedWorkout] = useState<PersistedWorkout | null>(null);
+  const [workoutToEdit, setWorkoutToEdit] = useState<PersistedWorkout | null>(null);
 
   const handleDeleteWorkout = async () => {
     if (!workoutToDelete) return;
@@ -93,16 +93,16 @@ const HistoryPage: React.FC = () => {
             history={globalHistory}
             loading={globalHistoryLoading}
             exercises={exercises}
-            onSelectWorkout={setSelectedWorkout}
+            onSelectWorkout={(w) => setSelectedWorkout(w as PersistedWorkout)}
             onDeleteWorkout={setWorkoutToDelete}
-            onMergeWorkouts={(later, earlier) => setWorkoutsToMerge({ later, earlier })}
+            onMergeWorkouts={(later, earlier) => setWorkoutsToMerge({ later: later as PersistedWorkout, earlier: earlier as PersistedWorkout })}
           />
         </div>
       ) : (
         <SimpleExerciseHistoryList
           history={globalHistory}
           exercises={exercises}
-          onSelectWorkout={setSelectedWorkout}
+          onSelectWorkout={(w) => setSelectedWorkout(w as PersistedWorkout)}
         />
       )}
 

@@ -144,6 +144,7 @@ export const useWorkoutSession = () => {
     setWorkoutNotes,
     workoutDate,
     setWorkoutDate,
+    workoutStartedAt,
     sessionMode,
     setSessionMode,
     addExercise,
