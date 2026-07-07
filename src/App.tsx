@@ -16,7 +16,7 @@ import Navbar from './components/layout/Navbar';
 import { BottomNav } from './components/layout/BottomNav';
 import { useTranslation } from 'react-i18next';
 import { InstallPrompt } from './components/pwa/InstallPrompt';
-import { useWorkoutContext } from './features/workout/context/WorkoutSessionContext';
+import { useWorkoutSessionStatus } from './features/workout/context/WorkoutSessionContext';
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import AdminPage from './pages/AdminPage';
@@ -50,7 +50,7 @@ const AppContent: React.FC = () => {
   const { settings, loading: settingsLoading } = useAppSettings();
   const { settings: userSettings, loading: userSettingsLoading } = useUserSettings();
   const { i18n } = useTranslation();
-  const { hasActiveSession } = useWorkoutContext();
+  const { hasActiveSession } = useWorkoutSessionStatus();
 
   const loading = authLoading || adminLoading || settingsLoading || userSettingsLoading;
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useAdmin } from '../../hooks/useAdmin';
-import { useWorkoutContext } from '../../features/workout/context/WorkoutSessionContext';
+import { useWorkoutSessionStatus } from '../../features/workout/context/WorkoutSessionContext';
 import { useTranslation } from 'react-i18next';
 import UserMenu from './UserMenu';
 import { Dumbbell, ShieldCheck, LayoutDashboard, User, TrendingUp, History as HistoryIcon, Globe, Timer, Menu, X } from 'lucide-react';
@@ -10,14 +10,13 @@ import { Dumbbell, ShieldCheck, LayoutDashboard, User, TrendingUp, History as Hi
 const Navbar: React.FC = () => {
   const { user } = useAuth();
   const { isAdmin } = useAdmin();
-  const { activeExercises } = useWorkoutContext();
+  const { hasActiveSession } = useWorkoutSessionStatus();
   const { t } = useTranslation();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   if (!user) return null;
 
-  const hasActiveSession = activeExercises.length > 0;
   const isWorkoutPage = location.pathname === '/new-workout';
 
   const navLinks = [
