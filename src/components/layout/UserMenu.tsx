@@ -27,7 +27,9 @@ const UserMenu: React.FC = () => {
       const apiPath = `${origin}${cleanBaseUrl}api/sounds?t=${Date.now()}`;
       const manifestPath = `${origin}${cleanBaseUrl}sounds.json?t=${Date.now()}`;
       
-      console.log('Sound fetch config:', { apiPath, manifestPath, baseUrl, origin, isGitHubPages });
+      if (import.meta.env.DEV) {
+        console.log('Sound fetch config:', { apiPath, manifestPath, baseUrl, origin, isGitHubPages });
+      }
       
       // Try manifest first as it's the primary way for static hosts like GitHub Pages
       try {
