@@ -5,6 +5,7 @@ import { useExercises } from '../hooks/useExercises';
 import { Workout, PersistedWorkout } from '../types';
 import { GlobalHistoryList } from '../features/progress/components/GlobalHistoryList';
 import { SimpleExerciseHistoryList } from '../features/progress/components/SimpleExerciseHistoryList';
+import { HistoryFilters } from '../features/progress/components/HistoryFilters';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { WorkoutDetailsModal } from '../components/ui/WorkoutDetailsModal';
 import { EditWorkoutModal } from '../components/ui/EditWorkoutModal';
@@ -18,13 +19,16 @@ const HistoryPage: React.FC = () => {
     loading: globalHistoryLoading, 
     deleteWorkout: deleteGlobalWorkout,
     mergeWorkouts
-  } = useWorkoutHistory();
+  } = useWorkoutHistory(9999);
 
   const [viewMode, setViewMode] = useState<'workouts' | 'exercises'>('workouts');
   const [workoutToDelete, setWorkoutToDelete] = useState<string | null>(null);
   const [workoutsToMerge, setWorkoutsToMerge] = useState<{ later: PersistedWorkout; earlier: PersistedWorkout } | null>(null);
   const [selectedWorkout, setSelectedWorkout] = useState<PersistedWorkout | null>(null);
   const [workoutToEdit, setWorkoutToEdit] = useState<PersistedWorkout | null>(null);
+
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
 
   const handleDeleteWorkout = async () => {
     if (!workoutToDelete) return;
@@ -45,6 +49,24 @@ const HistoryPage: React.FC = () => {
       console.error('Failed to merge workouts:', error);
     }
   };
+
+  const filteredHistory = globalHistory.filter((workout) => {
+    if (startDate) {
+      const sDate = new Date(startDate);
+      sDate.setHours(0, 0, 0, 0);
+      const wDate = new Date(workout.date);
+      wDate.setHours(0, 0, 0, 0);
+      if (wDate < sDate) return false;
+    }
+    if (endDate) {
+      const eDate = new Date(endDate);
+      eDate.setHours(23, 59, 59, 999);
+      const wDate = new Date(workout.date);
+      wDate.setHours(23, 59, 59, 999);
+      if (wDate > eDate) return false;
+    }
+    return true;
+  });
 
   return (
     <div className="max-w-4xl mx-auto p-4 pb-24 md:p-8 space-y-6">
@@ -83,6 +105,19 @@ const HistoryPage: React.FC = () => {
         </div>
       </header>
 
+      <HistoryFilters
+        startDate={startDate}
+        setStartDate={setStartDate}
+        endDate={endDate}
+        setEndDate={setEndDate}
+        onClear={() => {
+          setStartDate('');
+          setEndDate('');
+        }}
+        workouts={filteredHistory}
+        exercises={exercises}
+      />
+
       {globalHistoryLoading ? (
         <div className="p-12 flex justify-center bg-white border border-zinc-200 rounded-3xl">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
@@ -90,7 +125,7 @@ const HistoryPage: React.FC = () => {
       ) : viewMode === 'workouts' ? (
         <div className="bg-white border border-zinc-200 rounded-3xl overflow-hidden shadow-sm p-4 sm:p-6">
           <GlobalHistoryList
-            history={globalHistory}
+            history={filteredHistory}
             loading={globalHistoryLoading}
             exercises={exercises}
             onSelectWorkout={(w) => setSelectedWorkout(w as PersistedWorkout)}
@@ -100,7 +135,7 @@ const HistoryPage: React.FC = () => {
         </div>
       ) : (
         <SimpleExerciseHistoryList
-          history={globalHistory}
+          history={filteredHistory}
           exercises={exercises}
           onSelectWorkout={(w) => setSelectedWorkout(w as PersistedWorkout)}
         />

@@ -175,6 +175,17 @@
       "no_matching_exercises": "No exercises found matching the selected muscle groups.",
       "export_exercises": "Export Exercises",
       "merge_btn": "Merge Workouts",
+      "start_date": "Start Date",
+      "end_date": "End Date",
+      "export_csv_btn": "Export to CSV",
+      "csv_headers": {
+        "date": "Date",
+        "category": "Muscle Group",
+        "zone": "Muscle Zone if any",
+        "name": "Exercise Name",
+        "weight": "Weight",
+        "notes": "Notes if any"
+      },
       "confirmations": {
         "delete_workout": {
           "title": "Delete Workout",

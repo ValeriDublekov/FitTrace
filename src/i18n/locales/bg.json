@@ -178,6 +178,17 @@
       "no_matching_exercises": "Няма намерени упражнения с избраните мускулни групи.",
       "export_exercises": "Експорт на упражнения",
       "merge_btn": "Обединяване на тренировки",
+      "start_date": "От дата",
+      "end_date": "До дата",
+      "export_csv_btn": "Експортирай в CSV",
+      "csv_headers": {
+        "date": "дата",
+        "category": "мускулна група",
+        "zone": "зона на мускула ако има",
+        "name": "име на упражнение",
+        "weight": "тежест",
+        "notes": "бележки ако има"
+      },
       "confirmations": {
         "delete_workout": {
           "title": "Изтриване на тренировка",
