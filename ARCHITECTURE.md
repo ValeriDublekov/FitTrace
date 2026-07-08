@@ -19,18 +19,25 @@ The application utilizes a strictly ordered parent-to-child component nesting se
 
 ```text
 <AuthProvider>                      [Global Auth State Monitor]
-  └── <AppDataProvider>             [Global Static Catalogs, Settings, & Mutations Provider]
-        └── <WorkoutHistoryProvider> [User Historical Workout Stream & Queries Controller]
-              └── <Router>           [React Router navigation context (HashRouter)]
-                    └── <WorkoutSessionProvider> [Active live/manual session logging context]
-                          └── <AppContent /> [Component Layout with route controllers]
+  └── <AppDataProvider>             [Wrapper that injects Data-Specific Sub-Providers]
+        ├── <AdminContext>          [Admin Authorization Role]
+        ├── <AppSettingsContext>    [Global Variables / Maintenance Mode]
+        ├── <UserSettingsContext>   [Display Preferences]
+        └── <ExercisesContext>      [Global + Custom Exercise Catalog]
+              └── <WorkoutHistoryProvider> [User Historical Workout Stream & Queries]
+                    └── <Router>           [React Router navigation context (HashRouter)]
+                          └── <WorkoutSessionProvider> [Active live/manual session logging context]
+                                ├── <WorkoutSessionStateContext>
+                                ├── <WorkoutSessionStatusContext>
+                                ├── <WorkoutSessionActionsContext>
+                                └── <AppContent /> [Component Layout with route controllers]
 ```
 
 - **`AuthProvider`:** Controls user session, initialization, and exposes identity status.
-- **`AppDataProvider`:** Subscribes to global system parameters (`appSettings`), displays individual user displays (`userSettings`), parses standard exercise catalogs sorted alphabetically, and acts as the gatekeeper for core database writes.
+- **`AppDataProvider`:** The master provider that evaluates `admins/${user.uid}` to set the global source of truth for admin status, sets up snapshots for global app settings and per-user display settings, and fetches both global and user-custom exercises. It exposes its functionality via thin wrapper hooks (`useAdmin`, `useAppSettings`, `useUserSettings`, `useExercises`) connected to the corresponding sub-contexts to prevent unnecessary re-renders.
 - **`WorkoutHistoryProvider`:** Aggregates and maintains a cached state of user completed workout sessions to populate stats and logs securely.
 - **`HashRouter`:** Powers client-side routing. Hash navigation (`#/path`) is employed to bypass direct web-server requirements, allowing routes to function correctly under custom assets directories or subpaths without causing router 404 errors.
-- **`WorkoutSessionProvider`:** Encapsulates the active workout state (current logs, set telemetry, active duration timers, and passive rest alerts).
+- **`WorkoutSessionProvider`:** Encapsulates the active workout state (current logs, set telemetry, active duration timers, and passive rest alerts) utilizing modular State, Status, and Actions sub-contexts to optimize rendering performance.
 
 ---
 
@@ -46,10 +53,10 @@ Access to routes is governed by the state of user registration, authentication v
 | `/history` | `HistoryPage` | Authenticated users only. High-fidelity workout log, edit modes, and delete triggers. |
 | `/progress` | `ProgressPage` | Authenticated users only. Exercise selector and progressive Recharts line charts. |
 | `/my-exercises` | `MyExercisesPage` | Authenticated users only. Enables standard custom exercises creation, updating, or deletion. |
-| `/admin` | `AdminPage` | Authorized Administrators only. Enforces local checking via `ProtectedAdminRoute`. |
+| `/admin` | `AdminPage` | Authorized Administrators only. Enforces local checking via `ProtectedAdminRoute` which consumes `useAdmin()`. |
 
 ### route guards
-- **`ProtectedAdminRoute`**: Determines if the user's UID exists in the `admins` collection on Firestore. If not found, routes are safely bounced back to `/`.
+- **`ProtectedAdminRoute`**: Determines if the user's UID exists in the `admins` collection on Firestore based on the state loaded in `AppDataProvider`. If not found, routes are safely bounced back to `/`.
 - **Maintenance Bypass (Private Mode)**: If global `appSettings.isPublic` is configured to `false`, non-admin users are locked out by a dedicated app-wide blocking screen and must log out. Admins bypass the lock to facilitate updates.
 
 ---
@@ -80,7 +87,7 @@ State is classified into client-persistent (local), shared transient, and cloud-
 The database relies on three major collections utilizing explicit data types and server timestamps:
 
 ### 5.1. Collection: `admins`
-Used to authorize admin roles for modifications to general system assets.
+Used to authorize admin roles for modifications to general system assets. The document existence determines admin capability.
 * *Document ID:* `userId` (Firebase Authentication UID)
 * *Schema:*
   ```typescript
@@ -117,7 +124,7 @@ Underneath each user, preferences are partitioned to ensure logical data isolati
   ```
 
 ### 5.4. Collection: `exercises`
-Stores both global standard catalogues and custom user exercises.
+Stores both global standard catalogues and custom user exercises. Global queries pull where `userId == null` while custom queries pull where `userId == current_user_id`.
 * *Document ID:* Auto-generated UUID from Firestore
 * *Fields:*
   ```typescript
@@ -225,6 +232,7 @@ To resolve date drift and data corruption, a strict date-generation lifecycle an
    - **LIVE Mode Auto-Date:** When a user initiates a LIVE session, if it is the first exercise added to the log, `workoutDate` is automatically and dynamically updated to `new Date()`.
    - **Mode-switching Reset:** When toggling the session logging mode to `LIVE` within the `WorkoutSetup` interface, any pre-loaded date in the local hook is immediately reset to the current system date.
    - **Immutability of LIVE Timestamps:** In the Setup UI, manual date selector picking is strictly disabled while configured to `LIVE` mode, certifying that all real-time recording is linked exclusively to the absolute point of activity.
+   - **MANUAL Mode Flexibility:** In `MANUAL` mode, the rest timers do not run automatically upon set completion, and sets populate with `isCompleted: true` automatically when loaded from templates to facilitate rapid past log insertion. 
 
 2. **Cross-Session Conflict Resolution:**
    To guarantee store and database consistency across pages, the global `WorkoutSessionProvider` serves as the single source of truth. The application mitigates user collision through dynamic prompt overlays:
