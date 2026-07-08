@@ -236,4 +236,4 @@ To start the emulator, run the rules test suite, and clean up automatically, exe
 ```bash
 firebase emulators:exec "npm run test"
 ```
-Or view the live emulator dashboard at http://localhost:4000 to trace Firestore transactions and evaluate dynamic security rule checks.
+Or view the live emulator dashboard at `http://localhost:4000` to trace Firestore transactions and evaluate dynamic security rule checks.

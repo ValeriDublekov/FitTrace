@@ -15,7 +15,7 @@
 ### Spec Drift Report
 
 | File | Accuracy | Key Drift | Action Required |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | [README.md](README.md) | Obsolete | Still describes an AI Studio / Gemini app, not FitTrace. Local run instructions and environment expectations are wrong. | Delete and rewrite from scratch |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Partially accurate | Stack and `HashRouter` are correct, but base-path guidance is outdated, data model is incomplete, and current global/user settings plus manual/live session flow are missing. | Update |
 | [PRD.md](PRD.md) | Partially accurate | Major features are recognizable, but several details no longer match code: one-set session prefill vs “3 empty sets”, cardio semantics, current edit/delete flows, public/private app mode, and stale phase tracking. | Update |
