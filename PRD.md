@@ -7,40 +7,21 @@ Gym enthusiasts require a fast, frictionless, mobile-optimized tool to record wo
 
 ---
 
-## 2. Core Flows
+## 2. Target Users and Roles
 
-### 2.1. On-The-Fly Workout Logger
-1. **Start Live Workout:** Tapping "New Workout" initiates a real-time training session.
-2. **Category Selection:** Users select from primary muscle group directories (e.g., Chest, Back, Legs, Arms).
-3. **Adding Exercises:** Adding an exercise opens an optimized Set Logger. To minimize manual entry fatigue, the app dynamically consults the user's past training logs:
-   - If historical recordings are available, the logger retrieves properties from the **last completed set** (cloning reps, weights, levels, or durations).
-   - If no historical data is found, standard baseline defaults (10 reps, 0 weight) are pre-populated.
-   - **Discrepancy (Smart Sets Initial State):** While original theoretical requirements suggested pre-populating three blank sets, real-world touch interaction tests revealed this caused screen clutter on small mobile devices. The production app maintains exactly **1 smart default set**. Users append supplementary sets instantly via the "+ Add Set" button.
-4. **Logging Set Telemetry:** Users enter parameters mapped directly to the exercise's dynamic `LoadType`.
-5. **Set Completion:** Completing a set registers the metrics, marks the set checked, and initiates a passive notification timer.
-6. **Finishing Session:** Saves active exercises with completed sets, logs notes, calculates session duration, and cleans the temporary logging caches.
+### 2.1. Standard Users
+- **Authentication:** Users authenticate securely via Google Auth.
+- **Capabilities:** Create, edit, and log workouts (Live and Manual). Create custom exercises, save workout templates, view personal history, and customize personal settings.
 
-### 2.2. Rest Notification Timer
-- Completing a set under `LIVE` mode fires a visual rest timer on the page margin.
-- Resting intervals default to 90 seconds (customizable upon trigger).
-- Once the timer expires, the app triggers sound files loaded offline (`Happy bells`, `Opening Bell`, or `Uplifting bells`) corresponding to preferences configured inside **User Settings**.
-- Rest timers do not engage automatically inside retroactive `MANUAL` back-logging sessions to avoid notification clutter during rapid historical entries.
-
-### 2.3. Exercise History & Re-logging
-- When examining an active card, the logger displays the historical lifting logs of the last session.
-- Users can toggle a tab to view full historical lists for that specific exercise directly within the workout interface, keeping past accomplishments instantly accessible before loading heavy plates.
-
-### 2.4. Workout Templates / Routines
-To facilitate streamlined session planning, users can manage reusable workout skeletons called templates/routines:
-1. **Scope:** Planning includes pre-selecting categories and exercise types. Weights, reps, and set counts are omitted during templated planning, as these are automatically populated during session activation based on historical logs or standard defaults.
-2. **Creation from History:** Users can choose any past completed workout from their History log and save it as a routine. This automatically imports all exercises of that past session into the template, offering rapid naming and exercise filtering.
-3. **Template Management:** Routines are visible in a dedicated "Workout Templates" section on the Dashboard. Users can click any template to preview its exercises, start a LIVE session with those exercises loaded, record a MANUAL backlog, edit the template name/exercises, or delete the template.
+### 2.2. Administrators
+- **Authentication:** Authenticated via Google Auth and flagged with an admin role/access level.
+- **Capabilities:** Manage global system exercises (add, edit, delete, upload image thumbnails to Firebase Storage). Can view the Admin dashboard and test the platform even when it is in private/maintenance mode.
 
 ---
 
 ## 3. Session Modes
 
-FitTrace supports two distinct workout recording philosophies, selectable when spawning or recording a new session:
+FitTrace supports two distinct workout recording philosophies:
 
 ### 3.1. LIVE Workout Mode
 - **Recording Dynamics:** Tailored for active gym sessions. Tracks training duration dynamically.
@@ -56,29 +37,41 @@ FitTrace supports two distinct workout recording philosophies, selectable when s
 
 ---
 
-## 4. Custom Exercise Flows
+## 4. Core Features & Flows
 
-Users can create and edit their own exercises on the fly without system lock-out:
-- **On-The-Fly Generation:** Users can create custom exercises directly from the exercise category selection screen.
-- **User Scoping:** Custom exercises receive a `userId` property and are flagged with `isCustom: true`. They are strictly isolated and visible only to the creator.
-- **Modifications:** Standard users have full write access to edit names, categories, descriptions, or delete their custom exercises entirely.
-- **Advanced DeDuplication Mapping (Migration):** Over time, administrators may introduce official global equivalents of common custom exercises. To prevent orphaned histories, users or administrators can trigger a **Migration Merge**:
-  - The feature migrates past histories referencing the custom exercise ID to the designated official system exercise ID.
-  - The custom exercise is then safely deleted to keep the catalog clean.
+### 4.1. On-The-Fly Workout Logger & Smart Prefill
+- **Start Workout:** Tapping "New Workout" initiates a real-time training session or manual log.
+- **Category & Exercise Selection:** Users select from primary muscle group directories (e.g., Chest, Back, Legs, Arms) to add exercises to their session.
+- **Smart Set Prefill (1-Set Behavior):** To minimize manual entry fatigue, the app dynamically consults the user's past training logs:
+  - If historical recordings are available, the logger retrieves properties from the **last completed set** (cloning reps, weights, levels, or durations).
+  - If no historical data is found, standard baseline defaults (e.g., 10 reps, 0 weight) are pre-populated.
+  - The production app maintains exactly **1 smart default set** to avoid screen clutter. Users append supplementary sets instantly via the "+ Add Set" button.
+- **Logging Set Telemetry:** Users enter parameters mapped directly to the exercise's dynamic `LoadType` (e.g., Weight & Reps, Cardio, Bodyweight).
+
+### 4.2. Rest Notification Timer
+- Completing a set under `LIVE` mode fires a visual rest timer.
+- Resting intervals default to 90 seconds (customizable upon trigger).
+- Once the timer expires, the app triggers sound files based on user preferences.
+- Rest timers do not engage automatically inside retroactive `MANUAL` back-logging sessions.
+
+### 4.3. Workout Templates
+To facilitate streamlined session planning, users can manage reusable workout skeletons called templates/routines:
+- **Scope:** Planning includes pre-selecting categories and exercise types. Weights, reps, and set counts are omitted during templated planning, as these are automatically populated during session activation based on historical logs or standard defaults.
+- **Creation from History:** Users can choose any past completed workout from their History log and save it as a routine. This automatically imports all exercises of that past session into the template.
+- **Template Management:** Routines are visible in a dedicated "Workout Templates" section on the Dashboard. Users can click any template to preview its exercises, start a LIVE session, record a MANUAL backlog, edit, or delete the template.
 
 ---
 
-## 5. Admin & Maintenance Flows
+## 5. Exercise Management
 
-### 5.1. Global Catalog Ownership
-- Administrators can manage the official global exercises catalog (`isCustom: false`) available to every user on the platform.
-- Global additions demand custom image assets (thumbnails) uploaded securely directly to **Firebase Storage** buckets, maintaining lightweight network indexing.
+### 5.1. Global / Admin Exercises
+- Administrators manage the official global exercises catalog available to every user.
+- Global additions include custom image assets uploaded securely to Firebase Storage.
 
-### 5.2. Private Maintenance Mode
-The platform features a global administrative system gate managed in Firestore setting collections:
-- **State Toggles:** Admins can flag `settings/global.isPublic` to `false` via Settings interfaces.
-- **Standard User Lockdown:** When private mode is active, standard users attempting to access the platform are intercepted by a secure lock banner and prevented from seeing analytics, history, or workout loggers.
-- **Admin Pass-Through:** Administrator user UIDs completely bypass the lockdown layer, allowing testing of deployments or content uploads securely before opening public register gates.
+### 5.2. Custom Exercises
+- **On-The-Fly Generation:** Users can create custom exercises directly from the exercise category selection screen.
+- **User Scoping:** Custom exercises are strictly isolated and visible only to their creator.
+- **Migration & De-Duplication:** Admins or users can merge custom exercises into newly created global equivalents, migrating past histories to the official ID and deleting the custom record to keep the catalog clean.
 
 ---
 
@@ -87,31 +80,26 @@ The platform features a global administrative system gate managed in Firestore s
 ### 6.1. High-Fidelity History Logs
 - The **History** view lists all compiled training sessions.
 - Users can expand sessions to review specific exercises, sets, weights, and logs.
-- **Retroactive Correction:** Completed workouts are completely editable. Users can open previous sessions in editing modals, update weight metrics, reps, add or delete sets, or remove individual workouts from their profile entirely.
+- **Retroactive Correction:** Completed workouts are completely editable. Users can update metrics, add/delete sets, or remove sessions entirely.
 
 ### 6.2. Progression Analytics
 - The **Progress** view enables drilling down into specific exercises.
-- Enforces an intuitive interactive selection widget containing Categories and individual Exercises.
-- Displays a responsive, sleek **Recharts line chart** mapping lifting volumes (`WEIGHT_REPS`), machine resistance levels (`LEVEL_REPS`), or durations (`CARDIO`) across past training sequences.
+- Displays responsive line charts mapping lifting volumes, machine resistance levels, or durations across past training sequences.
 - Shows maximum metrics (Best Weight/Level), average repetitions, and overall set volume alongside the chart.
 
 ---
 
-## 7. Current Shipped Status
-
-The platform has completed all baseline launch features:
-- [x] **User Authentication:** Single-tier Google Authentication check.
-- [x] **Flexible Session Engine:** Real-world transition schemas between Live training and retroactive logging.
-- [x] **State Cache Recovery:** Resilient localStorage backends keeping session sets safe from page crashes.
-- [x] **Persistent Database Sync:** Reactive subscriptions parsing Firestore items directly.
-- [x] **Offline Service Worker Cache:** Fully functional assets delivery and indexedDB database sync.
-- [x] **Interactive Progression Visualization:** Recharts dashboards tracking metrics.
-- [x] **Custom Exercise Migrations:** Exercise merging capability for deduplication.
+## 7. User Settings
+Users have a dedicated settings view to customize their app experience:
+- **Language:** Toggle the interface language (e.g., English, Bulgarian).
+- **Font Size:** Adjust the global UI font size for accessibility and readability.
+- **Notifications Enabled:** Toggle the ability for the app to send rest timer notifications.
+- **Notification Sound:** Select from various offline sound profiles (e.g., Happy bells, Opening Bell, Uplifting bells) to play when a rest timer expires.
 
 ---
 
-## 8. Known Gaps & Limitations
-
-1. **Storage Network Reliance:** While text data synchronizes seamlessly offline through Firestore client caches, uploading physical image thumbnails for exercises requires live, online network connections to resolve Firebase Storage bucket APIs. Offline creations fall back gracefully to placeholder SVGs.
-2. **Concurrent Multi-Device Edits:** If updates to a particular workout document are conducted from separate offline devices simultaneously, sync resolution is governed by standard *last-write-wins* rules upon reconnection.
-3. **Bulk Custom Exercise Ownership Transfer:** Merging custom exercises to global exercises must be triggered on an individual exercise basis; bulk migrations of user registries are currently unsupported.
+## 8. Platform Administration (Public/Private Mode)
+The platform features a global administrative system gate:
+- **State Toggles:** Admins can set the platform to "Private" mode.
+- **Standard User Lockdown:** When private mode is active, standard users attempting to access the platform are intercepted by a secure lock banner and prevented from accessing core app features.
+- **Admin Pass-Through:** Administrator accounts bypass the lockdown layer, allowing testing of deployments or content uploads securely before opening public access.

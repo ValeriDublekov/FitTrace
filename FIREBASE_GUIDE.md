@@ -44,36 +44,49 @@ Single document containing global configurations for the application.
 
 #### `/exercises/{exerciseId}`
 Stores both global (system) exercises created by administrators and custom exercises created by individual users.
+Global exercises can be read by anyone but modified only by admins. Custom exercises are isolated and can only be read or modified by their creator.
 - **Doc ID**: Auto-generated string ID.
 - **Fields**:
-  - `name`: `string` — Name of the exercise.
-  - `category`: `string` — Exercise category (e.g., Chest, Back, Legs).
+  - `name`: `string` — Name of the exercise (up to 200 characters).
+  - `category`: `string` — Exercise category (up to 100 characters).
   - `loadType`: `string` — Enum value: `'WEIGHT_REPS'`, `'LEVEL_REPS'`, or `'CARDIO'`.
   - `isCustom`: `boolean` — `true` if created by a user, `false` if a global preset.
   - `userId`: `string | null` — UID of the creator if `isCustom` is `true`.
   - `thumbnailUrl`: `string | null` — Relative or absolute URL to the exercise image.
-  - `description`: `string | null` — Text describing performance technique.
+  - `description`: `string | null` — Text describing performance technique (up to 10000 characters).
   - `defaultNotes`: `string | null` — Default user guidelines.
-  - `affectedPart`: `string | null` — Targeted muscle group descriptor.
+  - `affectedPart`: `string | null` — Targeted muscle group descriptor (up to 200 characters).
   - `createdAt`: `timestamp` — Creation timestamp.
 
 #### `/workouts/{workoutId}`
-Houses workout sessions logged by users. Only visible to the creator.
+Houses workout sessions logged by users. Only visible to the creator. Validated to ensure data integrity limits (e.g., max 30 exercises per workout).
 - **Doc ID**: Auto-generated workout session ID.
 - **Fields**:
   - `userId`: `string` — UID matching the authenticating user.
   - `date`: `timestamp` — Workout performance date.
-  - `notes`: `string | null` — Session performance reviews.
-  - `exercises`: `array` of exercise logs (items contain logs of sets, level, reps, and weights).
+  - `exercises`: `array` — List of exercise logs (up to 30 items). Each contains sets (up to 50), durations, etc.
+  - `notes`: `string | null` — Session performance reviews (up to 10000 characters).
+  - `startedAt`: `timestamp | null` — When the session started.
+  - `durationSeconds`: `number | null` — Duration of the workout.
+  - `updatedAt`: `timestamp | null` — Last update timestamp.
+
+#### `/workout_templates/{templateId}`
+Stores user-created reusable workout templates. Enforces invariants like maximum exercise counts.
+- **Doc ID**: Auto-generated template ID.
+- **Fields**:
+  - `userId`: `string` — UID matching the authenticating user.
+  - `name`: `string` — Name of the template (up to 200 characters).
+  - `exerciseIds`: `array` — List of strings (up to 50 items).
+  - `createdAt`: `timestamp` — Template creation timestamp.
 
 #### `/users/{userId}/settings/display`
-User preference settings document containing personalized visual, UX, and PWA options.
+User preference settings document containing personalized visual, UX, and PWA options. Only accessible and modifiable by the owner.
 - **Doc ID**: `display` (nested under the `settings` subcollection of a specific user)
-- **Fields**:
-  - `fontSize`: `string` — Set to `'normal'`, `'large'`, or `'xlarge'`.
-  - `language`: `string` — Active locale code (e.g. `'bg'`, `'en'`).
-  - `updatedAt`: `timestamp` — Last update transaction time.
-  - `notificationSound`: `string | null` — Key of the selected sound for rest alerts.
+- **Fields** (strictly enforced):
+  - `updatedAt`: `timestamp` — Last update transaction time (must match server time on write).
+  - `fontSize`: `string | null` — Set to `'normal'`, `'large'`, or `'xlarge'`.
+  - `language`: `string | null` — Active locale code (e.g. `'bg'`, `'en'`).
+  - `notificationSound`: `string | null` — Key of the selected sound for rest alerts (up to 200 chars).
   - `isNotificationsEnabled`: `boolean | null` — If notifications permission state is active.
 
 ---

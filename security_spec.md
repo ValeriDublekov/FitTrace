@@ -2,10 +2,11 @@
 
 ## Firestore Collections
 
-- **admins**: Document-based list of user IDs that represent the application's administrators.
+- **admins**: Document-based list of user IDs that represent the application's administrators. This is the single source of truth for administrative rights.
 - **settings/global**: Global application configurations.
 - **exercises**: Database of both global (system) exercises and custom user-created exercises.
 - **workouts**: Database of user-specific workout log sessions.
+- **workout_templates**: Database of user-created reusable workout routines.
 - **users/{userId}/settings/display**: Individual user preferences (e.g. font size, language settings).
 
 ## Security Invariants
@@ -37,7 +38,7 @@
 
 #### 3. exercises (`/exercises/{exerciseId}`)
 
-- **Read Access**: Any signed-in user can read global exercises (`isCustom == false` or missing) or custom exercises that they created (`userId == request.auth.uid`).
+- **Read Access**: Any signed-in user can read global exercises (`isCustom == false` or missing) or custom exercises that they created (`userId == request.auth.uid`). Global exercises are separated from custom ones to prevent cross-user data leakage.
 - **Create Access**: Signed-in Admins can create global exercises (`isCustom == false`). Non-admin signed-in users can only create custom exercises (`isCustom == true` and `userId == request.auth.uid`).
 - **Update Access**:
   - Admins can update global exercises (`isCustom == false`).
@@ -53,25 +54,41 @@
 #### 4. workouts (`/workouts/{workoutId}`)
 
 - **Read/List Access**: Accessible only to the creator of the workout session (`resource.data.userId == request.auth.uid`). There are no blanket read/list operations.
-- **Create/Update Access**: Restructured to prevent spoofing. Users can only write/update workouts where `userId` matches their UID and the array of exercises is bounded to the standard performance limits (`<= 30` items).
+- **Create/Update Access**: Restructured to prevent spoofing. Users can only write/update workouts where `userId` matches their UID and the payload matches the strict validation schema.
 - **Delete Access**: Allowed only for the workout's author.
 - **Validation Details (`isValidWorkout`)**:
-  - Keys must include: `userId`, `date`, `exercises` (list of <= 30 items).
+  - Keys must include: `userId`, `date`, `exercises`.
+  - Maximum size enforced: `exercises` list is bounded to `<= 30` items. Each exercise item must have `<= 50` sets.
   - `userId` must strictly align with `request.auth.uid`.
-  - `date` must be a valid timestamp.
+  - `date`, `startedAt`, and `updatedAt` must be valid timestamps.
+  - Allows `notes` (string <= 10000 chars) and `durationSeconds` (int).
 
-#### 5. users/{userId}/settings/display (`/users/{userId}/settings/display`)
+#### 5. workout_templates (`/workout_templates/{templateId}`)
+
+- **Read/List Access**: Accessible only to the creator of the template (`resource.data.userId == request.auth.uid`).
+- **Create/Update Access**: Users can only create or update templates where `userId` matches their UID and the payload adheres to the validation rules.
+- **Delete Access**: Allowed only for the template's author.
+- **Validation Details (`isValidWorkoutTemplate`)**:
+  - Keys must include: `userId`, `name`, `exerciseIds`, `createdAt`.
+  - `userId` must strictly align with `request.auth.uid`.
+  - `name` must be a string <= 200 chars.
+  - `exerciseIds` must be a list of strings with a maximum size of 50.
+  - `createdAt` must be a valid timestamp.
+
+#### 6. users/{userId}/settings/display (`/users/{userId}/settings/display`)
 
 - **Read Access**: Only accessible to the document owner (`isOwner(userId)`).
 - **Write Access**: Only writeable by the owner (`isOwner(userId)`), must include `updatedAt` equal to `request.time`.
 - **Validation Details (`isValidUserSettings`)**:
+  - Keys MUST NOT include any unknown fields. Only `updatedAt`, `fontSize`, `language`, `notificationSound`, and `isNotificationsEnabled` are allowed.
   - Must include `updatedAt` (timestamp).
-  - Must contain at least one of `fontSize` or `language`.
-  - If `fontSize` is specified, it must be value `'normal'`, `'large'`, or `'xlarge'`.
-  - Custom client options such as `notificationSound` and `isNotificationsEnabled` are permitted as long as they are verified at runtime.
+  - `fontSize` must be `'normal'`, `'large'`, or `'xlarge'` if present.
+  - `language` must be `'bg'` or `'en'` if present.
+  - `notificationSound` must be a string <= 200 chars if present.
+  - `isNotificationsEnabled` must be a boolean if present.
 
 ---
 
 ## Test Status
 
-No executable rules tests exist yet. All security rules are validated via live sandbox deployments and strict schema checks in deployment rules verification.
+No automated executable rules tests exist for this project. Security validation relies on strict schema checks and manual verification. A manual testing checklist (`FIREBASE_EMULATOR_CHECKLIST.md`) can be used during local emulation to verify the invariants.
