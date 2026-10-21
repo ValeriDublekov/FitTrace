@@ -6,3 +6,19 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# .NET Build Outputs
+**/bin/
+**/obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Databases
+*.db
+*.db-wal
+*.db-shm
+
+# AI Studio
+.aistudio/

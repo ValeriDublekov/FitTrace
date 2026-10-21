@@ -15,10 +15,51 @@ import {
 import { db, handleFirestoreError, OperationType } from './firebase';
 import { Workout, PersistedWorkout, WorkoutExercise, WorkoutSavePayload, WorkoutUpdatePayload, cleanUndefined } from '../types';
 
+import { getBackendMode } from './backendMode';
+
 const WORKOUTS_COLLECTION = 'workouts';
 
 export const workoutService = {
   async saveWorkout(workout: Omit<Workout, 'id'>): Promise<string> {
+    if (getBackendMode() === 'dotnet') {
+      const payload = {
+        date: workout.date instanceof Date ? workout.date.toISOString() : new Date().toISOString(),
+        startedAt: workout.startedAt instanceof Date ? workout.startedAt.toISOString() : undefined,
+        durationSeconds: workout.durationSeconds,
+        notes: workout.notes,
+        exercises: workout.exercises.map((we, idx) => ({
+          exerciseId: we.exerciseId,
+          exerciseName: we.exerciseName,
+          orderIndex: idx + 1,
+          sessionNotes: we.sessionNotes,
+          supersetGroupId: we.supersetGroupId,
+          sets: we.sets.map((s, sIdx) => ({
+            setIndex: sIdx + 1,
+            weight: s.weight,
+            reps: s.reps,
+            level: s.level,
+            durationSeconds: s.duration,
+            isCompleted: s.isCompleted !== false,
+          })),
+        })),
+      };
+
+      const res = await fetch('/api/v2/api/workouts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Грешка при запис в .NET API: ${errText}`);
+      }
+
+      const data = await res.json();
+      window.dispatchEvent(new CustomEvent('fittrace_workout_saved', { detail: data }));
+      return data.id;
+    }
+
     try {
       const rawPayload: WorkoutSavePayload = {
         ...workout,
@@ -56,6 +97,12 @@ export const workoutService = {
   },
 
   async deleteWorkout(workoutId: string): Promise<void> {
+    if (getBackendMode() === 'dotnet') {
+      await fetch(`/api/v2/api/workouts/${workoutId}`, { method: 'DELETE' });
+      window.dispatchEvent(new CustomEvent('fittrace_workout_deleted', { detail: workoutId }));
+      return;
+    }
+
     try {
       await deleteDoc(doc(db, WORKOUTS_COLLECTION, workoutId));
     } catch (error) {
@@ -65,6 +112,42 @@ export const workoutService = {
   },
 
   async getExerciseHistory(exerciseId: string, userId: string, maxResults = 50): Promise<PersistedWorkout[]> {
+    if (getBackendMode() === 'dotnet') {
+      try {
+        const res = await fetch('/api/v2/api/workouts');
+        if (res.ok) {
+          const list = await res.json();
+          return list
+            .filter((w: any) => w.exercises?.some((we: any) => we.exerciseId === exerciseId))
+            .map((w: any) => ({
+              id: w.id,
+              userId: w.userId,
+              date: new Date(w.date),
+              notes: w.notes,
+              durationSeconds: w.durationSeconds,
+              exercises: w.exercises.map((we: any) => ({
+                id: we.exerciseId,
+                exerciseId: we.exerciseId,
+                exerciseName: we.exerciseName || '',
+                sessionNotes: we.sessionNotes,
+                sets: we.sets.map((s: any) => ({
+                  setIndex: s.setIndex,
+                  weight: s.weight,
+                  reps: s.reps,
+                  level: s.level,
+                  duration: s.durationSeconds,
+                  isCompleted: s.isCompleted,
+                })),
+              })),
+            }))
+            .slice(0, maxResults);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch workouts from .NET API', err);
+      }
+      return [];
+    }
+
     try {
       const q = query(
         collection(db, WORKOUTS_COLLECTION),

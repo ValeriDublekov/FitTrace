@@ -21,10 +21,38 @@ import { db, storage, handleFirestoreError, OperationType } from './firebase';
 import { Exercise, PersistedExercise, ExerciseCreateInput, ExerciseUpdateInput } from '../types';
 import { workoutService } from './workoutService';
 
+import { getBackendMode } from './backendMode';
+
 const EXERCISES_COLLECTION = 'exercises';
 
 export const exerciseService = {
   async getExercises(userId?: string): Promise<PersistedExercise[]> {
+    if (getBackendMode() === 'dotnet') {
+      try {
+        const res = await fetch('/api/v2/api/exercises');
+        if (res.ok) {
+          const data = await res.json();
+          return data.map((e: any) => ({
+            id: e.id,
+            name: e.name,
+            category: e.category,
+            loadType: (e.loadType === 1 ? 'LEVEL_REPS' : e.loadType === 2 ? 'CARDIO' : 'WEIGHT_REPS') as any,
+            affectedPart: e.affectedPart,
+            thumbnailUrl: e.thumbnailUrl,
+            defaultNotes: e.defaultNotes,
+            description: e.description,
+            url: e.url,
+            isCustom: e.isCustom,
+            userId: e.userId,
+            createdAt: new Date(),
+          })).sort((a: any, b: any) => a.name.localeCompare(b.name));
+        }
+      } catch (err) {
+        console.warn('Failed to fetch exercises from .NET API', err);
+      }
+      return [];
+    }
+
     try {
       const requests = [];
 

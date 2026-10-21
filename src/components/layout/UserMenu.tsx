@@ -3,18 +3,32 @@ import { useAuth } from '../../hooks/useAuth';
 import { useUserSettings } from '../../hooks/useUserSettings';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './LanguageSwitcher';
-import { Settings, Type, LogOut, User as UserIcon, ChevronDown, Bell } from 'lucide-react';
+import { Settings, Type, LogOut, User as UserIcon, ChevronDown, Bell, Server } from 'lucide-react';
 import { playNotificationSound } from '../../utils/audioUtils';
 import { motion, AnimatePresence } from 'motion/react';
 import { FontSize } from '../../types';
+import { V2TestingModal } from '../../features/v2-testing/V2TestingModal';
+import { getBackendMode, setBackendMode, subscribeBackendMode, BackendMode } from '../../services/backendMode';
 
 const UserMenu: React.FC = () => {
   const { user, logout } = useAuth();
   const { settings: userSettings, updateFontSize, updateNotificationSound, updateIsNotificationsEnabled } = useUserSettings();
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
+  const [isV2ModalOpen, setIsV2ModalOpen] = useState(false);
+  const [backendMode, setBackendModeState] = useState<BackendMode>(getBackendMode());
   const [availableSounds, setAvailableSounds] = useState<string[]>([]);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    return subscribeBackendMode((newMode) => {
+      setBackendModeState(newMode);
+    });
+  }, []);
+
+  const handleToggleBackend = (mode: BackendMode) => {
+    setBackendMode(mode);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -90,7 +104,7 @@ const UserMenu: React.FC = () => {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 p-1.5 hover:bg-zinc-100 rounded-2xl transition-colors"
+        className="flex items-center gap-1.5 p-1.5 hover:bg-zinc-100 rounded-2xl transition-colors"
       >
         {user.photoURL ? (
           <img src={user.photoURL} alt={user.displayName || 'User'} className="w-8 h-8 rounded-xl object-cover ring-2 ring-white shadow-sm" referrerPolicy="no-referrer" />
@@ -99,6 +113,9 @@ const UserMenu: React.FC = () => {
             <UserIcon className="w-5 h-5" />
           </div>
         )}
+        <span className={`text-[10px] font-black tracking-wider px-1.5 py-0.5 rounded-md ${backendMode === 'dotnet' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-zinc-200 text-zinc-700'}`}>
+          {backendMode === 'dotnet' ? 'v2' : 'v1'}
+        </span>
         <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
@@ -113,6 +130,32 @@ const UserMenu: React.FC = () => {
             <div className="px-5 py-3 border-b border-zinc-100 mb-2">
               <p className="font-bold text-zinc-900 truncate">{user.displayName}</p>
               <p className="text-xs text-zinc-500 truncate">{user.email}</p>
+            </div>
+
+            {/* Избор на активен бекенд: v1 Firebase vs v2 .NET */}
+            <div className="px-4 py-2 border-b border-zinc-100 mb-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400">Източник на данни</span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${backendMode === 'dotnet' ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-800'}`}>
+                  {backendMode === 'dotnet' ? 'v2 .NET Core' : 'v1 Firebase'}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-1 p-1 bg-zinc-100 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => handleToggleBackend('firebase')}
+                  className={`py-1.5 text-xs font-bold rounded-lg transition-all ${backendMode === 'firebase' ? 'bg-white text-zinc-900 shadow-xs' : 'text-zinc-500 hover:text-zinc-800'}`}
+                >
+                  v1 Firebase
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleToggleBackend('dotnet')}
+                  className={`py-1.5 text-xs font-bold rounded-lg transition-all ${backendMode === 'dotnet' ? 'bg-indigo-600 text-white shadow-xs' : 'text-zinc-500 hover:text-zinc-800'}`}
+                >
+                  v2 .NET API
+                </button>
+              </div>
             </div>
 
             <div className="px-4 py-2">
@@ -179,10 +222,18 @@ const UserMenu: React.FC = () => {
               </div>
             </div>
 
-            <div className="px-2 pt-2 border-t border-zinc-100">
+            <div className="px-2 pt-2 border-t border-zinc-100 flex flex-col gap-1">
+              <button
+                onClick={() => { setIsOpen(false); setIsV2ModalOpen(true); }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-indigo-700 bg-indigo-50/80 hover:bg-indigo-100 rounded-2xl transition-colors"
+              >
+                <Server className="w-4 h-4 text-indigo-600" />
+                🧪 Тествай v2 (.NET + DB)
+              </button>
+
               <button
                 onClick={logout}
-                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-rose-600 hover:bg-rose-50 rounded-2xl transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-50 rounded-2xl transition-colors"
               >
                 <LogOut className="w-4 h-4" />
                 {t('navbar.logout')}
@@ -191,6 +242,8 @@ const UserMenu: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <V2TestingModal isOpen={isV2ModalOpen} onClose={() => setIsV2ModalOpen(false)} />
     </div>
   );
 };

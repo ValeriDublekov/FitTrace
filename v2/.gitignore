@@ -1,0 +1,18 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Node / Frontend
+node_modules/
+dist/
+.vite/
+*.log
+
+# Environment & Secrets
+.env
+.env.local
+.DS_Store

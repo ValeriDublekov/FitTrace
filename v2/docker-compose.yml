@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fittrace-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: fittrace
+      POSTGRES_USER: fittrace
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fittrace_secret}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fittrace -d fittrace"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: src/FitTrace.Api/Dockerfile
+    container_name: fittrace-api
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=fittrace;Username=fittrace;Password=${POSTGRES_PASSWORD:-fittrace_secret}
+      - JwtSettings__Secret=${JWT_SECRET:-SuperSecretKeyForFitTraceTokenGeneration1234567890!}
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: fittrace-tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN:-dummy_token_replace_with_real_one}
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
+    driver: local

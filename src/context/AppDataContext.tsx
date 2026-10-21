@@ -5,6 +5,7 @@ import { db, handleFirestoreError, OperationType } from '../services/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { AppSettings, UserSettings, Exercise, PersistedExercise, FontSize, Language, NotificationSound, normalizeExerciseCreatePayload, normalizeExerciseUpdatePayload } from '../types';
 import { exerciseService } from '../services/exerciseService';
+import { subscribeBackendMode } from '../services/backendMode';
 
 export interface AppDataState {
   user: User | null;
@@ -296,6 +297,12 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   useEffect(() => {
     refreshExercises();
+  }, [refreshExercises]);
+
+  useEffect(() => {
+    return subscribeBackendMode(() => {
+      refreshExercises();
+    });
   }, [refreshExercises]);
 
   // Mutations
